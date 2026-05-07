@@ -106,7 +106,7 @@ export default function Home() {
 
 			<section className="bg-[var(--parchment-rose)] px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto grid max-w-7xl gap-8 xl:grid-cols-[1fr_320px]">
-					<div>
+					<div className="min-w-0">
 						<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 							<SectionHeader
 								label="Latest thoughts, stories, and posts"
@@ -126,7 +126,7 @@ export default function Home() {
 							))}
 						</MobileCarousel>
 					</div>
-					<div className="self-stretch">
+					<div className="min-w-0 self-stretch">
 						<QuotePanel quote="Words are how I make sense of the world." />
 					</div>
 				</div>

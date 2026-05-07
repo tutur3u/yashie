@@ -96,7 +96,7 @@ export function MobileCarousel({
 	};
 
 	return (
-		<div className="mt-5">
+		<div className="mt-5 min-w-0 max-w-full">
 			<div className="mb-3 flex items-center justify-between gap-3 md:hidden">
 				<p className={`text-xs font-bold uppercase tracking-[0.18em] ${labelClassName}`}>
 					{label} {activeIndex + 1} / {slides.length}
@@ -125,7 +125,7 @@ export function MobileCarousel({
 			<div
 				ref={trackRef}
 				aria-label={`${label} carousel`}
-				className={`scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 md:overflow-visible md:pb-0 ${desktopClassName}`}
+				className={`scrollbar-none flex w-full max-w-full snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 md:overflow-visible md:pb-0 ${desktopClassName}`}
 				onScroll={syncActiveSlide}
 				role="region"
 			>
