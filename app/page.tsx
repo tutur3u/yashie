@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MobileCarousel } from "@/app/components/MobileCarousel";
 import {
 	BlogCard,
 	GalleryCard,
@@ -68,11 +69,15 @@ export default function Home() {
 					<h2 className="font-display text-3xl text-[var(--gold)]">
 						Explore My Worlds
 					</h2>
-					<div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+					<MobileCarousel
+						label="World"
+						tone="dark"
+						desktopClassName="md:grid md:grid-cols-2 xl:grid-cols-5"
+					>
 						{worlds.map((world) => (
 							<WorldCard key={world.title} world={world} />
 						))}
-					</div>
+					</MobileCarousel>
 				</div>
 			</section>
 
@@ -88,11 +93,14 @@ export default function Home() {
 							View full gallery {"->"}
 						</Link>
 					</div>
-					<div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+					<MobileCarousel
+						label="Gallery"
+						desktopClassName="md:grid md:grid-cols-2 md:gap-5 lg:grid-cols-3 xl:grid-cols-6"
+					>
 						{galleryItems.slice(0, 6).map((item) => (
 							<GalleryCard key={item.title} item={item} />
 						))}
-					</div>
+					</MobileCarousel>
 				</div>
 			</section>
 
@@ -109,11 +117,14 @@ export default function Home() {
 								Visit blog {"->"}
 							</Link>
 						</div>
-						<div className="grid gap-5 lg:grid-cols-2">
+						<MobileCarousel
+							label="Post"
+							desktopClassName="md:grid md:gap-5 lg:grid-cols-2"
+						>
 							{blogPosts.map((post) => (
 								<BlogCard key={post.title} post={post} />
 							))}
-						</div>
+						</MobileCarousel>
 					</div>
 					<div className="self-stretch">
 						<QuotePanel quote="Words are how I make sense of the world." />
@@ -133,11 +144,14 @@ export default function Home() {
 							Open shop {"->"}
 						</Link>
 					</div>
-					<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+					<MobileCarousel
+						label="Shop"
+						desktopClassName="md:grid md:grid-cols-2 md:gap-5 xl:grid-cols-5"
+					>
 						{products.map((product) => (
 							<ProductCard key={product.title} product={product} />
 						))}
-					</div>
+					</MobileCarousel>
 				</div>
 			</section>
 
