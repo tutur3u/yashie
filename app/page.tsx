@@ -169,6 +169,9 @@ export default function Home() {
 							You can find me everywhere as {author.alias}. DMs are welcome so
 							long as everyone is respectful.
 						</p>
+						<Link href="/contact" className="mt-5 button-primary">
+							Contact Me
+						</Link>
 						<div className="mt-5 grid gap-3 sm:grid-cols-2">
 							{socials.map((social) => (
 								<a

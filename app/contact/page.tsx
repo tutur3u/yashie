@@ -5,7 +5,7 @@ import { PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
 import { author, socials } from "@/app/data/portfolio";
 
 export const metadata: Metadata = {
-	title: "Contact | Yashoda U. Itwaru",
+	title: "Contact Me | Yashoda U. Itwaru",
 	description:
 		"Mock contact page for Yashoda U. Itwaru, also known as InkedByYashie.",
 };
@@ -14,7 +14,7 @@ export default function ContactPage() {
 	return (
 		<main>
 			<PageIntro
-				title="Let's Connect"
+				title="Contact Me"
 				description="Reach out for respectful conversation, community, writing updates, collaborations, and future reader opportunities."
 				image="/images/portfolio/ornamental-panel.png"
 			/>
@@ -27,6 +27,21 @@ export default function ContactPage() {
 							title={`Find ${author.shortName}`}
 							description={`Most links use the public handle ${author.alias} or the InkedByYashie brand. This is a mock contact experience.`}
 						/>
+						<div className="parchment-card mb-5 p-5">
+							<p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]">
+								Preferred note
+							</p>
+							<a
+								href={`mailto:${author.email}`}
+								className="mt-2 block break-words font-display text-3xl leading-tight text-[var(--navy)] transition hover:text-[var(--clay)]"
+							>
+								{author.email}
+							</a>
+							<p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
+								Best for collaboration requests, reader notes, interview
+								inquiries, and respectful community messages.
+							</p>
+						</div>
 						<div className="grid gap-3">
 							{socials.map((social) => (
 								<a
@@ -57,6 +72,31 @@ export default function ContactPage() {
 							description="The form confirms a mock state only. No message is sent."
 						/>
 						<ContactForm />
+						<div className="mt-5 grid gap-3 sm:grid-cols-3">
+							{[
+								{
+									topic: "Writing",
+									description: "Essays, interviews, and reader letters.",
+								},
+								{
+									topic: "Collaborations",
+									description: "Panels, launches, and creative projects.",
+								},
+								{
+									topic: "Community",
+									description: "Respectful DMs and book-world updates.",
+								},
+							].map((item) => (
+								<div key={item.topic} className="parchment-card p-4">
+									<p className="font-display text-2xl text-[var(--navy)]">
+										{item.topic}
+									</p>
+									<p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">
+										{item.description}
+									</p>
+								</div>
+							))}
+						</div>
 					</div>
 				</div>
 			</section>

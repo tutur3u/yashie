@@ -66,7 +66,13 @@ export function ContactForm() {
 				<label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]" htmlFor="contact-name">
 					Name
 				</label>
-				<input id="contact-name" className="form-field" placeholder="Your name" />
+				<input
+					id="contact-name"
+					autoComplete="name"
+					className="form-field"
+					placeholder="Your name"
+					required
+				/>
 			</div>
 			<div className="grid gap-2">
 				<label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]" htmlFor="contact-email">
@@ -75,9 +81,33 @@ export function ContactForm() {
 				<input
 					id="contact-email"
 					type="email"
+					autoComplete="email"
 					className="form-field"
 					placeholder="you@example.com"
+					required
 				/>
+			</div>
+			<div className="grid gap-2">
+				<label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]" htmlFor="contact-subject">
+					Subject
+				</label>
+				<select id="contact-subject" className="form-field" defaultValue="reader-note">
+					<option value="reader-note">Reader note</option>
+					<option value="collaboration">Collaboration</option>
+					<option value="event">Event or interview</option>
+					<option value="shop">Shop question</option>
+				</select>
+			</div>
+			<div className="grid gap-2">
+				<label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]" htmlFor="contact-timeline">
+					Timeline
+				</label>
+				<select id="contact-timeline" className="form-field" defaultValue="flexible">
+					<option value="flexible">Flexible</option>
+					<option value="this-month">This month</option>
+					<option value="next-season">Next season</option>
+					<option value="no-date">No date yet</option>
+				</select>
 			</div>
 			<div className="grid gap-2">
 				<label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]" htmlFor="contact-message">
@@ -85,8 +115,9 @@ export function ContactForm() {
 				</label>
 				<textarea
 					id="contact-message"
-					className="form-field min-h-36 resize-y py-3"
+					className="form-field min-h-40 resize-y py-3"
 					placeholder="Tell Yashie what you are reaching out about."
+					required
 				/>
 			</div>
 			<button className="button-primary w-full sm:w-fit">Send Mock Message</button>
