@@ -15,7 +15,7 @@ export default function ShopPage() {
 			<PageIntro
 				title="From My Desk to Yours"
 				description="A frontend-only mock shop for books, prints, stationery, bookmarks, and merch."
-				image="/images/portfolio/shop-flatlay.png"
+				image="/images/portfolio/items/shop-merch.jpg"
 			/>
 
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
@@ -55,7 +55,7 @@ export default function ShopPage() {
 
 					<div className="ornament-frame relative min-h-80 overflow-hidden">
 						<Image
-							src="/images/portfolio/shop-flatlay.png"
+							src="/images/portfolio/items/shop-stationery.jpg"
 							alt="A flat-lay of mock literary merchandise with notebooks, a print, bookmark, pin, and tote."
 							fill
 							sizes="(min-width: 1024px) 45vw, 100vw"

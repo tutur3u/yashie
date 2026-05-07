@@ -48,7 +48,7 @@ export function PageIntro({
 }) {
 	return (
 		<section className="section-band border-b border-[rgba(184,112,81,0.4)]">
-			<div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+			<div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
 				<div className="self-center">
 					<p className="script-label">InkedByYashie</p>
 					<h1 className="font-display text-5xl leading-none text-[var(--navy)] sm:text-6xl">
@@ -58,7 +58,7 @@ export function PageIntro({
 						{description}
 					</p>
 				</div>
-				<div className="ornament-frame relative min-h-56 overflow-hidden">
+				<div className="ornament-frame relative min-h-72 overflow-hidden lg:min-h-96">
 					<Image
 						src={image}
 						alt=""
@@ -75,20 +75,22 @@ export function PageIntro({
 
 export function WorldCard({ world }: { world: WritingWorld }) {
 	return (
-		<article className="parchment-card group flex min-h-full flex-col overflow-hidden p-4">
-			<div className="relative mb-4 h-28 overflow-hidden border border-[rgba(184,112,81,0.45)]">
+		<article className="parchment-card group flex min-h-full flex-col overflow-hidden p-3">
+			<div className="relative mb-4 h-44 overflow-hidden border border-[rgba(184,112,81,0.45)]">
 				<Image
 					src={world.image}
 					alt={world.imageAlt}
 					fill
 					sizes="(min-width: 1024px) 20vw, 80vw"
-					className="object-cover opacity-85 transition duration-500 group-hover:scale-105"
+					loading="eager"
+					className="object-cover transition duration-700 group-hover:scale-110"
 				/>
+				<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,25,42,0)_45%,rgba(7,25,42,0.42)_100%)]" />
 			</div>
-			<p className="w-fit bg-[var(--navy-muted)] px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-white">
+			<p className="w-fit border border-[rgba(217,167,91,0.55)] bg-[var(--navy-muted)] px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-white">
 				{world.kicker}
 			</p>
-			<h3 className="mt-3 font-display text-2xl leading-7 text-[var(--navy)]">
+			<h3 className="mt-3 font-display text-3xl leading-8 text-[var(--navy)]">
 				{world.title}
 			</h3>
 			<p className="mt-3 flex-1 text-sm leading-6 text-[var(--ink-soft)]">
@@ -104,16 +106,18 @@ export function WorldCard({ world }: { world: WritingWorld }) {
 export function GalleryCard({ item }: { item: GalleryItem }) {
 	return (
 		<article className="group grid min-h-full gap-3">
-			<div className="book-cover relative aspect-[3/4] overflow-hidden border border-[var(--copper)] bg-[var(--navy)] shadow-[0_18px_25px_rgba(14,38,61,0.22)]">
+			<div className="book-cover relative aspect-[3/4] overflow-hidden border border-[var(--copper)] bg-[var(--navy)] shadow-[0_24px_38px_rgba(14,38,61,0.28)]">
 				<Image
 					src={item.image}
 					alt={item.imageAlt}
 					fill
 					sizes="(min-width: 1024px) 15vw, 45vw"
-					className="object-cover transition duration-500 group-hover:scale-105"
+					loading="eager"
+					className="object-cover transition duration-700 group-hover:scale-110"
 					style={{ objectPosition: item.imagePosition ?? "center" }}
 				/>
-				<div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,34,55,0.84)] via-transparent to-transparent" />
+				<div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,34,55,0.88)] via-[rgba(11,34,55,0.08)] to-transparent" />
+				<div className="absolute inset-3 border border-[rgba(217,167,91,0.52)]" />
 				<div className="absolute inset-x-0 bottom-0 p-4 text-white">
 					<h3 className="font-display text-2xl leading-6">{item.title}</h3>
 					<p className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--gold)]">
@@ -128,18 +132,20 @@ export function GalleryCard({ item }: { item: GalleryItem }) {
 
 export function BlogCard({ post }: { post: BlogPost }) {
 	return (
-		<article className="parchment-card group grid overflow-hidden sm:grid-cols-[0.85fr_1fr]">
-			<div className="relative min-h-48 overflow-hidden border-b border-[rgba(184,112,81,0.45)] sm:border-b-0 sm:border-r">
+		<article className="parchment-card group grid overflow-hidden sm:grid-cols-[0.95fr_1fr]">
+			<div className="relative min-h-64 overflow-hidden border-b border-[rgba(184,112,81,0.45)] sm:border-b-0 sm:border-r">
 				<Image
 					src={post.image}
 					alt={post.imageAlt}
 					fill
 					sizes="(min-width: 1024px) 22vw, 100vw"
-					className="object-cover transition duration-500 group-hover:scale-105"
+					loading="eager"
+					className="object-cover transition duration-700 group-hover:scale-110"
 					style={{ objectPosition: post.imagePosition ?? "center" }}
 				/>
+				<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,242,232,0)_55%,rgba(14,38,61,0.35)_100%)]" />
 			</div>
-			<div className="p-5">
+			<div className="p-6">
 				<div className="flex flex-wrap items-center gap-2 text-[0.68rem] font-bold uppercase tracking-[0.16em]">
 					<span className="bg-[var(--gold)] px-2 py-1 text-[var(--navy)]">
 						{post.category}
@@ -164,15 +170,17 @@ export function BlogCard({ post }: { post: BlogPost }) {
 export function ProductCard({ product }: { product: Product }) {
 	return (
 		<article className="parchment-card group overflow-hidden">
-			<div className="relative aspect-[4/3] overflow-hidden border-b border-[rgba(184,112,81,0.45)]">
+			<div className="relative aspect-[5/4] overflow-hidden border-b border-[rgba(184,112,81,0.45)]">
 				<Image
 					src={product.image}
 					alt={product.imageAlt}
 					fill
 					sizes="(min-width: 1024px) 20vw, 90vw"
-					className="object-cover transition duration-500 group-hover:scale-105"
+					loading="eager"
+					className="object-cover transition duration-700 group-hover:scale-110"
 					style={{ objectPosition: product.imagePosition ?? "center" }}
 				/>
+				<div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,242,232,0.18),transparent_42%)]" />
 			</div>
 			<div className="p-5">
 				<div className="flex items-start justify-between gap-4">

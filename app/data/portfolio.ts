@@ -48,7 +48,7 @@ export type SocialLink = {
 };
 
 export const navItems: NavItem[] = [
-	{ label: "Landing Page", href: "/" },
+	{ label: "Home", href: "/" },
 	{ label: "Gallery", href: "/gallery" },
 	{ label: "About", href: "/#about" },
 	{ label: "Contact", href: "/contact" },
@@ -87,8 +87,8 @@ export const worlds: WritingWorld[] = [
 			"Essays on memory, culture, quiet magic, and the rituals that keep a person whole.",
 		detail:
 			"Personal nonfiction rooted in everyday life, healing, and hard-won tenderness.",
-		image: "/images/portfolio/blog-collage.png",
-		imageAlt: "A parchment writing desk with flowers, books, and a peacock feather.",
+		image: "/images/portfolio/items/world-essays.jpg",
+		imageAlt: "An open parchment journal with ink blooms, marigold petals, and a peacock feather.",
 	},
 	{
 		kicker: "Reflections",
@@ -97,8 +97,8 @@ export const worlds: WritingWorld[] = [
 			"Notes about shame, growth, identity, and the culture that became a home again.",
 		detail:
 			"Soft, intimate pieces for readers who are still learning how to return to themselves.",
-		image: "/images/portfolio/ornamental-panel.png",
-		imageAlt: "A peacock and botanical manuscript ornament on parchment.",
+		image: "/images/portfolio/items/world-reflections.jpg",
+		imageAlt: "A sealed blush envelope, mirror shard, wax seal, and peacock eye motifs.",
 	},
 	{
 		kicker: "Books & Stories",
@@ -107,8 +107,8 @@ export const worlds: WritingWorld[] = [
 			"Fiction, non-fiction, and tales stitched with faith, truth, grief, and devotion.",
 		detail:
 			"Mock previews of dark fantasy worlds, short stories, and character-centered mythic arcs.",
-		image: "/images/portfolio/gallery-book-covers.png",
-		imageAlt: "Five ornate dark fantasy book covers without readable text.",
+		image: "/images/portfolio/items/world-stories.jpg",
+		imageAlt: "A stack of clothbound fantasy books with teal smoke and copper filigree.",
 	},
 	{
 		kicker: "Poetry",
@@ -117,8 +117,8 @@ export const worlds: WritingWorld[] = [
 			"Poems about love, longing, nature, softness, and the blade edge of survival.",
 		detail:
 			"Short lyrical fragments for moments where prose would make too much noise.",
-		image: "/images/portfolio/hero-still-life.png",
-		imageAlt: "A navy writer's desk with parchment, pen, and peacock details.",
+		image: "/images/portfolio/items/world-poetry.jpg",
+		imageAlt: "Moonlit paper leaves, a quill, lotus petals, and a peacock feather.",
 	},
 	{
 		kicker: "Blog Posts",
@@ -127,8 +127,8 @@ export const worlds: WritingWorld[] = [
 			"Reading notes, travel sparks, craft thoughts, and behind-the-page reflections.",
 		detail:
 			"A living notebook of the ideas that orbit the larger book world.",
-		image: "/images/portfolio/blog-collage.png",
-		imageAlt: "A collage of warm bookish writing scenes.",
+		image: "/images/portfolio/items/world-blog.jpg",
+		imageAlt: "A travel-worn notebook, chai, compass, flowers, and peacock feather shadows.",
 	},
 ];
 
@@ -138,54 +138,48 @@ export const galleryItems: GalleryItem[] = [
 		type: "Poetry Collection",
 		description:
 			"A mock collection of poems about inheritance, ache, survival, and sacred return.",
-		image: "/images/portfolio/gallery-book-covers.png",
+		image: "/images/portfolio/items/gallery-ink-stains.jpg",
 		imageAlt: "An ornate navy mock book cover with peacock-inspired copper detailing.",
-		imagePosition: "left center",
 	},
 	{
 		title: "Rooted in Ruminations",
 		type: "Reflection Journal",
 		description:
 			"A journal-shaped world for cultural memory, self-forgiveness, and difficult growth.",
-		image: "/images/portfolio/gallery-book-covers.png",
+		image: "/images/portfolio/items/gallery-rooted.jpg",
 		imageAlt: "A teal mock journal cover with botanical copper ornaments.",
-		imagePosition: "35% center",
 	},
 	{
 		title: "Letters I Never Mailed",
 		type: "Personal Writings",
 		description:
 			"Fragments of unsent truth, grief, tenderness, and conversations with the past.",
-		image: "/images/portfolio/gallery-book-covers.png",
+		image: "/images/portfolio/items/gallery-letters.jpg",
 		imageAlt: "A blush mock journal cover with antique botanical ornament.",
-		imagePosition: "72% center",
 	},
 	{
 		title: "Whispers Between the Lines",
 		type: "Short Stories",
 		description:
 			"Dark urban fantasy vignettes where city streets hold old prayers and older teeth.",
-		image: "/images/portfolio/gallery-book-covers.png",
+		image: "/images/portfolio/items/gallery-whispers.jpg",
 		imageAlt: "A navy mock book cover with copper filigree.",
-		imagePosition: "55% center",
 	},
 	{
 		title: "The Art of Becoming Unapologetic",
 		type: "Essays",
 		description:
 			"Essays about refusing erasure and writing toward the self that survived.",
-		image: "/images/portfolio/blog-collage.png",
-		imageAlt: "A writing desk with blank parchment, flowers, and a fountain pen.",
-		imagePosition: "left top",
+		image: "/images/portfolio/items/gallery-unapologetic.jpg",
+		imageAlt: "A bold navy mock essay cover with copper sunburst botanical ornament.",
 	},
 	{
 		title: "Moonlight Memos",
 		type: "Poetry & Prose",
 		description:
 			"Small luminous pieces about longing, softness, grief, and the night sky.",
-		image: "/images/portfolio/ornamental-panel.png",
-		imageAlt: "A peacock and floral manuscript panel on parchment.",
-		imagePosition: "right center",
+		image: "/images/portfolio/items/gallery-moonlight.jpg",
+		imageAlt: "A midnight blue mock poetry cover with moon phases, lotus flowers, and peacock arcs.",
 	},
 ];
 
@@ -196,9 +190,8 @@ export const blogPosts: BlogPost[] = [
 		date: "May 12, 2024",
 		excerpt:
 			"On finding courage in small choices and choosing yourself without apology.",
-		image: "/images/portfolio/blog-collage.png",
-		imageAlt: "An open journal with pressed flowers and peacock feather details.",
-		imagePosition: "left top",
+		image: "/images/portfolio/items/blog-becoming.jpg",
+		imageAlt: "A brass mirror reflecting a lotus, with marigold petals and a peacock feather.",
 		readTime: "5 min",
 	},
 	{
@@ -207,9 +200,8 @@ export const blogPosts: BlogPost[] = [
 		date: "May 5, 2024",
 		excerpt:
 			"How the page can hold what the heart is not ready to say out loud.",
-		image: "/images/portfolio/blog-collage.png",
-		imageAlt: "A blank parchment page and fountain pen on a dark ornate desk.",
-		imagePosition: "left bottom",
+		image: "/images/portfolio/items/blog-therapy.jpg",
+		imageAlt: "A fountain pen beside handmade blank paper, ink rings, flowers, and a copper paperweight.",
 		readTime: "7 min",
 	},
 	{
@@ -218,9 +210,8 @@ export const blogPosts: BlogPost[] = [
 		date: "Apr 27, 2024",
 		excerpt:
 			"A mock reading list of books that rewired thought, craft, and tenderness.",
-		image: "/images/portfolio/blog-collage.png",
-		imageAlt: "A stack of ornate books with warm lamplight.",
-		imagePosition: "right top",
+		image: "/images/portfolio/items/blog-books.jpg",
+		imageAlt: "A tower of ornate clothbound books, a glowing open book, and copper dust.",
 		readTime: "6 min",
 	},
 	{
@@ -229,9 +220,8 @@ export const blogPosts: BlogPost[] = [
 		date: "Apr 20, 2024",
 		excerpt:
 			"A poem for the self who kept going, even before she had language for it.",
-		image: "/images/portfolio/blog-collage.png",
-		imageAlt: "A teacup, peacock feather, and parchment in warm light.",
-		imagePosition: "right bottom",
+		image: "/images/portfolio/items/blog-girl.jpg",
+		imageAlt: "An open keepsake box with a folded blank letter, moon charm, ribbon, and peacock feather.",
 		readTime: "3 min",
 	},
 ];
@@ -241,41 +231,36 @@ export const products: Product[] = [
 		title: "Signed Copy of My Book",
 		price: "$28",
 		description: "A mock autographed edition with a tucked-in thank-you note.",
-		image: "/images/portfolio/shop-flatlay.png",
+		image: "/images/portfolio/items/shop-signed-book.jpg",
 		imageAlt: "A navy clothbound mock book with peacock ornamentation.",
-		imagePosition: "left top",
 	},
 	{
 		title: "Art Prints & Posters",
 		price: "$18",
 		description: "Botanical and literary prints for shelves, desks, and reading nooks.",
-		image: "/images/portfolio/shop-flatlay.png",
-		imageAlt: "A botanical peacock-inspired art print on cream paper.",
-		imagePosition: "45% 15%",
+		image: "/images/portfolio/items/shop-prints.jpg",
+		imageAlt: "Deckled-edge botanical art prints with peacock, lotus, and copper vine motifs.",
 	},
 	{
 		title: "Stationery & Notebooks",
 		price: "$16",
 		description: "Mock notebooks for writers, dreamers, and annotators.",
-		image: "/images/portfolio/shop-flatlay.png",
-		imageAlt: "A navy notebook with copper botanical decoration.",
-		imagePosition: "18% 83%",
+		image: "/images/portfolio/items/shop-stationery.jpg",
+		imageAlt: "Two ornate notebooks, blank cards, wax seal stickers, and a peacock feather pen.",
 	},
 	{
 		title: "Bookmarks & Accessories",
 		price: "$12",
 		description: "Peacock feather bookmarks and small desk treasures.",
-		image: "/images/portfolio/shop-flatlay.png",
-		imageAlt: "A peacock feather bookmark with a navy tassel.",
-		imagePosition: "50% 72%",
+		image: "/images/portfolio/items/shop-bookmarks.jpg",
+		imageAlt: "Peacock feather bookmarks, tassels, copper charms, and lotus pins.",
 	},
 	{
 		title: "Merch Collection",
 		price: "$34",
 		description: "A mock tote and small goods for carrying the book world with you.",
-		image: "/images/portfolio/shop-flatlay.png",
-		imageAlt: "A cream tote bag with peacock and floral ornamentation.",
-		imagePosition: "right center",
+		image: "/images/portfolio/items/shop-merch.jpg",
+		imageAlt: "A cream tote, folded navy scarf, enamel pin, sticker sheet, and small notebook.",
 	},
 ];
 
