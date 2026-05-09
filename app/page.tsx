@@ -1,23 +1,23 @@
-import Image from "next/image";
-import Link from "next/link";
 import { MobileCarousel } from "@/app/components/MobileCarousel";
 import {
-	BlogCard,
-	GalleryCard,
-	ProductCard,
-	QuotePanel,
-	SectionHeader,
-	WorldCard,
+    BlogCard,
+    GalleryCard,
+    ProductCard,
+    QuotePanel,
+    SectionHeader,
+    WorldCard,
 } from "@/app/components/PortfolioSections";
 import {
-	author,
-	blogPosts,
-	galleryItems,
-	products,
-	profileFacts,
-	socials,
-	worlds,
+    author,
+    blogPosts,
+    galleryItems,
+    products,
+    profileFacts,
+    socials,
+    worlds,
 } from "@/app/data/portfolio";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
 	return (
@@ -47,7 +47,7 @@ export default function Home() {
 						</p>
 						<div className="mt-7 flex flex-col gap-3 sm:flex-row">
 							<Link href="/blog" className="button-primary">
-								Read My Writings
+								Read My Writing
 							</Link>
 							<Link href="/gallery" className="button-secondary">
 								Explore Gallery
