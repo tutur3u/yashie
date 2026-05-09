@@ -40,7 +40,7 @@ export function SectionHeader({
 export function PageIntro({
 	title,
 	description,
-	image = "/images/portfolio/ornamental-panel.png",
+	image = "/images/artworks/bird-blade-floral-ornament.png",
 }: {
 	title: string;
 	description: string;
@@ -84,6 +84,7 @@ export function WorldCard({ world }: { world: WritingWorld }) {
 					sizes="(min-width: 1024px) 20vw, 80vw"
 					loading="eager"
 					className="object-cover transition duration-700 group-hover:scale-110"
+					style={{ objectPosition: world.imagePosition ?? "center" }}
 				/>
 				<div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,25,42,0)_45%,rgba(7,25,42,0.42)_100%)]" />
 			</div>

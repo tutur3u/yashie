@@ -24,8 +24,8 @@ export default function Home() {
 		<main>
 			<section className="hero-shell relative overflow-hidden border-b border-[var(--copper)]">
 				<Image
-					src="/images/portfolio/hero-still-life.png"
-					alt="A navy and parchment writing desk with an ornate journal, ink pot, and peacock feather."
+					src="/images/artworks/firelit-water-embrace.png"
+					alt="Painted couple embracing in water before a wall of fire, used as Yashie story-world art."
 					fill
 					priority
 					sizes="100vw"
@@ -214,6 +214,15 @@ export default function Home() {
 						<h3 className="font-display text-3xl text-[var(--navy)]">
 							{author.brand}
 						</h3>
+						<div className="relative mt-4 h-24 overflow-hidden border border-[rgba(184,112,81,0.32)] bg-[rgba(255,246,239,0.72)]">
+							<Image
+								src="/images/artworks/yashie-author-signature.png"
+								alt="Maroon Yashoda Itwaru signature mark with a peacock form."
+								fill
+								sizes="320px"
+								className="object-contain p-3"
+							/>
+						</div>
 						<ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--ink-soft)]">
 							{profileFacts.map((fact) => (
 								<li key={fact} className="flex gap-3">

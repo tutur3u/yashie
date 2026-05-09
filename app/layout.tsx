@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 		title: "Yashoda U. Itwaru | InkedByYashie",
 		description:
 			"Adult dark fantasy, dark urban fantasy, essays, poetry, and cultural reflections.",
-		images: ["/images/portfolio/hero-still-life.png"],
+		images: ["/images/artworks/firelit-water-embrace.png"],
 	},
 };
 

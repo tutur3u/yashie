@@ -12,11 +12,11 @@ export default function LoginPage() {
 	return (
 		<main className="relative min-h-[calc(100vh-92px)] overflow-hidden px-4 py-14 sm:px-6 lg:px-8">
 			<Image
-				src="/images/portfolio/hero-still-life.png"
+				src="/images/artworks/violet-trident-goddess.png"
 				alt=""
 				fill
 				sizes="100vw"
-				className="object-cover"
+				className="object-cover object-center"
 				priority
 			/>
 			<div className="absolute inset-0 bg-[rgba(246,221,205,0.78)]" />

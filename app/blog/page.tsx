@@ -15,7 +15,7 @@ export default function BlogPage() {
 			<PageIntro
 				title="From the Blog"
 				description="Mock essays and reflections about culture, writing, memory, books, and the soft violence of becoming yourself."
-				image="/images/portfolio/items/blog-books.jpg"
+				image="/images/artworks/chibi-family-cast.jpg"
 			/>
 
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
@@ -56,8 +56,8 @@ export default function BlogPage() {
 				<div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
 					<div className="ornament-frame relative min-h-80 overflow-hidden">
 						<Image
-							src="/images/portfolio/items/blog-therapy.jpg"
-							alt="A parchment writing desk with an ornate navy notebook and ink pot."
+							src="/images/artworks/bird-blade-floral-ornament.png"
+							alt="Black line art of a bird, curved blade, flowers, and scrollwork."
 							fill
 							sizes="(min-width: 1024px) 45vw, 100vw"
 							className="object-cover"

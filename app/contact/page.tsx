@@ -16,7 +16,7 @@ export default function ContactPage() {
 			<PageIntro
 				title="Contact Me"
 				description="Reach out for respectful conversation, community, writing updates, collaborations, and future reader opportunities."
-				image="/images/portfolio/ornamental-panel.png"
+				image="/images/artworks/lotus-dove-ornament.jpg"
 			/>
 
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
@@ -115,11 +115,11 @@ export default function ContactPage() {
 					</div>
 					<div className="ornament-frame relative min-h-80 overflow-hidden">
 						<Image
-							src="/images/portfolio/hero-still-life.png"
-							alt="A warm literary desk with parchment, an ink pot, and a peacock feather."
+							src="/images/artworks/yashie-author-signature.png"
+							alt="Maroon Yashoda Itwaru signature mark with a peacock form."
 							fill
 							sizes="(min-width: 1024px) 45vw, 100vw"
-							className="object-cover"
+							className="object-contain p-8"
 						/>
 					</div>
 				</div>
