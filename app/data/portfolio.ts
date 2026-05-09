@@ -61,7 +61,7 @@ export const navItems: NavItem[] = [
 export const author = {
 	name: "Yashoda U. Itwaru",
 	brand: "InkedByYashie",
-	alias: "@samrajni",
+	alias: "@inkedbyyashie",
 	shortName: "Yashie",
 	title: "Writer. Author. Storyteller.",
 	tagline:
@@ -278,12 +278,12 @@ export const products: Product[] = [
 ];
 
 export const socials: SocialLink[] = [
-	{ label: "Instagram", handle: "@samrajni", href: "https://www.instagram.com/samrajni" },
+	{ label: "Instagram", handle: "@inkedbyyashie", href: "https://www.instagram.com/inkedbyyashie" },
 	{ label: "Threads", handle: "@inkedbyyashie", href: "https://www.threads.com/@inkedbyyashie" },
 	{ label: "Bluesky", handle: "@inkedbyyashie.bsky.social", href: "https://bsky.app/profile/inkedbyyashie.bsky.social" },
 	{ label: "Linktree", handle: "inkedbyyashie", href: "https://linktr.ee/inkedbyyashie" },
-	{ label: "YouTube", handle: "@samrajni", href: "https://www.youtube.com/@samrajni" },
-	{ label: "Goodreads", handle: "@samrajni", href: "https://www.goodreads.com" },
+	{ label: "YouTube", handle: "@inkedbyyashie", href: "https://www.youtube.com/@inkedbyyashie" },
+	{ label: "Goodreads", handle: "@inkedbyyashie", href: "https://www.goodreads.com" },
 ];
 
 export const profileFacts = [
