@@ -68,7 +68,7 @@ export const author = {
 		"Adult dark fantasy and dark urban fantasy inspired by Hinduism, Indo-Guyanese memory, rebellion, and identity.",
 	quote:
 		"I don't just write to be read. I write to understand, heal, remember, and leave behind pieces of me.",
-	email: "hello@inkedbyyashie.com",
+	email: "yashodauitwaru.pa@gmail.com",
 	location: "Indo-Guyanese Hindu author world",
 	values: [
 		"Indo-Guyanese Hindu",
