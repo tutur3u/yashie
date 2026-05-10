@@ -184,7 +184,7 @@ export default function Home() {
 							long as everyone is respectful.
 						</p>
 						<Link href="/contact" className="mt-5 button-primary">
-							Contact Me
+							Contact
 						</Link>
 						<div className="mt-5 grid gap-3 sm:grid-cols-2">
 							{socials.map((social) => (
