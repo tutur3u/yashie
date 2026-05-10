@@ -5,7 +5,7 @@ import { PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
 import { author, socials } from "@/app/data/portfolio";
 
 export const metadata: Metadata = {
-	title: "Contact Me | Yashoda U. Itwaru",
+	title: "Contact | Yashoda U. Itwaru",
 	description:
 		"Mock contact page for Yashoda U. Itwaru, also known as InkedByYashie.",
 };
@@ -14,7 +14,7 @@ export default function ContactPage() {
 	return (
 		<main>
 			<PageIntro
-				title="Contact Me"
+				title="Contact"
 				description="Reach out for respectful conversation, community, writing updates, collaborations, and future reader opportunities."
 				image="/images/artworks/lotus-dove-ornament.jpg"
 			/>
