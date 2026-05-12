@@ -6,6 +6,12 @@ import type {
 	Product,
 	WritingWorld,
 } from "@/app/data/portfolio";
+import {
+	getBlogHref,
+	getGalleryHref,
+	getProductHref,
+	getWorldHref,
+} from "@/app/data/portfolio";
 
 type SectionHeaderProps = {
 	label?: string;
@@ -75,7 +81,11 @@ export function PageIntro({
 
 export function WorldCard({ world }: { world: WritingWorld }) {
 	return (
-		<article className="parchment-card group flex min-h-full flex-col overflow-hidden p-3">
+		<Link
+			href={getWorldHref(world)}
+			className="parchment-card group flex min-h-full flex-col overflow-hidden p-3 transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:ring-offset-2 focus:ring-offset-[var(--navy)]"
+			aria-label={`Read more about ${world.title}`}
+		>
 			<div className="relative mb-4 h-44 overflow-hidden border border-[rgba(184,112,81,0.45)]">
 				<Image
 					src={world.image}
@@ -100,13 +110,17 @@ export function WorldCard({ world }: { world: WritingWorld }) {
 			<p className="mt-4 text-sm font-semibold text-[var(--clay)]">
 				Read more {"->"}
 			</p>
-		</article>
+		</Link>
 	);
 }
 
 export function GalleryCard({ item }: { item: GalleryItem }) {
 	return (
-		<article className="group grid min-h-full gap-3">
+		<Link
+			href={getGalleryHref(item)}
+			className="group grid min-h-full gap-3 transition duration-200 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:ring-offset-2 focus:ring-offset-[var(--parchment)]"
+			aria-label={`Open gallery item ${item.title}`}
+		>
 			<div className="book-cover relative aspect-[3/4] overflow-hidden border border-[var(--copper)] bg-[var(--navy)] shadow-[0_24px_38px_rgba(14,38,61,0.28)]">
 				<Image
 					src={item.image}
@@ -127,13 +141,17 @@ export function GalleryCard({ item }: { item: GalleryItem }) {
 				</div>
 			</div>
 			<p className="text-sm leading-6 text-[var(--ink-soft)]">{item.description}</p>
-		</article>
+		</Link>
 	);
 }
 
 export function BlogCard({ post }: { post: BlogPost }) {
 	return (
-		<article className="parchment-card group grid overflow-hidden sm:grid-cols-[0.95fr_1fr]">
+		<Link
+			href={getBlogHref(post)}
+			className="parchment-card group grid overflow-hidden transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:ring-offset-2 focus:ring-offset-[var(--parchment)] sm:grid-cols-[0.95fr_1fr]"
+			aria-label={`Read mock post ${post.title}`}
+		>
 			<div className="relative min-h-64 overflow-hidden border-b border-[rgba(184,112,81,0.45)] sm:border-b-0 sm:border-r">
 				<Image
 					src={post.image}
@@ -160,17 +178,21 @@ export function BlogCard({ post }: { post: BlogPost }) {
 				<p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
 					{post.excerpt}
 				</p>
-				<Link href="/blog" className="mt-4 inline-block text-sm font-semibold text-[var(--clay)]">
+				<p className="mt-4 inline-block text-sm font-semibold text-[var(--clay)]">
 					Read mock post {"->"}
-				</Link>
+				</p>
 			</div>
-		</article>
+		</Link>
 	);
 }
 
 export function ProductCard({ product }: { product: Product }) {
 	return (
-		<article className="parchment-card group overflow-hidden">
+		<Link
+			href={getProductHref(product)}
+			className="parchment-card group block overflow-hidden transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:ring-offset-2 focus:ring-offset-[var(--parchment)]"
+			aria-label={`Open shop item ${product.title}`}
+		>
 			<div className="relative aspect-[5/4] overflow-hidden border-b border-[rgba(184,112,81,0.45)]">
 				<Image
 					src={product.image}
@@ -195,11 +217,11 @@ export function ProductCard({ product }: { product: Product }) {
 				<p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
 					{product.description}
 				</p>
-				<button className="mt-5 text-sm font-semibold text-[var(--clay)]">
-					Shop mock item {"->"}
-				</button>
+				<p className="mt-5 text-sm font-semibold text-[var(--clay)]">
+					View mock item {"->"}
+				</p>
 			</div>
-		</article>
+		</Link>
 	);
 }
 

@@ -64,7 +64,10 @@ export default function Home() {
 				</div>
 			</section>
 
-			<section className="bg-[var(--navy)] px-4 py-8 text-[var(--parchment)] sm:px-6 lg:px-8">
+			<section
+				id="worlds"
+				className="bg-[var(--navy)] px-4 py-8 text-[var(--parchment)] sm:px-6 lg:px-8"
+			>
 				<div className="mx-auto max-w-7xl">
 					<h2 className="font-display text-3xl text-[var(--gold)]">
 						Explore My Worlds

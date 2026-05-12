@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
 	GalleryCard,
 	PageIntro,
 	QuotePanel,
 	SectionHeader,
 } from "@/app/components/PortfolioSections";
-import { author, galleryItems, worlds } from "@/app/data/portfolio";
+import { author, galleryItems, getWorldHref, worlds } from "@/app/data/portfolio";
 
 export const metadata: Metadata = {
 	title: "Gallery | Yashoda U. Itwaru",
@@ -46,7 +47,11 @@ export default function GalleryPage() {
 						/>
 						<div className="grid gap-4 md:grid-cols-2">
 							{worlds.map((world) => (
-								<article key={world.title} className="parchment-card p-5">
+								<Link
+									key={world.title}
+									href={getWorldHref(world)}
+									className="parchment-card p-5 transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:ring-offset-2 focus:ring-offset-[var(--parchment-rose)]"
+								>
 									<p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]">
 										{world.kicker}
 									</p>
@@ -56,7 +61,7 @@ export default function GalleryPage() {
 									<p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
 										{world.detail}
 									</p>
-								</article>
+								</Link>
 							))}
 						</div>
 					</div>

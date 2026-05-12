@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { BlogCard, PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
-import { blogPosts, worlds } from "@/app/data/portfolio";
+import { blogPosts, getWorldHref, worlds } from "@/app/data/portfolio";
 
 export const metadata: Metadata = {
 	title: "Blog | Yashoda U. Itwaru",
@@ -25,14 +26,14 @@ export default function BlogPage() {
 						<h2 className="font-display text-3xl text-[var(--navy)]">Categories</h2>
 						<div className="mt-4 grid gap-2">
 							{worlds.map((world) => (
-								<a
+								<Link
 									key={world.kicker}
-									href={`#${world.kicker.toLowerCase().replaceAll(" ", "-")}`}
+									href={getWorldHref(world)}
 									className="flex items-center justify-between border-b border-[rgba(184,112,81,0.22)] py-2 text-sm text-[var(--ink-soft)] transition hover:text-[var(--clay)]"
 								>
 									<span>{world.kicker}</span>
 									<span aria-hidden="true">{"->"}</span>
-								</a>
+								</Link>
 							))}
 						</div>
 					</aside>

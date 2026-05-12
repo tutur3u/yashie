@@ -14,7 +14,7 @@ function isActivePath(pathname: string, href: string) {
 		return false;
 	}
 
-	return pathname === href;
+	return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function SiteHeader() {
