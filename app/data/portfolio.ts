@@ -293,3 +293,43 @@ export const profileFacts = [
 	"Open to respectful DMs and community conversation.",
 	"Writing as a love letter to culture, identity, resistance, and reclamation.",
 ];
+
+export function slugify(value: string) {
+	return value
+		.toLowerCase()
+		.replace(/&/g, " and ")
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
+}
+
+export function getWorldHref(world: WritingWorld) {
+	return `/worlds/${slugify(world.title)}`;
+}
+
+export function getGalleryHref(item: GalleryItem) {
+	return `/gallery/${slugify(item.title)}`;
+}
+
+export function getBlogHref(post: BlogPost) {
+	return `/blog/${slugify(post.title)}`;
+}
+
+export function getProductHref(product: Product) {
+	return `/shop/${slugify(product.title)}`;
+}
+
+export function findWorldBySlug(slug: string) {
+	return worlds.find((world) => slugify(world.title) === slug);
+}
+
+export function findGalleryItemBySlug(slug: string) {
+	return galleryItems.find((item) => slugify(item.title) === slug);
+}
+
+export function findBlogPostBySlug(slug: string) {
+	return blogPosts.find((post) => slugify(post.title) === slug);
+}
+
+export function findProductBySlug(slug: string) {
+	return products.find((product) => slugify(product.title) === slug);
+}
