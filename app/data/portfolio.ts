@@ -63,7 +63,7 @@ export const navItems: NavItem[] = [
 	{ label: "Contact", href: "/contact" },
 	{ label: "Shop", href: "/shop" },
 	{ label: "Blog", href: "/blog" },
-	{ label: "Login", href: "/login" },
+	{ label: "Admin", href: "/admin" },
 ];
 
 export const author = {
