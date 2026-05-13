@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NewsletterForm } from "@/app/components/MockForms";
+import { SocialIcon } from "@/app/components/SocialIcon";
 import { author, navItems, socials } from "@/app/data/portfolio";
 
 export function SiteFooter() {
@@ -38,7 +39,7 @@ export function SiteFooter() {
 								className="social-orb"
 								aria-label={social.label}
 							>
-								{social.label.slice(0, 1)}
+								<SocialIcon platform={social.platform} />
 							</a>
 						))}
 					</div>

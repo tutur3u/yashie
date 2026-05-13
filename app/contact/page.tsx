@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { ContactForm } from "@/app/components/MockForms";
 import { PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
+import { SocialIcon } from "@/app/components/SocialIcon";
 import { author, socials } from "@/app/data/portfolio";
 
 export const metadata: Metadata = {
@@ -51,7 +52,9 @@ export default function ContactPage() {
 									rel="noreferrer"
 									className="social-row parchment-card p-4"
 								>
-									<span className="social-orb">{social.label.slice(0, 1)}</span>
+									<span className="social-orb">
+										<SocialIcon platform={social.platform} />
+									</span>
 									<span>
 										<span className="block font-display text-2xl text-[var(--navy)]">
 											{social.label}

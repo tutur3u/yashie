@@ -42,10 +42,18 @@ export type Product = {
 	imagePosition?: string;
 };
 
+export type SocialPlatform =
+	| "instagram"
+	| "threads"
+	| "bluesky"
+	| "linktree"
+	| "goodreads";
+
 export type SocialLink = {
 	label: string;
 	handle: string;
 	href: string;
+	platform: SocialPlatform;
 };
 
 export const navItems: NavItem[] = [
@@ -278,12 +286,36 @@ export const products: Product[] = [
 ];
 
 export const socials: SocialLink[] = [
-	{ label: "Instagram", handle: "@inkedbyyashie", href: "https://www.instagram.com/inkedbyyashie" },
-	{ label: "Threads", handle: "@inkedbyyashie", href: "https://www.threads.com/@inkedbyyashie" },
-	{ label: "Bluesky", handle: "@inkedbyyashie.bsky.social", href: "https://bsky.app/profile/inkedbyyashie.bsky.social" },
-	{ label: "Linktree", handle: "inkedbyyashie", href: "https://linktr.ee/inkedbyyashie" },
-	{ label: "YouTube", handle: "@inkedbyyashie", href: "https://www.youtube.com/@inkedbyyashie" },
-	{ label: "Goodreads", handle: "@inkedbyyashie", href: "https://www.goodreads.com" },
+	{
+		label: "Instagram",
+		handle: "@inkedbyyashie",
+		href: "https://www.instagram.com/inkedbyyashie",
+		platform: "instagram",
+	},
+	{
+		label: "Threads",
+		handle: "@inkedbyyashie",
+		href: "https://www.threads.com/@inkedbyyashie",
+		platform: "threads",
+	},
+	{
+		label: "Bluesky",
+		handle: "@inkedbyyashie.bsky.social",
+		href: "https://bsky.app/profile/inkedbyyashie.bsky.social",
+		platform: "bluesky",
+	},
+	{
+		label: "Linktree",
+		handle: "inkedbyyashie",
+		href: "https://linktr.ee/inkedbyyashie",
+		platform: "linktree",
+	},
+	{
+		label: "Goodreads",
+		handle: "@inkedbyyashie",
+		href: "https://www.goodreads.com",
+		platform: "goodreads",
+	},
 ];
 
 export const profileFacts = [

@@ -277,6 +277,11 @@ button {
   width: 2rem;
 }
 
+.social-orb svg {
+  height: 1.4rem;
+  width: 1.4rem;
+}
+
 .social-orb:hover,
 .social-row:hover .social-orb {
   background: var(--gold);

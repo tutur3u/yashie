@@ -7,6 +7,7 @@ import {
     SectionHeader,
     WorldCard,
 } from "@/app/components/PortfolioSections";
+import { SocialIcon } from "@/app/components/SocialIcon";
 import {
     author,
     blogPosts,
@@ -198,7 +199,9 @@ export default function Home() {
 									rel="noreferrer"
 									className="social-row"
 								>
-									<span className="social-orb">{social.label.slice(0, 1)}</span>
+									<span className="social-orb">
+										<SocialIcon platform={social.platform} />
+									</span>
 									<span>
 										<span className="block font-semibold text-[var(--navy)]">
 											{social.label}
