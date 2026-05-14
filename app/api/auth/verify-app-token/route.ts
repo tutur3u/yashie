@@ -1,4 +1,4 @@
-import { getYashieApiBaseUrl, getYashieAppId, getYashieAppSecret } from "@/lib/yashie-config";
+import { getYashieApiBaseUrl, getYashieAppId, getYashieAppSecret, getYashieWorkspaceId } from "@/lib/yashie-config";
 import { setYashieSessionCookie, type YashieAdminSession } from "@/lib/yashie-session";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -12,6 +12,7 @@ type AppTokenExchangeResponse = {
   error?: string;
   expiresAt?: string;
   tokenType?: string;
+  workspaceId?: string | null;
   user?: {
     email?: string | null;
     id?: string;
@@ -45,6 +46,7 @@ async function exchangeCrossAppToken(token: string) {
       appSecret: getYashieAppSecret(),
       requestedScopes: ["external-projects:*"],
       token,
+      workspaceId: getYashieWorkspaceId(),
     }),
     cache: "no-store",
     headers: {
@@ -62,7 +64,7 @@ async function exchangeCrossAppToken(token: string) {
 }
 
 function toYashieSession(payload: AppTokenExchangeResponse): YashieAdminSession {
-  if (!payload.accessToken || !payload.expiresAt || !payload.user?.id) {
+  if (!payload.accessToken || !payload.expiresAt || !payload.user?.id || !payload.workspaceId) {
     throw new Error("Invalid Tuturuuu app token exchange response.");
   }
 
@@ -73,6 +75,7 @@ function toYashieSession(payload: AppTokenExchangeResponse): YashieAdminSession 
     },
     expiresAt: payload.expiresAt,
     tokenType: "Bearer",
+    workspaceId: payload.workspaceId,
     user: {
       email: payload.user.email ?? null,
       id: payload.user.id,
