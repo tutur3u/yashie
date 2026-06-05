@@ -6,7 +6,8 @@ import {
 	QuotePanel,
 	SectionHeader,
 } from "@/app/components/PortfolioSections";
-import { author, galleryItems, getWorldHref, worlds } from "@/app/data/portfolio";
+import { author, getWorldHref, worlds } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 export const metadata: Metadata = {
 	title: "Gallery | Yashoda U. Itwaru",
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
 		"Mock gallery of book worlds, journals, poetry collections, and personal writing from InkedByYashie.",
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+	const content = await getYashieContent();
+
 	return (
 		<main>
 			<PageIntro
@@ -25,12 +28,12 @@ export default function GalleryPage() {
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
 					<SectionHeader
-						label="Mock books and keepsakes"
+						label="Books and keepsakes"
 						title="The Book World Shelf"
-						description="Every image here is a concept asset for this portfolio build. The titles and descriptions stay code-native so the shelf can evolve."
+						description="A shelf of covers, journals, and writing-world fragments for the InkedByYashie portfolio."
 					/>
 					<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-						{galleryItems.map((item) => (
+						{content.galleryItems.map((item) => (
 							<GalleryCard key={item.title} item={item} />
 						))}
 					</div>

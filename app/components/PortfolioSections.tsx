@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type {
 	BlogPost,
@@ -6,6 +5,7 @@ import type {
 	Product,
 	WritingWorld,
 } from "@/app/data/portfolio";
+import { SmartImage } from "@/app/components/SmartImage";
 import {
 	getBlogHref,
 	getGalleryHref,
@@ -65,7 +65,7 @@ export function PageIntro({
 					</p>
 				</div>
 				<div className="ornament-frame relative min-h-72 overflow-hidden lg:min-h-96">
-					<Image
+					<SmartImage
 						src={image}
 						alt=""
 						fill
@@ -87,7 +87,7 @@ export function WorldCard({ world }: { world: WritingWorld }) {
 			aria-label={`Read more about ${world.title}`}
 		>
 			<div className="relative mb-4 h-44 overflow-hidden border border-[rgba(184,112,81,0.45)]">
-				<Image
+				<SmartImage
 					src={world.image}
 					alt={world.imageAlt}
 					fill
@@ -122,7 +122,7 @@ export function GalleryCard({ item }: { item: GalleryItem }) {
 			aria-label={`Open gallery item ${item.title}`}
 		>
 			<div className="book-cover relative aspect-[3/4] overflow-hidden border border-[var(--copper)] bg-[var(--navy)] shadow-[0_24px_38px_rgba(14,38,61,0.28)]">
-				<Image
+				<SmartImage
 					src={item.image}
 					alt={item.imageAlt}
 					fill
@@ -153,7 +153,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
 			aria-label={`Read mock post ${post.title}`}
 		>
 			<div className="relative min-h-64 overflow-hidden border-b border-[rgba(184,112,81,0.45)] sm:border-b-0 sm:border-r">
-				<Image
+				<SmartImage
 					src={post.image}
 					alt={post.imageAlt}
 					fill
@@ -194,7 +194,7 @@ export function ProductCard({ product }: { product: Product }) {
 			aria-label={`Open shop item ${product.title}`}
 		>
 			<div className="relative aspect-[5/4] overflow-hidden border-b border-[rgba(184,112,81,0.45)]">
-				<Image
+				<SmartImage
 					src={product.image}
 					alt={product.imageAlt}
 					fill

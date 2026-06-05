@@ -11,6 +11,7 @@ import {
 	getBlogHref,
 	slugify,
 } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 type DetailParams = {
 	params: Promise<{ slug: string }>;
@@ -26,7 +27,8 @@ export async function generateMetadata({
 	params,
 }: DetailParams): Promise<Metadata> {
 	const { slug } = await params;
-	const post = findBlogPostBySlug(slug);
+	const content = await getYashieContent();
+	const post = findBlogPostBySlug(slug, content.blogPosts);
 
 	if (!post) {
 		return {};
@@ -43,14 +45,15 @@ export async function generateMetadata({
 
 export default async function BlogPostPage({ params }: DetailParams) {
 	const { slug } = await params;
-	const post = findBlogPostBySlug(slug);
+	const content = await getYashieContent();
+	const post = findBlogPostBySlug(slug, content.blogPosts);
 
 	if (!post) {
 		notFound();
 	}
 
-	const currentIndex = blogPosts.findIndex((item) => item.title === post.title);
-	const nextPost = blogPosts[(currentIndex + 1) % blogPosts.length];
+	const currentIndex = content.blogPosts.findIndex((item) => item.title === post.title);
+	const nextPost = content.blogPosts[(currentIndex + 1) % content.blogPosts.length];
 
 	return (
 		<DetailPageShell
@@ -69,9 +72,7 @@ export default async function BlogPostPage({ params }: DetailParams) {
 			<DetailCopyBlock label="Journal entry" title="The post">
 				<article className="grid gap-5">
 					<p>
-						{post.excerpt} This mock entry gives the title its own readable
-						space, with a stronger editorial rhythm than the listing card can
-						offer.
+						{post.body ?? post.excerpt}
 					</p>
 					<p>
 						The writing lane is personal and reflective: a place for craft,

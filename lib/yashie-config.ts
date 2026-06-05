@@ -103,6 +103,14 @@ export function getYashieWorkspaceId() {
   return workspaceId.trim();
 }
 
+export function getOptionalYashieWorkspaceId() {
+  const workspaceId =
+    process.env.TUTURUUU_YASHIE_WORKSPACE_ID ??
+    process.env.NEXT_PUBLIC_TUTURUUU_YASHIE_WORKSPACE_ID;
+
+  return workspaceId?.trim() || null;
+}
+
 export function getYashieAppId() {
   return (process.env.YASHIE_APP_ID ?? YASHIE_APP_NAME).trim().toLowerCase();
 }

@@ -11,6 +11,7 @@ import {
 	getGalleryHref,
 	slugify,
 } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 type DetailParams = {
 	params: Promise<{ slug: string }>;
@@ -26,7 +27,8 @@ export async function generateMetadata({
 	params,
 }: DetailParams): Promise<Metadata> {
 	const { slug } = await params;
-	const item = findGalleryItemBySlug(slug);
+	const content = await getYashieContent();
+	const item = findGalleryItemBySlug(slug, content.galleryItems);
 
 	if (!item) {
 		return {};
@@ -43,16 +45,17 @@ export async function generateMetadata({
 
 export default async function GalleryDetailPage({ params }: DetailParams) {
 	const { slug } = await params;
-	const item = findGalleryItemBySlug(slug);
+	const content = await getYashieContent();
+	const item = findGalleryItemBySlug(slug, content.galleryItems);
 
 	if (!item) {
 		notFound();
 	}
 
-	const currentIndex = galleryItems.findIndex(
+	const currentIndex = content.galleryItems.findIndex(
 		(galleryItem) => galleryItem.title === item.title,
 	);
-	const nextItem = galleryItems[(currentIndex + 1) % galleryItems.length];
+	const nextItem = content.galleryItems[(currentIndex + 1) % content.galleryItems.length];
 
 	return (
 		<DetailPageShell
@@ -70,9 +73,7 @@ export default async function GalleryDetailPage({ params }: DetailParams) {
 		>
 			<DetailCopyBlock label="Object note" title="A closer look">
 				<p>
-					{item.title} now has room to breathe as an individual gallery piece.
-					The detail view treats the artwork as a cover, keeps the description
-					close, and gives the visual a larger frame for inspection.
+					{item.description}
 				</p>
 				<p>
 					The piece belongs to the portfolio&apos;s shelf of book-world fragments:

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
 
 async function readAdminError(response: Response) {
   const data = (await response.json().catch(() => null)) as { error?: unknown } | null;
@@ -91,13 +92,12 @@ export function YashieAdminSyncPanel() {
     <section className="parchment-card grid gap-5 p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="script-label">Tuturuuu sync</p>
+          <p className="script-label">{YASHIE_ADMIN_COPY.publish.title}</p>
           <h2 className="font-display text-4xl leading-none text-[var(--navy)]">
-            CMS publishing bridge
+            Share the latest website
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-soft)]">
-            Diff and push the Yashie manifest, including local public folder images, into
-            the Tuturuuu external-project workspace.
+            {YASHIE_ADMIN_COPY.publish.description}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -107,7 +107,7 @@ export function YashieAdminSyncPanel() {
             onClick={runDiff}
             type="button"
           >
-            {pendingAction === "diff" ? "Checking..." : "Check sync"}
+            {pendingAction === "diff" ? "Checking..." : YASHIE_ADMIN_COPY.publish.check}
           </button>
           <button
             className="button-primary min-w-32 disabled:cursor-not-allowed disabled:opacity-45"
@@ -115,7 +115,7 @@ export function YashieAdminSyncPanel() {
             onClick={() => void runApply(false)}
             type="button"
           >
-            {pendingAction === "apply" ? "Pushing..." : "Push manifest"}
+            {pendingAction === "apply" ? "Sharing..." : YASHIE_ADMIN_COPY.publish.push}
           </button>
         </div>
       </div>
@@ -123,10 +123,10 @@ export function YashieAdminSyncPanel() {
       {diff ? (
         <div className="grid gap-2 text-sm sm:grid-cols-4">
           {[
-            ["Create", summary?.create ?? 0],
-            ["Update", summary?.update ?? 0],
-            ["Archive", summary?.archive ?? 0],
-            ["Delete", summary?.delete ?? 0],
+            ["New", summary?.create ?? 0],
+            ["Changed", summary?.update ?? 0],
+            ["Hidden", summary?.archive ?? 0],
+            ["Removed", summary?.delete ?? 0],
           ].map(([label, value]) => (
             <div
               className="border border-[rgba(184,112,81,0.34)] bg-[rgba(255,246,239,0.62)] px-3 py-2"
@@ -141,14 +141,14 @@ export function YashieAdminSyncPanel() {
 
       {diff?.hasDestructiveOperations ? (
         <div className="flex flex-wrap items-center justify-between gap-3 border border-red-300 bg-red-500/12 px-3 py-2 text-sm text-red-800">
-          <span>Destructive operations require explicit force.</span>
+          <span>{YASHIE_ADMIN_COPY.publish.warning}</span>
           <button
             className="border border-red-300 px-3 py-2 text-xs font-black uppercase tracking-[0.16em]"
             disabled={pendingAction !== null}
             onClick={() => void runApply(true)}
             type="button"
           >
-            Force apply
+            {YASHIE_ADMIN_COPY.publish.force}
           </button>
         </div>
       ) : null}
@@ -156,21 +156,21 @@ export function YashieAdminSyncPanel() {
       {diff && !diff.hasDestructiveOperations ? (
         <p className="text-sm text-[var(--ink-soft)]">
           {totalOperations === 0
-            ? "Manifest is already in sync."
-            : `${totalOperations} changes ready.`}
+            ? YASHIE_ADMIN_COPY.publish.done
+            : `${totalOperations} ${YASHIE_ADMIN_COPY.publish.pending}.`}
         </p>
       ) : null}
 
       {publicAssetSync ? (
         <p className="text-sm text-[var(--ink-soft)]">
-          Uploaded {publicAssetSync.uploaded?.length ?? 0} public assets
+          Prepared {publicAssetSync.uploaded?.length ?? 0} images
           {publicAssetSync.skipped?.length ? `, skipped ${publicAssetSync.skipped.length}` : ""}.
         </p>
       ) : null}
 
       {error ? (
         <div className="border border-red-300 bg-red-500/12 px-3 py-2 text-sm text-red-800">
-          {error}
+          We could not share the latest version. Please try again.
         </div>
       ) : null}
     </section>

@@ -12,6 +12,7 @@ import {
 	products,
 	slugify,
 } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 type DetailParams = {
 	params: Promise<{ slug: string }>;
@@ -27,7 +28,8 @@ export async function generateMetadata({
 	params,
 }: DetailParams): Promise<Metadata> {
 	const { slug } = await params;
-	const product = findProductBySlug(slug);
+	const content = await getYashieContent();
+	const product = findProductBySlug(slug, content.products);
 
 	if (!product) {
 		return {};
@@ -44,14 +46,15 @@ export async function generateMetadata({
 
 export default async function ProductDetailPage({ params }: DetailParams) {
 	const { slug } = await params;
-	const product = findProductBySlug(slug);
+	const content = await getYashieContent();
+	const product = findProductBySlug(slug, content.products);
 
 	if (!product) {
 		notFound();
 	}
 
-	const currentIndex = products.findIndex((item) => item.title === product.title);
-	const nextProduct = products[(currentIndex + 1) % products.length];
+	const currentIndex = content.products.findIndex((item) => item.title === product.title);
+	const nextProduct = content.products[(currentIndex + 1) % content.products.length];
 
 	return (
 		<DetailPageShell
@@ -69,9 +72,7 @@ export default async function ProductDetailPage({ params }: DetailParams) {
 		>
 			<DetailCopyBlock label="Shelf note" title={`${product.price} concept item`}>
 				<p>
-					{product.title} is presented as a keepsake from the InkedByYashie
-					world: tactile, bookish, and shaped for readers who like their desks
-					to feel like small shrines to story.
+					{product.description}
 				</p>
 				<p>
 					This detail page gives the item a proper stop in the shop flow, with

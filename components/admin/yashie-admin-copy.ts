@@ -1,0 +1,63 @@
+export const YASHIE_ADMIN_COPY = {
+  account: {
+    description: "You can edit the website and choose what visitors can see.",
+    signOut: "Sign out",
+    signedIn: "Signed in",
+    viewSite: "View site",
+  },
+  actions: {
+    cancel: "Cancel",
+    delete: "Delete",
+    keep: "Keep it",
+    newGallery: "New gallery piece",
+    newPost: "New post",
+    newShop: "New shop item",
+    save: "Save",
+    saving: "Saving",
+  },
+  dashboard: {
+    eyebrow: "InkedByYashie",
+    subtitle: "Manage posts, artwork, and shop items in one calm place.",
+    title: "Yashie Dashboard",
+  },
+  editor: {
+    basics: "Basics",
+    details: "Details",
+    image: "Image",
+    imageHelp: "Choose a clear picture visitors will recognize.",
+    publicView: "Visitor view",
+    visibility: "Visibility",
+  },
+  empty: {
+    blog: "Start the first post from the editor.",
+    gallery: "Add the first gallery piece from the editor.",
+    shop: "Add the first shop item from the editor.",
+  },
+  errors: {
+    delete: "We could not delete this item. Please try again.",
+    save: "We could not save this item. Please try again.",
+  },
+  publish: {
+    check: "Check for changes",
+    description: "Review what changed, then share the latest version with visitors.",
+    done: "Your website is up to date.",
+    force: "Share anyway",
+    pending: "changes ready",
+    push: "Share latest version",
+    title: "Publish",
+    warning: "Some changes need one more confirmation.",
+  },
+  tabs: {
+    account: "Account",
+    blog: "Blog",
+    gallery: "Gallery",
+    publish: "Publish",
+    shop: "Shop",
+  },
+  visibility: {
+    archived: "Hidden",
+    draft: "Draft",
+    published: "Live",
+    scheduled: "Scheduled",
+  },
+} as const;

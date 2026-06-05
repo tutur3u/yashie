@@ -1,0 +1,408 @@
+import type { ExternalProjectsClient } from "tuturuuu/external-projects";
+import {
+  YASHIE_ADMIN_COLLECTIONS,
+  readYashieAdminContent,
+  type YashieAdminCollectionKey,
+  type YashieAdminContentItem,
+  type YashieAdminStudioPayload,
+  type YashieContentMutationInput,
+  type YashieContentStatus,
+} from "./yashie-admin-content-model";
+import {
+  createYashieExternalProjectsClient,
+  revalidateYashieContent,
+} from "./yashie-admin-api";
+import { getYashieWorkspaceId } from "./yashie-config";
+import { getYashieManifestCollectionSchema } from "./yashie-external-project-manifest";
+
+type YashieCrudClient = Pick<
+  ExternalProjectsClient,
+  | "createAsset"
+  | "createBlock"
+  | "createCollection"
+  | "createEntry"
+  | "deleteAsset"
+  | "deleteEntry"
+  | "getStudio"
+  | "publishEntry"
+  | "updateAsset"
+  | "updateBlock"
+  | "updateEntry"
+  | "uploadAssetFile"
+>;
+
+type MutationResult = {
+  item: YashieAdminContentItem | null;
+  items: YashieAdminContentItem[];
+};
+
+function readRecord(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function readString(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function getCollection(studio: YashieAdminStudioPayload, collectionKey: YashieAdminCollectionKey) {
+  const config = YASHIE_ADMIN_COLLECTIONS[collectionKey];
+
+  return (
+    studio.collections.find((collection) => {
+      return (
+        readString(collection, "slug") === config.collectionSlug ||
+        readString(collection, "collection_type") === config.collectionSlug
+      );
+    }) ?? null
+  );
+}
+
+function readCreatedEntryId(response: unknown) {
+  const record = readRecord(response);
+  return readString(record, "id") ?? readString(readRecord(record.entry), "id");
+}
+
+function findItemById(
+  studio: YashieAdminStudioPayload,
+  collectionKey: YashieAdminCollectionKey,
+  entryId: string,
+) {
+  return readYashieAdminContent(studio, collectionKey).find((item) => item.id === entryId) ?? null;
+}
+
+function findItemBySlug(
+  studio: YashieAdminStudioPayload,
+  collectionKey: YashieAdminCollectionKey,
+  slug: string,
+) {
+  return readYashieAdminContent(studio, collectionKey).find((item) => item.slug === slug) ?? null;
+}
+
+async function ensureContentCollection(
+  client: YashieCrudClient,
+  workspaceId: string,
+  collectionKey: YashieAdminCollectionKey,
+) {
+  let studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+  let collection = getCollection(studio, collectionKey);
+
+  if (!collection) {
+    const config = YASHIE_ADMIN_COLLECTIONS[collectionKey];
+    const schema = getYashieManifestCollectionSchema(config.collectionSlug);
+
+    await client.createCollection(workspaceId, {
+      collection_type: schema?.collection_type ?? config.collectionSlug,
+      config: {},
+      description: schema?.description ?? null,
+      slug: config.collectionSlug,
+      title: schema?.title ?? config.singularLabel,
+    });
+
+    studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+    collection = getCollection(studio, collectionKey);
+  }
+
+  if (!collection) {
+    throw new Error("This section is not ready yet.");
+  }
+
+  return { collection, studio };
+}
+
+function buildProfileData(input: YashieContentMutationInput) {
+  if (input.collectionKey === "blog") {
+    return {
+      category: input.category,
+      date: input.date,
+      imagePosition: input.imagePosition || null,
+      readTime: input.readTime,
+    };
+  }
+
+  if (input.collectionKey === "gallery") {
+    return {
+      imagePosition: input.imagePosition || null,
+      type: input.type,
+    };
+  }
+
+  return {
+    imagePosition: input.imagePosition || null,
+    price: input.price,
+  };
+}
+
+function getSubtitle(input: YashieContentMutationInput) {
+  if (input.collectionKey === "blog") return input.category || null;
+  if (input.collectionKey === "gallery") return input.type || null;
+  return input.price || null;
+}
+
+function buildEntryPayload(collectionId: string, input: YashieContentMutationInput) {
+  return {
+    collection_id: collectionId,
+    metadata: {},
+    profile_data: buildProfileData(input),
+    slug: input.slug,
+    status: input.status,
+    subtitle: getSubtitle(input),
+    summary: input.summary || null,
+    title: input.title,
+  };
+}
+
+function buildBlockPayload(entryId: string, input: YashieContentMutationInput) {
+  return {
+    block_type: "markdown",
+    content: {
+      markdown: input.body,
+    },
+    entry_id: entryId,
+    sort_order: 0,
+    title: "Body",
+  };
+}
+
+async function saveBodyBlock({
+  client,
+  entryId,
+  input,
+  item,
+  workspaceId,
+}: {
+  client: YashieCrudClient;
+  entryId: string;
+  input: YashieContentMutationInput;
+  item: YashieAdminContentItem | null;
+  workspaceId: string;
+}) {
+  if (input.collectionKey !== "blog") return;
+
+  const payload = buildBlockPayload(entryId, input);
+
+  if (item?.blockId) {
+    await client.updateBlock(workspaceId, item.blockId, payload);
+    return;
+  }
+
+  if (input.body) {
+    await client.createBlock(workspaceId, payload);
+  }
+}
+
+async function uploadImageFile(
+  client: YashieCrudClient,
+  workspaceId: string,
+  input: YashieContentMutationInput,
+) {
+  if (!input.imageFile) return null;
+
+  return client.uploadAssetFile(workspaceId, input.imageFile, {
+    collectionType: YASHIE_ADMIN_COLLECTIONS[input.collectionKey].collectionSlug,
+    entrySlug: input.slug,
+    upsert: true,
+  });
+}
+
+function buildImageAssetPayload({
+  entryId,
+  input,
+  upload,
+}: {
+  entryId: string;
+  input: YashieContentMutationInput;
+  upload?: { path: string } | null;
+}) {
+  const metadata: Record<string, string | number | null> = {
+    imagePosition: input.imagePosition || null,
+  };
+
+  if (input.imageFile) {
+    metadata.contentType = input.imageFile.type || null;
+    metadata.filename = input.imageFile.name;
+    metadata.size = input.imageFile.size;
+  }
+
+  return {
+    alt_text: input.imageAlt || `${input.title} image`,
+    asset_type: "image",
+    block_id: null,
+    entry_id: entryId,
+    metadata,
+    sort_order: 0,
+    source_url: null,
+    storage_path: upload?.path ?? null,
+  };
+}
+
+async function saveImageAsset({
+  client,
+  entryId,
+  input,
+  item,
+  workspaceId,
+}: {
+  client: YashieCrudClient;
+  entryId: string;
+  input: YashieContentMutationInput;
+  item: YashieAdminContentItem | null;
+  workspaceId: string;
+}) {
+  if (input.removeImage && item?.imageAssetId) {
+    await client.deleteAsset(workspaceId, item.imageAssetId);
+    return;
+  }
+
+  if (!input.imageFile) {
+    if (
+      item?.imageAssetId &&
+      (input.imageAlt !== item.imageAlt || input.imagePosition !== item.imagePosition)
+    ) {
+      await client.updateAsset(workspaceId, item.imageAssetId, {
+        ...buildImageAssetPayload({ entryId, input, upload: null }),
+        storage_path: item.imageStoragePath,
+      });
+    }
+
+    return;
+  }
+
+  const upload = await uploadImageFile(client, workspaceId, input);
+  const payload = buildImageAssetPayload({ entryId, input, upload });
+
+  if (item?.imageAssetId) {
+    await client.updateAsset(workspaceId, item.imageAssetId, {
+      ...payload,
+      storage_path: upload?.path ?? item.imageStoragePath,
+    });
+    return;
+  }
+
+  if (upload) {
+    await client.createAsset(workspaceId, payload);
+  }
+}
+
+async function publishForStatus(
+  client: YashieCrudClient,
+  workspaceId: string,
+  entryId: string,
+  status: YashieContentStatus,
+  previousStatus?: YashieContentStatus,
+) {
+  if (status === "published") {
+    await client.publishEntry(workspaceId, entryId, "publish");
+    return;
+  }
+
+  if (previousStatus === "published") {
+    await client.publishEntry(workspaceId, entryId, "unpublish");
+  }
+}
+
+async function finalizeMutation(
+  client: YashieCrudClient,
+  workspaceId: string,
+  collectionKey: YashieAdminCollectionKey,
+  entryId: string | null,
+): Promise<MutationResult> {
+  const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+  const items = readYashieAdminContent(studio, collectionKey);
+  revalidateYashieContent();
+
+  return {
+    item: entryId ? items.find((contentItem) => contentItem.id === entryId) ?? null : null,
+    items,
+  };
+}
+
+export async function createYashieContentItem(
+  client: YashieCrudClient,
+  workspaceId: string,
+  collectionKey: YashieAdminCollectionKey,
+  input: YashieContentMutationInput,
+): Promise<MutationResult> {
+  const { collection } = await ensureContentCollection(client, workspaceId, collectionKey);
+  const created = await client.createEntry(
+    workspaceId,
+    buildEntryPayload(String(collection.id), input),
+  );
+  let entryId = readCreatedEntryId(created);
+  let studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+
+  if (!entryId) {
+    entryId = findItemBySlug(studio, collectionKey, input.slug)?.id ?? null;
+  }
+
+  if (!entryId) {
+    throw new Error("The item was saved, but it could not be opened.");
+  }
+
+  const item = findItemById(studio, collectionKey, entryId);
+  await saveImageAsset({ client, entryId, input, item, workspaceId });
+  await saveBodyBlock({ client, entryId, input, item, workspaceId });
+  await publishForStatus(client, workspaceId, entryId, input.status);
+
+  studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+  return {
+    item: findItemById(studio, collectionKey, entryId),
+    items: readYashieAdminContent(studio, collectionKey),
+  };
+}
+
+export async function updateYashieContentItem(
+  client: YashieCrudClient,
+  workspaceId: string,
+  collectionKey: YashieAdminCollectionKey,
+  entryId: string,
+  input: YashieContentMutationInput,
+): Promise<MutationResult> {
+  const { collection, studio } = await ensureContentCollection(client, workspaceId, collectionKey);
+  const current = findItemById(studio, collectionKey, entryId);
+
+  if (!current) {
+    throw new Error("Item not found.");
+  }
+
+  await client.updateEntry(workspaceId, entryId, buildEntryPayload(String(collection.id), input));
+  await saveImageAsset({ client, entryId, input, item: current, workspaceId });
+  await saveBodyBlock({ client, entryId, input, item: current, workspaceId });
+  await publishForStatus(client, workspaceId, entryId, input.status, current.status);
+
+  return finalizeMutation(client, workspaceId, collectionKey, entryId);
+}
+
+export async function deleteYashieContentItem(
+  client: YashieCrudClient,
+  workspaceId: string,
+  collectionKey: YashieAdminCollectionKey,
+  entryId: string,
+): Promise<MutationResult> {
+  const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+  const current = findItemById(studio, collectionKey, entryId);
+
+  if (!current) {
+    throw new Error("Item not found.");
+  }
+
+  if (current.imageAssetId) {
+    await client.deleteAsset(workspaceId, current.imageAssetId);
+  }
+
+  await client.deleteEntry(workspaceId, entryId);
+  return finalizeMutation(client, workspaceId, collectionKey, null);
+}
+
+export async function refreshYashieAdminContent(
+  accessToken: string,
+  collectionKey: YashieAdminCollectionKey,
+) {
+  const workspaceId = getYashieWorkspaceId();
+  const client = createYashieExternalProjectsClient(accessToken);
+  const studio = await client.getStudio(workspaceId);
+  revalidateYashieContent();
+  return readYashieAdminContent(studio as YashieAdminStudioPayload, collectionKey);
+}

@@ -20,6 +20,7 @@ export type GalleryItem = {
 	image: string;
 	imageAlt: string;
 	imagePosition?: string;
+	slug?: string;
 };
 
 export type BlogPost = {
@@ -31,6 +32,8 @@ export type BlogPost = {
 	imageAlt: string;
 	imagePosition?: string;
 	readTime: string;
+	body?: string;
+	slug?: string;
 };
 
 export type Product = {
@@ -40,6 +43,7 @@ export type Product = {
 	image: string;
 	imageAlt: string;
 	imagePosition?: string;
+	slug?: string;
 };
 
 export type SocialPlatform =
@@ -339,29 +343,29 @@ export function getWorldHref(world: WritingWorld) {
 }
 
 export function getGalleryHref(item: GalleryItem) {
-	return `/gallery/${slugify(item.title)}`;
+	return `/gallery/${item.slug ?? slugify(item.title)}`;
 }
 
 export function getBlogHref(post: BlogPost) {
-	return `/blog/${slugify(post.title)}`;
+	return `/blog/${post.slug ?? slugify(post.title)}`;
 }
 
 export function getProductHref(product: Product) {
-	return `/shop/${slugify(product.title)}`;
+	return `/shop/${product.slug ?? slugify(product.title)}`;
 }
 
 export function findWorldBySlug(slug: string) {
 	return worlds.find((world) => slugify(world.title) === slug);
 }
 
-export function findGalleryItemBySlug(slug: string) {
-	return galleryItems.find((item) => slugify(item.title) === slug);
+export function findGalleryItemBySlug(slug: string, items: GalleryItem[] = galleryItems) {
+	return items.find((item) => (item.slug ?? slugify(item.title)) === slug);
 }
 
-export function findBlogPostBySlug(slug: string) {
-	return blogPosts.find((post) => slugify(post.title) === slug);
+export function findBlogPostBySlug(slug: string, posts: BlogPost[] = blogPosts) {
+	return posts.find((post) => (post.slug ?? slugify(post.title)) === slug);
 }
 
-export function findProductBySlug(slug: string) {
-	return products.find((product) => slugify(product.title) === slug);
+export function findProductBySlug(slug: string, items: Product[] = products) {
+	return items.find((product) => (product.slug ?? slugify(product.title)) === slug);
 }

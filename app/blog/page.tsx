@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { BlogCard, PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
-import { blogPosts, getWorldHref, worlds } from "@/app/data/portfolio";
+import { getWorldHref, worlds } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 export const metadata: Metadata = {
 	title: "Blog | Yashoda U. Itwaru",
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 		"Mock essays, reflections, poetry notes, and bookish posts from InkedByYashie.",
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+	const content = await getYashieContent();
+
 	return (
 		<main>
 			<PageIntro
@@ -40,12 +43,12 @@ export default function BlogPage() {
 
 					<div>
 						<SectionHeader
-							label="Latest mock posts"
+							label="Latest posts"
 							title="Essays, poems, and notes"
-							description="This page is frontend-only, but the layout is ready for a future CMS or static post collection."
+							description="A living notebook for culture, writing, memory, books, and the private weather behind a larger fantasy world."
 						/>
 						<div className="grid gap-6">
-							{blogPosts.map((post) => (
+							{content.blogPosts.map((post) => (
 								<BlogCard key={post.title} post={post} />
 							))}
 						</div>

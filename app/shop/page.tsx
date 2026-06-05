@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { PageIntro, ProductCard, SectionHeader } from "@/app/components/PortfolioSections";
-import { products } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 export const metadata: Metadata = {
 	title: "Shop | Yashoda U. Itwaru",
@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 		"Mock shop for signed books, stationery, bookmarks, art prints, and author merch from InkedByYashie.",
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+	const content = await getYashieContent();
+
 	return (
 		<main>
 			<PageIntro
@@ -21,12 +23,12 @@ export default function ShopPage() {
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
 					<SectionHeader
-						label="Mock products"
+						label="Shop items"
 						title="Shop the shelf"
-						description="No checkout is connected. These cards model the future commerce experience and visual direction."
+						description="Books, prints, stationery, bookmarks, and desk treasures from the InkedByYashie world."
 					/>
 					<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-						{products.map((product) => (
+						{content.products.map((product) => (
 							<ProductCard key={product.title} product={product} />
 						))}
 					</div>

@@ -10,17 +10,17 @@ import {
 import { SocialIcon } from "@/app/components/SocialIcon";
 import {
     author,
-    blogPosts,
-    galleryItems,
-    products,
     profileFacts,
     socials,
     worlds,
 } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+	const content = await getYashieContent();
+
 	return (
 		<main>
 			<section className="hero-shell relative overflow-hidden border-b border-[var(--copper)]">
@@ -91,7 +91,7 @@ export default function Home() {
 						<SectionHeader
 							label="A peek into books, writing, journals, and poetry"
 							title="Gallery"
-							description="Mock covers, journals, and world fragments arranged like a shelf of secret rooms."
+							description="Covers, journals, and world fragments arranged like a shelf of secret rooms."
 						/>
 						<Link href="/gallery" className="link-cta">
 							View full gallery {"->"}
@@ -101,7 +101,7 @@ export default function Home() {
 						label="Gallery"
 						desktopClassName="md:grid md:grid-cols-2 md:gap-5 lg:grid-cols-3 xl:grid-cols-6"
 					>
-						{galleryItems.slice(0, 6).map((item) => (
+						{content.galleryItems.slice(0, 6).map((item) => (
 							<GalleryCard key={item.title} item={item} />
 						))}
 					</MobileCarousel>
@@ -115,7 +115,7 @@ export default function Home() {
 							<SectionHeader
 								label="Latest thoughts, stories, and posts"
 								title="From the Blog"
-								description="Mock posts shaped around writing practice, becoming, reading, and reclamation."
+								description="Posts shaped around writing practice, becoming, reading, and reclamation."
 							/>
 							<Link href="/blog" className="link-cta">
 								Visit blog {"->"}
@@ -125,7 +125,7 @@ export default function Home() {
 							label="Post"
 							desktopClassName="md:grid md:gap-5 lg:grid-cols-2"
 						>
-							{blogPosts.map((post) => (
+							{content.blogPosts.map((post) => (
 								<BlogCard key={post.title} post={post} />
 							))}
 						</MobileCarousel>
@@ -142,7 +142,7 @@ export default function Home() {
 						<SectionHeader
 							label="Books, prints, merch, and stationery"
 							title="From My Desk to Yours"
-							description="A mock shop shelf for signed copies, art prints, notebooks, bookmarks, and merch."
+							description="A shop shelf for signed copies, art prints, notebooks, bookmarks, and merch."
 						/>
 						<Link href="/shop" className="link-cta">
 							Open shop {"->"}
@@ -152,7 +152,7 @@ export default function Home() {
 						label="Shop"
 						desktopClassName="md:grid md:grid-cols-2 md:gap-5 xl:grid-cols-5"
 					>
-						{products.map((product) => (
+						{content.products.map((product) => (
 							<ProductCard key={product.title} product={product} />
 						))}
 					</MobileCarousel>

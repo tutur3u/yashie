@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SmartImage } from "@/app/components/SmartImage";
 
 type DetailPageShellProps = {
 	backHref: string;
@@ -35,7 +35,7 @@ export function DetailPageShell({
 		<main>
 			<section className="relative overflow-hidden border-b border-[var(--copper)] bg-[var(--navy)] text-[var(--parchment)]">
 				<div className="absolute inset-0">
-					<Image
+					<SmartImage
 						src={image}
 						alt=""
 						fill
@@ -74,7 +74,7 @@ export function DetailPageShell({
 					</div>
 
 					<figure className="ornament-frame relative min-h-[22rem] overflow-hidden bg-[var(--parchment)] lg:min-h-[31rem]">
-						<Image
+						<SmartImage
 							src={image}
 							alt={imageAlt}
 							fill
