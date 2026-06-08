@@ -54,6 +54,7 @@ export type PublicFolderSyncResult<Manifest extends PublicManifest> = {
 type SyncPublicFolderAssetsInput<Manifest extends PublicManifest> = {
 	accessToken: string;
 	apiBaseUrl: string;
+	appBaseUrl?: string;
 	fetch?: typeof fetch;
 	manifest: Manifest;
 	publicDir?: string;
@@ -176,6 +177,45 @@ function parseUploadUrlResponse(payload: UploadUrlResponse) {
 	};
 }
 
+async function readPublicAsset({
+	appBaseUrl,
+	fetchImpl,
+	publicDir,
+	publicPath,
+}: {
+	appBaseUrl?: string;
+	fetchImpl: typeof fetch;
+	publicDir: string;
+	publicPath: string;
+}) {
+	try {
+		const file = await readFile(/* turbopackIgnore: true */ resolvePublicFilePath(publicDir, publicPath));
+
+		return {
+			contentType: contentTypeForPath(publicPath),
+			value: new Uint8Array(file),
+		};
+	} catch {
+		if (!appBaseUrl?.trim()) {
+			return null;
+		}
+	}
+
+	const assetUrl = new URL(publicPath, appBaseUrl).toString();
+	const response = await fetchImpl(assetUrl, { cache: "no-store" }).catch(() => null);
+
+	if (!response?.ok) {
+		return null;
+	}
+
+	const contentType = response.headers.get("content-type")?.split(";")[0]?.trim() || contentTypeForPath(publicPath);
+
+	return {
+		contentType,
+		value: new Uint8Array(await response.arrayBuffer()),
+	};
+}
+
 async function readUploadUrlError(response: Response) {
 	const data = (await response.json().catch(() => null)) as { error?: unknown } | null;
 	return typeof data?.error === "string" && data.error.trim()
@@ -206,6 +246,7 @@ export function linkPublicFolderAssets<Manifest extends PublicManifest>(manifest
 export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
 	accessToken,
 	apiBaseUrl,
+	appBaseUrl,
 	fetch: fetchImpl = fetch,
 	manifest: manifestInput,
 	publicDir = resolve(/* turbopackIgnore: true */ process.cwd(), "public"),
@@ -234,10 +275,14 @@ export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
 				}),
 		} satisfies PublicFolderAssetUpload;
 
-		let file: Buffer;
-		try {
-			file = await readFile(/* turbopackIgnore: true */ resolvePublicFilePath(publicDir, publicPath));
-		} catch {
+		const source = await readPublicAsset({
+			appBaseUrl,
+			fetchImpl,
+			publicDir,
+			publicPath,
+		});
+
+		if (!source) {
 			skipped.push(upload);
 			continue;
 		}
@@ -268,20 +313,19 @@ export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
 		}
 
 		const uploadUrl = parseUploadUrlResponse(await uploadUrlResponse.json());
-		const contentType = contentTypeForPath(publicPath);
 		let response = await fetchImpl(uploadUrl.signedUrl, {
-			body: new Blob([new Uint8Array(file)], { type: contentType }),
+			body: new Blob([source.value], { type: source.contentType }),
 			cache: "no-store",
 			headers: {
 				Authorization: `Bearer ${uploadUrl.token}`,
-				"Content-Type": contentType,
+				"Content-Type": source.contentType,
 			},
 			method: "PUT",
 		});
 
 		if (!response.ok) {
 			response = await fetchImpl(uploadUrl.signedUrl, {
-				body: new Blob([new Uint8Array(file)], { type: contentType }),
+				body: new Blob([source.value], { type: source.contentType }),
 				cache: "no-store",
 				headers: {
 					Authorization: `Bearer ${uploadUrl.token}`,

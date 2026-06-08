@@ -13,9 +13,9 @@ const manifest = {
             altText: "Signature mark",
             assetType: "image",
             metadata: {
-              publicPath: "/file.svg",
+              publicPath: "/missing-from-serverless-fs.svg",
             },
-            sourceUrl: "/file.svg",
+            sourceUrl: "/missing-from-serverless-fs.svg",
             stableSourceId: "yashie:profile:profile:image",
           },
         ],
@@ -125,13 +125,22 @@ function createMockFetch() {
 
     if (url.endsWith("/external-projects/assets/upload-url")) {
       return Response.json({
-        path: "external-projects/yashie/profile/profile/file.svg",
-        signedUrl: "https://uploads.example.com/file.svg",
+        path: "external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
+        signedUrl: "https://uploads.example.com/yashie-public-asset",
         token: "upload-token",
       });
     }
 
-    if (url === "https://uploads.example.com/file.svg") {
+    if (url === "https://yashodauitwaru.com/missing-from-serverless-fs.svg") {
+      return new Response("<svg />", {
+        headers: {
+          "Content-Type": "image/svg+xml",
+        },
+        status: 200,
+      });
+    }
+
+    if (url === "https://uploads.example.com/yashie-public-asset") {
       return new Response(null, { status: 200 });
     }
 
@@ -172,6 +181,7 @@ describe("Yashie admin sync apply route", () => {
   beforeEach(() => {
     process.env.TUTURUUU_API_BASE_URL = "https://platform.example.com/api/v1";
     process.env.TUTURUUU_YASHIE_WORKSPACE_ID = "ws-linked";
+    process.env.YASHIE_APP_URL = "https://yashodauitwaru.com";
     revalidatePath.mockClear();
   });
 
@@ -179,9 +189,10 @@ describe("Yashie admin sync apply route", () => {
     globalThis.fetch = originalFetch;
     delete process.env.TUTURUUU_API_BASE_URL;
     delete process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
+    delete process.env.YASHIE_APP_URL;
   });
 
-  test("normalizes public folder assets before setup and apply", async () => {
+  test("normalizes and fetches public folder assets before setup and apply", async () => {
     const calls = createMockFetch();
     const response = await POST(createRequest());
 
@@ -192,8 +203,15 @@ describe("Yashie admin sync apply route", () => {
     const setupAsset = setupBody.manifest.content.entries[0]?.assets?.[0];
 
     expect(setupAsset?.sourceUrl).toBeNull();
-    expect(setupAsset?.metadata?.publicPath).toBe("/file.svg");
-    expect(setupAsset?.storagePath).toBe("external-projects/yashie/profile/profile/file.svg");
+    expect(setupAsset?.metadata?.publicPath).toBe("/missing-from-serverless-fs.svg");
+    expect(setupAsset?.storagePath).toBe(
+      "external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
+    );
+
+    const publicAssetFetch = findCall(calls, "/missing-from-serverless-fs.svg");
+    expect(publicAssetFetch?.input.toString()).toBe(
+      "https://yashodauitwaru.com/missing-from-serverless-fs.svg",
+    );
 
     const uploadUrlBody = JSON.parse(
       findCall(calls, "/external-projects/assets/upload-url")?.init?.body as string,
@@ -206,7 +224,7 @@ describe("Yashie admin sync apply route", () => {
     expect(uploadUrlBody).toMatchObject({
       collectionType: "profile",
       entrySlug: "profile",
-      filename: "file.svg",
+      filename: "missing-from-serverless-fs.svg",
     });
 
     const applyBody = parseBody(findCall(calls, "/external-projects/sync/apply"));
@@ -214,6 +232,8 @@ describe("Yashie admin sync apply route", () => {
 
     expect(applyBody.force).toBe(false);
     expect(applyAsset?.sourceUrl).toBeNull();
-    expect(applyAsset?.storagePath).toBe("external-projects/yashie/profile/profile/file.svg");
+    expect(applyAsset?.storagePath).toBe(
+      "external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
+    );
   });
 });
