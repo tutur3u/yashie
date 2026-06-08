@@ -1,4 +1,7 @@
-import { syncPublicFolderAssets } from "@/lib/tuturuuu-public-folder-sync";
+import {
+  linkPublicFolderAssets,
+  syncPublicFolderAssets,
+} from "@/lib/tuturuuu-public-folder-sync";
 import { getYashieApiBaseUrl, getYashieWorkspaceId } from "@/lib/yashie-config";
 import { yashieExternalProjectManifest } from "@/lib/yashie-external-project-manifest";
 import { getYashieSessionFromCookies } from "@/lib/yashie-session";
@@ -23,12 +26,13 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { force?: unknown } | null;
   const workspaceId = getYashieWorkspaceId();
   const apiBaseUrl = getYashieApiBaseUrl();
+  const manifest = linkPublicFolderAssets(yashieExternalProjectManifest);
   const setupResponse = await fetch(
     `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,
     )}/external-projects/setup`,
     {
-      body: JSON.stringify({ manifest: yashieExternalProjectManifest }),
+      body: JSON.stringify({ manifest }),
       cache: "no-store",
       headers: {
         Accept: "application/json",
@@ -49,7 +53,7 @@ export async function POST(request: Request) {
   const publicAssetSync = await syncPublicFolderAssets({
     accessToken: session.accessToken,
     apiBaseUrl,
-    manifest: yashieExternalProjectManifest,
+    manifest,
     tokenType: session.tokenType,
     workspaceId,
   });
