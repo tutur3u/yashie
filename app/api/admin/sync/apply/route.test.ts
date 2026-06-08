@@ -124,10 +124,23 @@ function createMockFetch() {
     }
 
     if (url.endsWith("/external-projects/assets/upload-url")) {
+      const formData = init?.body;
+      if (!(formData instanceof FormData)) {
+        return Response.json({ error: "Invalid upload body" }, { status: 400 });
+      }
+
+      const file = formData.get("file");
+      if (!(file instanceof File)) {
+        return Response.json({ error: "Missing file" }, { status: 400 });
+      }
+
       return Response.json({
-        path: "external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
-        signedUrl: "https://uploads.example.com/yashie-public-asset",
-        token: "upload-token",
+        contentType: file.type,
+        data: {
+          fullPath: "ws-linked/external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
+          path: "external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
+        },
+        filename: file.name,
       });
     }
 
@@ -138,10 +151,6 @@ function createMockFetch() {
         },
         status: 200,
       });
-    }
-
-    if (url === "https://uploads.example.com/yashie-public-asset") {
-      return new Response(null, { status: 200 });
     }
 
     if (url.endsWith("/external-projects/sync/apply")) {
@@ -213,19 +222,21 @@ describe("Yashie admin sync apply route", () => {
       "https://yashodauitwaru.com/missing-from-serverless-fs.svg",
     );
 
-    const uploadUrlBody = JSON.parse(
-      findCall(calls, "/external-projects/assets/upload-url")?.init?.body as string,
-    ) as {
-      collectionType?: string;
-      entrySlug?: string;
-      filename?: string;
-    };
+    const uploadCall = findCall(calls, "/external-projects/assets/upload-url");
+    const uploadUrlBody = uploadCall?.init?.body as FormData;
+    const uploadFile = uploadUrlBody.get("file") as File;
 
-    expect(uploadUrlBody).toMatchObject({
-      collectionType: "profile",
-      entrySlug: "profile",
-      filename: "missing-from-serverless-fs.svg",
-    });
+    expect(uploadUrlBody).toBeInstanceOf(FormData);
+    expect(uploadUrlBody.get("collectionType")).toBe("profile");
+    expect(uploadUrlBody.get("entrySlug")).toBe("profile");
+    expect(uploadUrlBody.get("upsert")).toBe("true");
+    expect(uploadFile).toBeInstanceOf(File);
+    expect(uploadFile.name).toBe("missing-from-serverless-fs.svg");
+    expect(uploadFile.type).toBe("image/svg+xml");
+    await expect(uploadFile.text()).resolves.toBe("<svg />");
+    expect(Object.keys((uploadCall?.init?.headers ?? {}) as Record<string, string>)).not.toContain(
+      "Content-Type",
+    );
 
     const applyBody = parseBody(findCall(calls, "/external-projects/sync/apply"));
     const applyAsset = applyBody.manifest.content.entries[0]?.assets?.[0];

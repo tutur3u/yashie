@@ -1,16 +1,34 @@
 import { revalidatePath } from "next/cache";
 import { ExternalProjectsClient } from "tuturuuu/external-projects";
-import { linkPublicFolderAssets } from "./tuturuuu-public-folder-sync";
+import {
+  linkPublicFolderAssets,
+  uploadExternalProjectAssetFile,
+} from "./tuturuuu-public-folder-sync";
 import { getYashieApiBaseUrl, getYashieWorkspaceId } from "./yashie-config";
 import { yashieExternalProjectManifest } from "./yashie-external-project-manifest";
 import { getYashieSessionFromCookies } from "./yashie-session";
 import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
 
 export function createYashieExternalProjectsClient(accessToken: string) {
-  return new ExternalProjectsClient({
+  const apiBaseUrl = getYashieApiBaseUrl();
+  const client = new ExternalProjectsClient({
     apiKey: accessToken,
-    baseUrl: getYashieApiBaseUrl(),
+    baseUrl: apiBaseUrl,
   });
+
+  client.uploadAssetFile = (workspaceId, file, options) =>
+    uploadExternalProjectAssetFile({
+      accessToken,
+      apiBaseUrl,
+      collectionType: options.collectionType,
+      entrySlug: options.entrySlug,
+      file,
+      filename: file.name,
+      upsert: options.upsert,
+      workspaceId,
+    });
+
+  return client;
 }
 
 async function readApiError(response: Response) {

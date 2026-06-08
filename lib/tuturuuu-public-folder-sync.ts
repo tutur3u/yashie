@@ -30,10 +30,13 @@ type PublicManifest = {
 	};
 };
 
-type UploadUrlResponse = {
+type AssetUploadResponse = {
+	data?: {
+		fullPath?: unknown;
+		path?: unknown;
+	};
+	fullPath?: unknown;
 	path?: unknown;
-	signedUrl?: unknown;
-	token?: unknown;
 };
 
 export type PublicFolderAssetUpload = {
@@ -58,6 +61,19 @@ type SyncPublicFolderAssetsInput<Manifest extends PublicManifest> = {
 	fetch?: typeof fetch;
 	manifest: Manifest;
 	publicDir?: string;
+	tokenType?: string;
+	upsert?: boolean;
+	workspaceId: string;
+};
+
+type UploadExternalProjectAssetFileInput = {
+	accessToken: string;
+	apiBaseUrl: string;
+	collectionType: string;
+	entrySlug: string;
+	fetch?: typeof fetch;
+	file: Blob;
+	filename: string;
 	tokenType?: string;
 	upsert?: boolean;
 	workspaceId: string;
@@ -161,19 +177,15 @@ function getPublicAssetStoragePath({
 	);
 }
 
-function parseUploadUrlResponse(payload: UploadUrlResponse) {
-	if (
-		typeof payload.signedUrl !== "string" ||
-		typeof payload.token !== "string" ||
-		typeof payload.path !== "string"
-	) {
-		throw new Error("Missing Tuturuuu asset upload URL payload");
+function parseAssetUploadResponse(payload: AssetUploadResponse) {
+	const data = payload.data ?? payload;
+	if (typeof data.path !== "string" || !data.path.trim()) {
+		throw new Error("Missing Tuturuuu asset upload response payload");
 	}
 
 	return {
-		path: payload.path,
-		signedUrl: payload.signedUrl,
-		token: payload.token,
+		fullPath: typeof data.fullPath === "string" ? data.fullPath : null,
+		path: data.path,
 	};
 }
 
@@ -216,11 +228,11 @@ async function readPublicAsset({
 	};
 }
 
-async function readUploadUrlError(response: Response) {
+async function readAssetUploadError(response: Response) {
 	const data = (await response.json().catch(() => null)) as { error?: unknown } | null;
 	return typeof data?.error === "string" && data.error.trim()
 		? data.error
-		: `Tuturuuu asset upload URL failed with status ${response.status}`;
+		: `Tuturuuu asset upload failed with status ${response.status}`;
 }
 
 export function linkPublicFolderAssets<Manifest extends PublicManifest>(manifestInput: Manifest) {
@@ -241,6 +253,49 @@ export function linkPublicFolderAssets<Manifest extends PublicManifest>(manifest
 	}
 
 	return manifest;
+}
+
+export async function uploadExternalProjectAssetFile({
+	accessToken,
+	apiBaseUrl,
+	collectionType,
+	entrySlug,
+	fetch: fetchImpl = fetch,
+	file,
+	filename,
+	tokenType = "Bearer",
+	upsert = true,
+	workspaceId,
+}: UploadExternalProjectAssetFileInput) {
+	const formData = new FormData();
+	formData.set("collectionType", collectionType);
+	formData.set("entrySlug", entrySlug);
+	formData.set("file", file, filename);
+
+	if (upsert === true) {
+		formData.set("upsert", "true");
+	}
+
+	const response = await fetchImpl(
+		`${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
+			workspaceId,
+		)}/external-projects/assets/upload-url`,
+		{
+			body: formData,
+			cache: "no-store",
+			headers: {
+				Accept: "application/json",
+				Authorization: `${tokenType} ${accessToken}`,
+			},
+			method: "POST",
+		},
+	);
+
+	if (!response.ok) {
+		throw new Error(await readAssetUploadError(response));
+	}
+
+	return parseAssetUploadResponse(await response.json());
 }
 
 export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
@@ -287,63 +342,21 @@ export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
 			continue;
 		}
 
-		const uploadUrlResponse = await fetchImpl(
-			`${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
-				workspaceId,
-			)}/external-projects/assets/upload-url`,
-			{
-				body: JSON.stringify({
-					collectionType: entry.collectionSlug,
-					entrySlug: entry.slug,
-					filename: upload.filename,
-					upsert,
-				}),
-				cache: "no-store",
-				headers: {
-					Accept: "application/json",
-					Authorization: `${tokenType} ${accessToken}`,
-					"Content-Type": "application/json",
-				},
-				method: "POST",
-			},
-		);
-
-		if (!uploadUrlResponse.ok) {
-			throw new Error(await readUploadUrlError(uploadUrlResponse));
-		}
-
-		const uploadUrl = parseUploadUrlResponse(await uploadUrlResponse.json());
-		let response = await fetchImpl(uploadUrl.signedUrl, {
-			body: new Blob([source.value], { type: source.contentType }),
-			cache: "no-store",
-			headers: {
-				Authorization: `Bearer ${uploadUrl.token}`,
-				"Content-Type": source.contentType,
-			},
-			method: "PUT",
+		const result = await uploadExternalProjectAssetFile({
+			accessToken,
+			apiBaseUrl,
+			collectionType: entry.collectionSlug,
+			entrySlug: entry.slug,
+			fetch: fetchImpl,
+			file: new Blob([source.value], { type: source.contentType }),
+			filename: upload.filename,
+			tokenType,
+			upsert,
+			workspaceId,
 		});
 
-		if (!response.ok) {
-			response = await fetchImpl(uploadUrl.signedUrl, {
-				body: new Blob([source.value], { type: source.contentType }),
-				cache: "no-store",
-				headers: {
-					Authorization: `Bearer ${uploadUrl.token}`,
-				},
-				method: "PUT",
-			});
-		}
-
-		if (!response.ok) {
-			const message = await response.text().catch(() => "");
-			throw new Error(
-				`Failed to upload public asset ${publicPath} (${response.status})${
-					message ? `: ${message}` : ""
-				}`,
-			);
-		}
-
-		uploaded.push(upload);
+		asset.storagePath = result.path;
+		uploaded.push({ ...upload, storagePath: result.path });
 	}
 
 	return { manifest, skipped, uploaded };
