@@ -10,6 +10,7 @@ import { resolveYashieAdminTargetKey } from "@/lib/yashie-config";
 import { getYashieAdminStudio } from "@/lib/yashie-admin-api";
 import { getYashieSessionFromCookies } from "@/lib/yashie-session";
 import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
+import { getYashieStorageFiles } from "@/lib/yashie-storage-files";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,9 @@ export default async function AdminPage({
 }) {
   const session = await getYashieSessionFromCookies();
   const resolvedSearchParams = await searchParams;
-  const activeTarget = resolveYashieAdminTargetKey(resolvedSearchParams?.target);
+  const activeTarget = resolveYashieAdminTargetKey(
+    resolvedSearchParams?.target,
+  );
 
   if (!session) {
     return (
@@ -44,9 +47,10 @@ export default async function AdminPage({
     );
   }
 
-  const [studio, storageAnalytics] = await Promise.all([
+  const [studio, storageAnalytics, storageFiles] = await Promise.all([
     getYashieAdminStudio(session.accessToken).catch(() => emptyStudio()),
     getYashieStorageAnalytics(session.accessToken),
+    getYashieStorageFiles(session.accessToken),
   ]);
 
   return (
@@ -57,6 +61,7 @@ export default async function AdminPage({
         shop: readYashieAdminContent(studio, "shop"),
       }}
       storageAnalytics={storageAnalytics}
+      storageFiles={storageFiles}
       userEmail={session.user.email}
     />
   );

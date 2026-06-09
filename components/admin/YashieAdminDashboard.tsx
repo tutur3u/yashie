@@ -9,13 +9,24 @@ import type {
 } from "@/lib/yashie-admin-content-model";
 import { slugifyYashieContent } from "@/lib/yashie-admin-content-model";
 import type { YashieStorageAnalyticsState } from "@/lib/yashie-storage-analytics";
+import type {
+  YashieStorageFileItem,
+  YashieStorageFilesState,
+} from "@/lib/yashie-storage-files";
 import { YashieAdminSyncPanel } from "./YashieAdminSyncPanel";
 import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
 
 type AdminTab = YashieAdminCollectionKey | "account" | "publish" | "storage";
 
-type DashboardContent = Record<YashieAdminCollectionKey, YashieAdminContentItem[]>;
-type ReadyStorageAnalytics = Extract<YashieStorageAnalyticsState, { status: "ready" }>;
+type DashboardContent = Record<
+  YashieAdminCollectionKey,
+  YashieAdminContentItem[]
+>;
+type ReadyStorageAnalytics = Extract<
+  YashieStorageAnalyticsState,
+  { status: "ready" }
+>;
+type ReadyStorageFiles = Extract<YashieStorageFilesState, { status: "ready" }>;
 
 type Draft = {
   body: string;
@@ -133,7 +144,9 @@ function formatBytes(bytes: number) {
   );
   const value = bytes / 1024 ** exponent;
   const formatted =
-    value >= 10 || exponent === 0 ? Math.round(value).toString() : value.toFixed(1);
+    value >= 10 || exponent === 0
+      ? Math.round(value).toString()
+      : value.toFixed(1);
 
   return `${formatted} ${byteUnits[exponent]}`;
 }
@@ -163,7 +176,11 @@ function StorageMetric({
       <strong className="mt-3 block font-display text-4xl leading-none text-[var(--navy)]">
         {value}
       </strong>
-      {detail ? <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{detail}</p> : null}
+      {detail ? (
+        <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+          {detail}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -180,7 +197,9 @@ function StorageFileHighlight({
       <p className="text-sm font-bold text-[var(--clay)]">{label}</p>
       {file ? (
         <div className="mt-3">
-          <strong className="block truncate text-[var(--ink)]">{file.name}</strong>
+          <strong className="block truncate text-[var(--ink)]">
+            {file.name}
+          </strong>
           <span className="mt-1 block text-sm text-[var(--ink-soft)]">
             {formatBytes(file.size)} - {formatFileDate(file.createdAt)}
           </span>
@@ -194,12 +213,379 @@ function StorageFileHighlight({
   );
 }
 
+function storageParentPath(path: string) {
+  const segments = path.split("/").filter(Boolean);
+  segments.pop();
+  return segments.join("/");
+}
+
+function isStorageFilesPayload(
+  value: unknown,
+): value is ReadyStorageFiles["data"] {
+  if (!value || typeof value !== "object") return false;
+
+  const payload = value as Record<string, unknown>;
+  return (
+    Array.isArray(payload.items) &&
+    typeof payload.path === "string" &&
+    typeof payload.total === "number"
+  );
+}
+
+function isStorageAnalyticsState(
+  value: unknown,
+): value is YashieStorageAnalyticsState {
+  if (!value || typeof value !== "object") return false;
+
+  const payload = value as Record<string, unknown>;
+  return payload.status === "ready" || payload.status === "unavailable";
+}
+
+function StorageFileRow({
+  busy,
+  confirmDeletePath,
+  item,
+  onDelete,
+  onOpen,
+  onOpenFolder,
+  onRename,
+  renamingPath,
+  renameValue,
+  setConfirmDeletePath,
+  setRenamingPath,
+  setRenameValue,
+}: {
+  busy: boolean;
+  confirmDeletePath: string | null;
+  item: YashieStorageFileItem;
+  onDelete: (item: YashieStorageFileItem) => void;
+  onOpen: (item: YashieStorageFileItem) => void;
+  onOpenFolder: (path: string) => void;
+  onRename: (item: YashieStorageFileItem) => void;
+  renamingPath: string | null;
+  renameValue: string;
+  setConfirmDeletePath: (path: string | null) => void;
+  setRenamingPath: (path: string | null) => void;
+  setRenameValue: (name: string) => void;
+}) {
+  const isRenaming = renamingPath === item.path;
+  const isConfirmingDelete = confirmDeletePath === item.path;
+  const dateLabel = formatFileDate(item.updatedAt ?? item.createdAt ?? "");
+
+  return (
+    <div className="grid gap-4 border border-[rgba(184,112,81,0.34)] bg-white/68 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+      <div className="min-w-0">
+        {isRenaming ? (
+          <input
+            className="min-h-11 w-full border border-[rgba(184,112,81,0.42)] bg-white px-3 text-sm font-bold text-[var(--ink)] outline-none focus:border-[var(--gold)]"
+            onChange={(event) => setRenameValue(event.currentTarget.value)}
+            value={renameValue}
+          />
+        ) : item.kind === "folder" ? (
+          <button
+            className="block max-w-full truncate text-left font-bold text-[var(--ink)] underline decoration-[rgba(184,112,81,0.28)] underline-offset-4"
+            onClick={() => onOpenFolder(item.path)}
+            type="button"
+          >
+            {item.name}
+          </button>
+        ) : (
+          <strong className="block truncate text-[var(--ink)]">
+            {item.name}
+          </strong>
+        )}
+        <span className="mt-1 block text-sm text-[var(--ink-soft)]">
+          {item.kind === "folder" ? "Folder" : formatBytes(item.size)} -{" "}
+          {dateLabel}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {item.kind === "file" && !isRenaming && !isConfirmingDelete ? (
+          <button
+            className="button-secondary min-h-10 px-4 text-xs"
+            disabled={busy}
+            onClick={() => onOpen(item)}
+            type="button"
+          >
+            {YASHIE_ADMIN_COPY.storage.open}
+          </button>
+        ) : null}
+        {isRenaming ? (
+          <>
+            <button
+              className="button-primary min-h-10 px-4 text-xs"
+              disabled={busy || !renameValue.trim()}
+              onClick={() => onRename(item)}
+              type="button"
+            >
+              {YASHIE_ADMIN_COPY.actions.save}
+            </button>
+            <button
+              className="button-secondary min-h-10 px-4 text-xs"
+              disabled={busy}
+              onClick={() => setRenamingPath(null)}
+              type="button"
+            >
+              {YASHIE_ADMIN_COPY.actions.cancel}
+            </button>
+          </>
+        ) : isConfirmingDelete ? (
+          <>
+            <button
+              className="min-h-10 bg-red-800 px-4 text-xs font-bold text-white disabled:opacity-50"
+              disabled={busy}
+              onClick={() => onDelete(item)}
+              type="button"
+            >
+              {YASHIE_ADMIN_COPY.storage.remove}
+            </button>
+            <button
+              className="button-secondary min-h-10 px-4 text-xs"
+              disabled={busy}
+              onClick={() => setConfirmDeletePath(null)}
+              type="button"
+            >
+              {YASHIE_ADMIN_COPY.actions.keep}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="button-secondary min-h-10 px-4 text-xs"
+              disabled={busy}
+              onClick={() => {
+                setRenameValue(item.name);
+                setRenamingPath(item.path);
+              }}
+              type="button"
+            >
+              {YASHIE_ADMIN_COPY.storage.rename}
+            </button>
+            <button
+              className="min-h-10 border border-red-300 px-4 text-xs font-bold text-red-800 disabled:opacity-50"
+              disabled={busy}
+              onClick={() => setConfirmDeletePath(item.path)}
+              type="button"
+            >
+              {YASHIE_ADMIN_COPY.storage.remove}
+            </button>
+          </>
+        )}
+      </div>
+      {isConfirmingDelete ? (
+        <p className="text-sm leading-6 text-red-800 md:col-span-2">
+          {YASHIE_ADMIN_COPY.storage.deleteHint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function StoragePanel({
   storageAnalytics,
+  storageFiles,
+  onResourcesChanged,
 }: {
   storageAnalytics: YashieStorageAnalyticsState;
+  storageFiles: YashieStorageFilesState;
+  onResourcesChanged: () => Promise<void>;
 }) {
-  if (storageAnalytics.status === "unavailable") {
+  const [analyticsState, setAnalyticsState] = useState(storageAnalytics);
+  const [filesState, setFilesState] = useState(storageFiles);
+  const [currentPath, setCurrentPath] = useState(
+    storageFiles.status === "ready" ? storageFiles.data.path : "",
+  );
+  const [folderName, setFolderName] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(
+    null,
+  );
+  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const refreshStorage = async (path = currentPath) => {
+    setBusy(true);
+    setMessage(null);
+    setCurrentPath(path);
+
+    try {
+      const filesUrl = new URL("/api/admin/storage", window.location.origin);
+      if (path) {
+        filesUrl.searchParams.set("path", path);
+      }
+
+      const [filesResponse, analyticsResponse] = await Promise.all([
+        fetch(filesUrl, { cache: "no-store" }),
+        fetch("/api/admin/storage/analytics", { cache: "no-store" }),
+      ]);
+      const filesPayload = (await filesResponse.json().catch(() => null)) as {
+        data?: unknown;
+        error?: string;
+      } | null;
+      const analyticsPayload = (await analyticsResponse
+        .json()
+        .catch(() => null)) as unknown;
+
+      if (filesResponse.ok && isStorageFilesPayload(filesPayload?.data)) {
+        setFilesState({ data: filesPayload.data, status: "ready" });
+      } else {
+        setFilesState({
+          message: filesPayload?.error ?? "Files are not available right now.",
+          status: "unavailable",
+        });
+      }
+
+      if (analyticsResponse.ok && isStorageAnalyticsState(analyticsPayload)) {
+        setAnalyticsState(analyticsPayload);
+      }
+    } catch {
+      setFilesState({
+        message: "Files are not available right now.",
+        status: "unavailable",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runStorageMutation = async (
+    request: Promise<Response>,
+    successMessage: string,
+    refreshPath = currentPath,
+  ) => {
+    setBusy(true);
+    setMessage(null);
+
+    try {
+      const response = await request;
+      const payload = (await response.json().catch(() => null)) as {
+        data?: { detachedAssets?: number; updatedAssets?: number };
+        error?: string;
+      } | null;
+
+      if (!response.ok) {
+        setMessage(payload?.error ?? "Storage request failed.");
+        return;
+      }
+
+      const changedLinks =
+        (payload?.data?.detachedAssets ?? 0) +
+        (payload?.data?.updatedAssets ?? 0);
+      const successText =
+        changedLinks > 0
+          ? `${successMessage} ${changedLinks} saved item${changedLinks === 1 ? "" : "s"} updated.`
+          : successMessage;
+      setConfirmDeletePath(null);
+      setRenamingPath(null);
+      await refreshStorage(refreshPath);
+      setMessage(successText);
+      await onResourcesChanged();
+    } catch {
+      setMessage("Storage request failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const uploadSelectedFile = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!uploadFile) {
+      setMessage(YASHIE_ADMIN_COPY.storage.chooseFile);
+      return;
+    }
+
+    const body = new FormData();
+    body.set("file", uploadFile);
+    body.set("path", currentPath);
+    body.set("upsert", "true");
+
+    await runStorageMutation(
+      fetch("/api/admin/storage", {
+        body,
+        method: "POST",
+      }),
+      YASHIE_ADMIN_COPY.storage.uploadDone,
+    );
+    setUploadFile(null);
+  };
+
+  const createFolder = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = folderName.trim();
+    if (!name) return;
+
+    await runStorageMutation(
+      fetch("/api/admin/storage", {
+        body: JSON.stringify({ name, path: currentPath }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }),
+      YASHIE_ADMIN_COPY.storage.folderDone,
+    );
+    setFolderName("");
+  };
+
+  const renameItem = (item: YashieStorageFileItem) => {
+    void runStorageMutation(
+      fetch("/api/admin/storage", {
+        body: JSON.stringify({
+          kind: item.kind,
+          newName: renameValue.trim(),
+          path: item.path,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      }),
+      YASHIE_ADMIN_COPY.storage.renameDone,
+      storageParentPath(item.path),
+    );
+  };
+
+  const deleteItem = (item: YashieStorageFileItem) => {
+    void runStorageMutation(
+      fetch("/api/admin/storage", {
+        body: JSON.stringify({ kind: item.kind, path: item.path }),
+        headers: { "Content-Type": "application/json" },
+        method: "DELETE",
+      }),
+      YASHIE_ADMIN_COPY.storage.deleteDone,
+      storageParentPath(item.path),
+    );
+  };
+
+  const openFile = async (item: YashieStorageFileItem) => {
+    setBusy(true);
+    setMessage(null);
+
+    try {
+      const url = new URL("/api/admin/storage", window.location.origin);
+      url.searchParams.set("filePath", item.path);
+      const response = await fetch(url, { cache: "no-store" });
+      const payload = (await response.json().catch(() => null)) as {
+        data?: { signedUrl?: string };
+        error?: string;
+      } | null;
+
+      if (!response.ok || !payload?.data?.signedUrl) {
+        setMessage(payload?.error ?? "File could not be opened.");
+        return;
+      }
+
+      window.open(payload.data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      setMessage("File could not be opened.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (
+    analyticsState.status === "unavailable" &&
+    filesState.status === "unavailable"
+  ) {
     return (
       <section className="parchment-card p-6">
         <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
@@ -207,53 +593,195 @@ function StoragePanel({
           {YASHIE_ADMIN_COPY.storage.unavailableTitle}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
-          {storageAnalytics.message}
+          {analyticsState.message}
         </p>
       </section>
     );
   }
 
-  const { data } = storageAnalytics;
-  const usagePercentage = Math.max(0, Math.min(100, data.usagePercentage));
+  const data = analyticsState.status === "ready" ? analyticsState.data : null;
+  const usagePercentage = data
+    ? Math.max(0, Math.min(100, data.usagePercentage))
+    : 0;
+  const files = filesState.status === "ready" ? filesState.data.items : [];
+  const pathLabel = currentPath || YASHIE_ADMIN_COPY.storage.root;
 
   return (
     <section className="grid gap-4 lg:grid-cols-3">
-      <div className="parchment-card p-6 lg:col-span-3">
+      {data ? (
+        <div className="parchment-card p-6 lg:col-span-3">
+          <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
+          <div className="mt-2 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+                {YASHIE_ADMIN_COPY.storage.heading}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
+                {YASHIE_ADMIN_COPY.storage.description}
+              </p>
+            </div>
+            <strong className="font-display text-5xl leading-none text-[var(--clay)]">
+              {usagePercentage.toFixed(usagePercentage % 1 === 0 ? 0 : 1)}%
+            </strong>
+          </div>
+          <div className="mt-6 h-3 overflow-hidden border border-[rgba(184,112,81,0.34)] bg-white/72">
+            <div
+              className="h-full bg-[var(--clay)]"
+              style={{ width: `${usagePercentage}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {data ? (
+        <>
+          <StorageMetric
+            detail={`${formatBytes(data.totalSize)} ${YASHIE_ADMIN_COPY.storage.of} ${formatBytes(
+              data.storageLimit,
+            )}`}
+            label={YASHIE_ADMIN_COPY.storage.used}
+            value={formatBytes(data.totalSize)}
+          />
+          <StorageMetric
+            label={YASHIE_ADMIN_COPY.storage.limit}
+            value={formatBytes(data.storageLimit)}
+          />
+          <StorageMetric
+            label={YASHIE_ADMIN_COPY.storage.files}
+            value={String(data.fileCount)}
+          />
+          <StorageFileHighlight
+            file={data.largestFile}
+            label={YASHIE_ADMIN_COPY.storage.largest}
+          />
+          <StorageFileHighlight
+            file={data.smallestFile}
+            label={YASHIE_ADMIN_COPY.storage.smallest}
+          />
+        </>
+      ) : null}
+
+      <div className="parchment-card grid gap-5 p-6 lg:col-span-3">
         <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
-        <div className="mt-2 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
-              {YASHIE_ADMIN_COPY.storage.heading}
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
-              {YASHIE_ADMIN_COPY.storage.description}
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="min-w-0">
+            <h3 className="font-display text-4xl leading-none text-[var(--navy)]">
+              {pathLabel}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+              {YASHIE_ADMIN_COPY.storage.uploadHelp}
             </p>
           </div>
-          <strong className="font-display text-5xl leading-none text-[var(--clay)]">
-            {usagePercentage.toFixed(usagePercentage % 1 === 0 ? 0 : 1)}%
-          </strong>
+          <div className="flex flex-wrap gap-2">
+            {currentPath ? (
+              <button
+                className="button-secondary min-h-10 px-4 text-xs"
+                disabled={busy}
+                onClick={() =>
+                  void refreshStorage(storageParentPath(currentPath))
+                }
+                type="button"
+              >
+                {YASHIE_ADMIN_COPY.storage.back}
+              </button>
+            ) : null}
+            <button
+              className="button-secondary min-h-10 px-4 text-xs"
+              disabled={busy}
+              onClick={() => void refreshStorage(currentPath)}
+              type="button"
+            >
+              {YASHIE_ADMIN_COPY.storage.refresh}
+            </button>
+          </div>
         </div>
-        <div className="mt-6 h-3 overflow-hidden border border-[rgba(184,112,81,0.34)] bg-white/72">
-          <div
-            className="h-full bg-[var(--clay)]"
-            style={{ width: `${usagePercentage}%` }}
-          />
+
+        {message ? (
+          <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
+            {message}
+          </div>
+        ) : null}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <form
+            className="grid gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
+            onSubmit={uploadSelectedFile}
+          >
+            <label className="grid gap-2">
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+                {YASHIE_ADMIN_COPY.storage.chooseFile}
+              </span>
+              <input
+                className="min-h-11 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
+                onChange={(event) =>
+                  setUploadFile(event.currentTarget.files?.[0] ?? null)
+                }
+                type="file"
+              />
+            </label>
+            <button
+              className="button-primary"
+              disabled={busy || !uploadFile}
+              type="submit"
+            >
+              {YASHIE_ADMIN_COPY.storage.upload}
+            </button>
+          </form>
+
+          <form
+            className="grid gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
+            onSubmit={createFolder}
+          >
+            <label className="grid gap-2">
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+                {YASHIE_ADMIN_COPY.storage.folderName}
+              </span>
+              <input
+                className="min-h-11 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--gold)]"
+                onChange={(event) => setFolderName(event.currentTarget.value)}
+                value={folderName}
+              />
+            </label>
+            <button
+              className="button-secondary"
+              disabled={busy || !folderName.trim()}
+              type="submit"
+            >
+              {YASHIE_ADMIN_COPY.storage.createFolder}
+            </button>
+          </form>
+        </div>
+
+        <div className="grid gap-3">
+          {filesState.status === "unavailable" ? (
+            <p className="text-sm leading-6 text-[var(--ink-soft)]">
+              {filesState.message}
+            </p>
+          ) : files.length > 0 ? (
+            files.map((item) => (
+              <StorageFileRow
+                busy={busy}
+                confirmDeletePath={confirmDeletePath}
+                item={item}
+                key={item.path}
+                onDelete={deleteItem}
+                onOpen={(file) => void openFile(file)}
+                onOpenFolder={(path) => void refreshStorage(path)}
+                onRename={renameItem}
+                renameValue={renameValue}
+                renamingPath={renamingPath}
+                setConfirmDeletePath={setConfirmDeletePath}
+                setRenameValue={setRenameValue}
+                setRenamingPath={setRenamingPath}
+              />
+            ))
+          ) : (
+            <p className="border border-dashed border-[rgba(184,112,81,0.5)] bg-white/58 p-6 text-sm leading-6 text-[var(--ink-soft)]">
+              {YASHIE_ADMIN_COPY.storage.emptyFiles}
+            </p>
+          )}
         </div>
       </div>
-      <StorageMetric
-        detail={`${formatBytes(data.totalSize)} ${YASHIE_ADMIN_COPY.storage.of} ${formatBytes(
-          data.storageLimit,
-        )}`}
-        label={YASHIE_ADMIN_COPY.storage.used}
-        value={formatBytes(data.totalSize)}
-      />
-      <StorageMetric
-        label={YASHIE_ADMIN_COPY.storage.limit}
-        value={formatBytes(data.storageLimit)}
-      />
-      <StorageMetric label={YASHIE_ADMIN_COPY.storage.files} value={String(data.fileCount)} />
-      <StorageFileHighlight file={data.largestFile} label={YASHIE_ADMIN_COPY.storage.largest} />
-      <StorageFileHighlight file={data.smallestFile} label={YASHIE_ADMIN_COPY.storage.smallest} />
     </section>
   );
 }
@@ -414,7 +942,9 @@ function ContentList({
                 ) : null}
               </div>
               <div>
-                <strong className="block text-base text-[var(--ink)]">{item.title}</strong>
+                <strong className="block text-base text-[var(--ink)]">
+                  {item.title}
+                </strong>
                 <span className="mt-1 block text-sm text-[var(--ink-soft)]">
                   {collectionKey === "blog"
                     ? item.category || "Post"
@@ -431,7 +961,9 @@ function ContentList({
           <h3 className="font-display text-3xl leading-none text-[var(--navy)]">
             Nothing here yet.
           </h3>
-          <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{copy.empty}</p>
+          <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
+            {copy.empty}
+          </p>
         </div>
       )}
     </aside>
@@ -447,7 +979,10 @@ function ContentForm({
   collectionKey: YashieAdminCollectionKey;
   item: YashieAdminContentItem | null;
   onDeleted: (items: YashieAdminContentItem[]) => void;
-  onSaved: (items: YashieAdminContentItem[], item: YashieAdminContentItem | null) => void;
+  onSaved: (
+    items: YashieAdminContentItem[],
+    item: YashieAdminContentItem | null,
+  ) => void;
 }) {
   const copy = sectionCopy[collectionKey];
   const [draft, setDraft] = useState(() => draftFromItem(item));
@@ -464,7 +999,12 @@ function ContentForm({
     setDraft((current) => {
       const next = { ...current, [name]: value };
 
-      if (name === "title" && typeof value === "string" && !slugTouched && !item) {
+      if (
+        name === "title" &&
+        typeof value === "string" &&
+        !slugTouched &&
+        !item
+      ) {
         next.slug = slugifyYashieContent(value);
       }
 
@@ -475,7 +1015,9 @@ function ContentForm({
   const updateImageFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0] ?? null;
     setImageFile(file);
-    setImageFileLabel(file ? `${file.name} (${Math.round(file.size / 1024)} KB)` : "");
+    setImageFileLabel(
+      file ? `${file.name} (${Math.round(file.size / 1024)} KB)` : "",
+    );
 
     if (file) {
       setDraft((current) => ({ ...current, removeImage: false }));
@@ -507,7 +1049,9 @@ function ContentForm({
           method: item ? "PATCH" : "POST",
         },
       );
-      const payload = (await response.json().catch(() => ({}))) as MutationResponse;
+      const payload = (await response
+        .json()
+        .catch(() => ({}))) as MutationResponse;
 
       if (!response.ok) {
         setFieldErrors(payload.errors ?? {});
@@ -540,7 +1084,9 @@ function ContentForm({
           method: "DELETE",
         },
       );
-      const payload = (await response.json().catch(() => ({}))) as MutationResponse;
+      const payload = (await response
+        .json()
+        .catch(() => ({}))) as MutationResponse;
 
       if (!response.ok) {
         setMessage(YASHIE_ADMIN_COPY.errors.delete);
@@ -559,7 +1105,9 @@ function ContentForm({
     <form className="grid gap-6" onSubmit={submit}>
       <div className="flex flex-col gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="script-label">{item ? `Edit ${copy.singular}` : copy.newLabel}</p>
+          <p className="script-label">
+            {item ? `Edit ${copy.singular}` : copy.newLabel}
+          </p>
           <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
             {draft.title || `Untitled ${copy.singular}`}
           </h2>
@@ -569,7 +1117,9 @@ function ContentForm({
           disabled={submitting || deleting}
           type="submit"
         >
-          {submitting ? YASHIE_ADMIN_COPY.actions.saving : YASHIE_ADMIN_COPY.actions.save}
+          {submitting
+            ? YASHIE_ADMIN_COPY.actions.saving
+            : YASHIE_ADMIN_COPY.actions.save}
         </button>
       </div>
 
@@ -599,9 +1149,13 @@ function ContentForm({
               </span>
               <select
                 className={`min-h-11 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
-                  fieldErrors.status ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
+                  fieldErrors.status
+                    ? "border-red-400"
+                    : "border-[rgba(184,112,81,0.42)]"
                 }`}
-                onChange={(event) => updateDraft("status", event.currentTarget.value)}
+                onChange={(event) =>
+                  updateDraft("status", event.currentTarget.value)
+                }
                 value={draft.status}
               >
                 {statusOptions.map((option) => (
@@ -611,7 +1165,9 @@ function ContentForm({
                 ))}
               </select>
               {fieldErrors.status ? (
-                <span className="text-xs text-red-700">{fieldErrors.status}</span>
+                <span className="text-xs text-red-700">
+                  {fieldErrors.status}
+                </span>
               ) : null}
             </label>
             <TextField
@@ -646,7 +1202,12 @@ function ContentForm({
               onChange={updateDraft}
               value={draft.category}
             />
-            <TextField label="Date" name="date" onChange={updateDraft} value={draft.date} />
+            <TextField
+              label="Date"
+              name="date"
+              onChange={updateDraft}
+              value={draft.date}
+            />
             <TextField
               label="Reading time"
               name="readTime"
@@ -656,10 +1217,20 @@ function ContentForm({
           </div>
         ) : null}
         {collectionKey === "gallery" ? (
-          <TextField label="Kind" name="type" onChange={updateDraft} value={draft.type} />
+          <TextField
+            label="Kind"
+            name="type"
+            onChange={updateDraft}
+            value={draft.type}
+          />
         ) : null}
         {collectionKey === "shop" ? (
-          <TextField label="Price" name="price" onChange={updateDraft} value={draft.price} />
+          <TextField
+            label="Price"
+            name="price"
+            onChange={updateDraft}
+            value={draft.price}
+          />
         ) : null}
         <TextAreaField
           label={collectionKey === "blog" ? "Short intro" : "Description"}
@@ -722,10 +1293,14 @@ function ContentForm({
                 type="file"
               />
               {imageFileLabel ? (
-                <span className="text-xs text-[var(--ink-soft)]">{imageFileLabel}</span>
+                <span className="text-xs text-[var(--ink-soft)]">
+                  {imageFileLabel}
+                </span>
               ) : null}
               {fieldErrors.imageFile ? (
-                <span className="text-xs text-red-700">{fieldErrors.imageFile}</span>
+                <span className="text-xs text-red-700">
+                  {fieldErrors.imageFile}
+                </span>
               ) : null}
             </label>
             {item?.imageAssetId ? (
@@ -733,7 +1308,9 @@ function ContentForm({
                 <input
                   checked={draft.removeImage}
                   className="size-4 accent-[var(--clay)]"
-                  onChange={(event) => updateDraft("removeImage", event.currentTarget.checked)}
+                  onChange={(event) =>
+                    updateDraft("removeImage", event.currentTarget.checked)
+                  }
                   type="checkbox"
                 />
                 Remove the current image
@@ -788,25 +1365,65 @@ function ContentForm({
 export function YashieAdminDashboard({
   initialContent,
   storageAnalytics,
+  storageFiles,
   userEmail,
 }: {
   initialContent: DashboardContent;
   storageAnalytics: YashieStorageAnalyticsState;
+  storageFiles: YashieStorageFilesState;
   userEmail: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("blog");
   const [content, setContent] = useState(initialContent);
-  const [selectedIds, setSelectedIds] = useState<Record<YashieAdminCollectionKey, string | null>>({
+  const [selectedIds, setSelectedIds] = useState<
+    Record<YashieAdminCollectionKey, string | null>
+  >({
     blog: initialContent.blog[0]?.id ?? null,
     gallery: initialContent.gallery[0]?.id ?? null,
     shop: initialContent.shop[0]?.id ?? null,
   });
 
+  const refreshContent = async () => {
+    const nextContent = { ...content };
+
+    await Promise.all(
+      contentTabs.map(async (collectionKey) => {
+        const response = await fetch(`/api/admin/content/${collectionKey}`, {
+          cache: "no-store",
+        });
+        const payload = (await response
+          .json()
+          .catch(() => ({}))) as MutationResponse;
+
+        if (response.ok && payload.items) {
+          nextContent[collectionKey] = payload.items;
+        }
+      }),
+    );
+
+    setContent(nextContent);
+    setSelectedIds((current) => {
+      const next = { ...current };
+
+      for (const collectionKey of contentTabs) {
+        const selectedId = next[collectionKey];
+        if (
+          !selectedId ||
+          !nextContent[collectionKey].some((item) => item.id === selectedId)
+        ) {
+          next[collectionKey] = nextContent[collectionKey][0]?.id ?? null;
+        }
+      }
+
+      return next;
+    });
+  };
+
   const renderContentTab = (collectionKey: YashieAdminCollectionKey) => {
     const items = content[collectionKey];
     const selectedId = selectedIds[collectionKey];
     const selectedItem = selectedId
-      ? items.find((item) => item.id === selectedId) ?? null
+      ? (items.find((item) => item.id === selectedId) ?? null)
       : null;
 
     return (
@@ -859,7 +1476,9 @@ export function YashieAdminDashboard({
         <header className="parchment-card overflow-hidden p-6">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <p className="script-label">{YASHIE_ADMIN_COPY.dashboard.eyebrow}</p>
+              <p className="script-label">
+                {YASHIE_ADMIN_COPY.dashboard.eyebrow}
+              </p>
               <h1 className="font-display text-5xl leading-none text-[var(--navy)] sm:text-6xl">
                 {YASHIE_ADMIN_COPY.dashboard.title}
               </h1>
@@ -906,12 +1525,20 @@ export function YashieAdminDashboard({
 
         {activeTab === "publish" ? <YashieAdminSyncPanel /> : null}
 
-        {activeTab === "storage" ? <StoragePanel storageAnalytics={storageAnalytics} /> : null}
+        {activeTab === "storage" ? (
+          <StoragePanel
+            onResourcesChanged={refreshContent}
+            storageAnalytics={storageAnalytics}
+            storageFiles={storageFiles}
+          />
+        ) : null}
 
         {activeTab === "account" ? (
           <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
             <div className="parchment-card p-6">
-              <p className="script-label">{YASHIE_ADMIN_COPY.account.signedIn}</p>
+              <p className="script-label">
+                {YASHIE_ADMIN_COPY.account.signedIn}
+              </p>
               <div className="mt-4 flex items-center gap-4">
                 <span className="grid size-14 place-items-center bg-[var(--navy)] font-display text-2xl text-[var(--parchment)]">
                   {getInitials(userEmail)}
