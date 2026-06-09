@@ -11,6 +11,7 @@ import {
 } from "@/lib/yashie-config";
 import { getYashieAdminStudio } from "@/lib/yashie-admin-api";
 import { getYashieSessionFromCookies } from "@/lib/yashie-session";
+import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,10 @@ export default async function AdminPage({
     redirect(getYashieAdminLoginPath(activeTarget));
   }
 
-  const studio = await getYashieAdminStudio(session.accessToken).catch(() => emptyStudio());
+  const [studio, storageAnalytics] = await Promise.all([
+    getYashieAdminStudio(session.accessToken).catch(() => emptyStudio()),
+    getYashieStorageAnalytics(session.accessToken),
+  ]);
 
   return (
     <YashieAdminDashboard
@@ -50,6 +54,7 @@ export default async function AdminPage({
         gallery: readYashieAdminContent(studio, "gallery"),
         shop: readYashieAdminContent(studio, "shop"),
       }}
+      storageAnalytics={storageAnalytics}
       userEmail={session.user.email}
     />
   );

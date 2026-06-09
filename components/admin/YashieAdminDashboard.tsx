@@ -8,12 +8,14 @@ import type {
   YashieContentStatus,
 } from "@/lib/yashie-admin-content-model";
 import { slugifyYashieContent } from "@/lib/yashie-admin-content-model";
+import type { YashieStorageAnalyticsState } from "@/lib/yashie-storage-analytics";
 import { YashieAdminSyncPanel } from "./YashieAdminSyncPanel";
 import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
 
-type AdminTab = YashieAdminCollectionKey | "account" | "publish";
+type AdminTab = YashieAdminCollectionKey | "account" | "publish" | "storage";
 
 type DashboardContent = Record<YashieAdminCollectionKey, YashieAdminContentItem[]>;
+type ReadyStorageAnalytics = Extract<YashieStorageAnalyticsState, { status: "ready" }>;
 
 type Draft = {
   body: string;
@@ -45,8 +47,11 @@ const tabLabels: Array<{ id: AdminTab; label: string }> = [
   { id: "gallery", label: YASHIE_ADMIN_COPY.tabs.gallery },
   { id: "shop", label: YASHIE_ADMIN_COPY.tabs.shop },
   { id: "publish", label: YASHIE_ADMIN_COPY.tabs.publish },
+  { id: "storage", label: YASHIE_ADMIN_COPY.tabs.storage },
   { id: "account", label: YASHIE_ADMIN_COPY.tabs.account },
 ];
+
+const byteUnits = ["B", "KB", "MB", "GB", "TB"] as const;
 
 const sectionCopy: Record<
   YashieAdminCollectionKey,
@@ -117,6 +122,140 @@ function statusClass(status: YashieContentStatus) {
   }
 
   return "border-[rgba(184,112,81,0.34)] bg-[rgba(184,112,81,0.1)] text-[var(--clay)]";
+}
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+
+  const exponent = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    byteUnits.length - 1,
+  );
+  const value = bytes / 1024 ** exponent;
+  const formatted =
+    value >= 10 || exponent === 0 ? Math.round(value).toString() : value.toFixed(1);
+
+  return `${formatted} ${byteUnits[exponent]}`;
+}
+
+function formatFileDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return YASHIE_ADMIN_COPY.storage.unknownDate;
+  }
+
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(date);
+}
+
+function StorageMetric({
+  detail,
+  label,
+  value,
+}: {
+  detail?: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="parchment-card p-6">
+      <p className="text-sm font-bold text-[var(--clay)]">{label}</p>
+      <strong className="mt-3 block font-display text-4xl leading-none text-[var(--navy)]">
+        {value}
+      </strong>
+      {detail ? <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{detail}</p> : null}
+    </div>
+  );
+}
+
+function StorageFileHighlight({
+  file,
+  label,
+}: {
+  file: ReadyStorageAnalytics["data"]["largestFile"];
+  label: string;
+}) {
+  return (
+    <div className="parchment-card p-6">
+      <p className="text-sm font-bold text-[var(--clay)]">{label}</p>
+      {file ? (
+        <div className="mt-3">
+          <strong className="block truncate text-[var(--ink)]">{file.name}</strong>
+          <span className="mt-1 block text-sm text-[var(--ink-soft)]">
+            {formatBytes(file.size)} - {formatFileDate(file.createdAt)}
+          </span>
+        </div>
+      ) : (
+        <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
+          {YASHIE_ADMIN_COPY.storage.noFiles}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StoragePanel({
+  storageAnalytics,
+}: {
+  storageAnalytics: YashieStorageAnalyticsState;
+}) {
+  if (storageAnalytics.status === "unavailable") {
+    return (
+      <section className="parchment-card p-6">
+        <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
+        <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+          {YASHIE_ADMIN_COPY.storage.unavailableTitle}
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
+          {storageAnalytics.message}
+        </p>
+      </section>
+    );
+  }
+
+  const { data } = storageAnalytics;
+  const usagePercentage = Math.max(0, Math.min(100, data.usagePercentage));
+
+  return (
+    <section className="grid gap-4 lg:grid-cols-3">
+      <div className="parchment-card p-6 lg:col-span-3">
+        <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
+        <div className="mt-2 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+              {YASHIE_ADMIN_COPY.storage.heading}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
+              {YASHIE_ADMIN_COPY.storage.description}
+            </p>
+          </div>
+          <strong className="font-display text-5xl leading-none text-[var(--clay)]">
+            {usagePercentage.toFixed(usagePercentage % 1 === 0 ? 0 : 1)}%
+          </strong>
+        </div>
+        <div className="mt-6 h-3 overflow-hidden border border-[rgba(184,112,81,0.34)] bg-white/72">
+          <div
+            className="h-full bg-[var(--clay)]"
+            style={{ width: `${usagePercentage}%` }}
+          />
+        </div>
+      </div>
+      <StorageMetric
+        detail={`${formatBytes(data.totalSize)} ${YASHIE_ADMIN_COPY.storage.of} ${formatBytes(
+          data.storageLimit,
+        )}`}
+        label={YASHIE_ADMIN_COPY.storage.used}
+        value={formatBytes(data.totalSize)}
+      />
+      <StorageMetric
+        label={YASHIE_ADMIN_COPY.storage.limit}
+        value={formatBytes(data.storageLimit)}
+      />
+      <StorageMetric label={YASHIE_ADMIN_COPY.storage.files} value={String(data.fileCount)} />
+      <StorageFileHighlight file={data.largestFile} label={YASHIE_ADMIN_COPY.storage.largest} />
+      <StorageFileHighlight file={data.smallestFile} label={YASHIE_ADMIN_COPY.storage.smallest} />
+    </section>
+  );
 }
 
 function draftFromItem(item: YashieAdminContentItem | null): Draft {
@@ -648,9 +787,11 @@ function ContentForm({
 
 export function YashieAdminDashboard({
   initialContent,
+  storageAnalytics,
   userEmail,
 }: {
   initialContent: DashboardContent;
+  storageAnalytics: YashieStorageAnalyticsState;
   userEmail: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("blog");
@@ -764,6 +905,8 @@ export function YashieAdminDashboard({
           : null}
 
         {activeTab === "publish" ? <YashieAdminSyncPanel /> : null}
+
+        {activeTab === "storage" ? <StoragePanel storageAnalytics={storageAnalytics} /> : null}
 
         {activeTab === "account" ? (
           <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
