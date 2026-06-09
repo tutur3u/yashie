@@ -44,7 +44,9 @@ export async function getYashieStorageAnalytics(
     const apiBaseUrl = getYashieApiBaseUrl().replace(/\/+$/, "");
     const workspaceId = getYashieWorkspaceId();
     const response = await fetch(
-      `${apiBaseUrl}/workspaces/${encodeURIComponent(workspaceId)}/storage/analytics`,
+      `${apiBaseUrl}/workspaces/${encodeURIComponent(
+        workspaceId,
+      )}/external-projects/storage-analytics`,
       {
         cache: "no-store",
         headers: {
