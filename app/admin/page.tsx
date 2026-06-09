@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { YashieAdminDashboard } from "@/components/admin/YashieAdminDashboard";
+import { YashieAdminLoginPanel } from "@/components/admin/YashieAdminLoginPanel";
+import { getYashieCentralizedLoginHref } from "./login-link";
 import {
   readYashieAdminContent,
   type YashieAdminStudioPayload,
 } from "@/lib/yashie-admin-content-model";
-import {
-  getYashieAdminLoginPath,
-  resolveYashieAdminTargetKey,
-} from "@/lib/yashie-config";
+import { resolveYashieAdminTargetKey } from "@/lib/yashie-config";
 import { getYashieAdminStudio } from "@/lib/yashie-admin-api";
 import { getYashieSessionFromCookies } from "@/lib/yashie-session";
 import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
@@ -39,7 +37,11 @@ export default async function AdminPage({
   const activeTarget = resolveYashieAdminTargetKey(resolvedSearchParams?.target);
 
   if (!session) {
-    redirect(getYashieAdminLoginPath(activeTarget));
+    return (
+      <YashieAdminLoginPanel
+        loginHref={await getYashieCentralizedLoginHref(activeTarget)}
+      />
+    );
   }
 
   const [studio, storageAnalytics] = await Promise.all([
