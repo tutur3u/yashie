@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
-import { getYashieWorkspaceId } from "@/lib/yashie-config";
+import { getYashieApiBaseUrl, getYashieWorkspaceId } from "@/lib/yashie-config";
 import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 
@@ -82,11 +82,33 @@ function unsealSession(value: string): YashieAdminSession | null {
   }
 }
 
+function getYashieSessionValidationUrl(workspaceId: string) {
+  const apiBaseUrl = getYashieApiBaseUrl().replace(/\/+$/, "");
+  return `${apiBaseUrl}/workspaces/${encodeURIComponent(workspaceId)}/external-projects/summary`;
+}
+
+async function validateYashieSession(session: YashieAdminSession) {
+  try {
+    const response = await fetch(getYashieSessionValidationUrl(session.workspaceId), {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        Authorization: `${session.tokenType} ${session.accessToken}`,
+      },
+    });
+
+    return response.ok ? session : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getYashieSessionFromCookies() {
   const cookieStore = await cookies();
   const value = cookieStore.get(YASHIE_SESSION_COOKIE)?.value;
+  const session = value ? unsealSession(value) : null;
 
-  return value ? unsealSession(value) : null;
+  return session ? validateYashieSession(session) : null;
 }
 
 export function setYashieSessionCookie(response: NextResponse, session: YashieAdminSession) {
