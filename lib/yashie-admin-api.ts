@@ -6,7 +6,10 @@ import {
 } from "./tuturuuu-public-folder-sync";
 import { getYashieApiBaseUrl, getYashieWorkspaceId } from "./yashie-config";
 import { yashieExternalProjectManifest } from "./yashie-external-project-manifest";
-import { getYashieSessionFromCookies } from "./yashie-session";
+import {
+  getYashieSessionFromCookies,
+  getYashieSessionReadStateFromCookies,
+} from "./yashie-session";
 import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
 
 export function createYashieExternalProjectsClient(accessToken: string) {
@@ -64,6 +67,10 @@ export async function setupYashieAdminStudio(accessToken: string) {
 
 export async function getYashieAdminSession() {
   return getYashieSessionFromCookies();
+}
+
+export async function getYashieAdminSessionReadState() {
+  return getYashieSessionReadStateFromCookies();
 }
 
 export async function getYashieAdminStudio(accessToken: string) {

@@ -13,7 +13,9 @@ mock.module("next/headers", () => ({
 
 const originalFetch = globalThis.fetch;
 
-function createSession(): YashieAdminSession {
+function createSession(
+  overrides: Partial<YashieAdminSession> = {},
+): YashieAdminSession {
   return {
     accessToken: "app-token",
     app: { name: "yashie" },
@@ -21,6 +23,7 @@ function createSession(): YashieAdminSession {
     tokenType: "Bearer",
     user: { email: "admin@example.com", id: "user-1" },
     workspaceId: "ws-linked",
+    ...overrides,
   };
 }
 
@@ -33,6 +36,7 @@ function readSessionCookieValue(response: NextResponse) {
 describe("yashie session validation", () => {
   beforeEach(() => {
     process.env.TUTURUUU_API_BASE_URL = "https://platform.example.com/api/v1";
+    process.env.YASHIE_APP_SECRET = "app-secret";
     process.env.TUTURUUU_YASHIE_WORKSPACE_ID = "ws-linked";
     process.env.YASHIE_SESSION_SECRET = "session-secret";
     sessionCookieValue = null;
@@ -41,6 +45,7 @@ describe("yashie session validation", () => {
   afterEach(() => {
     globalThis.fetch = originalFetch;
     delete process.env.TUTURUUU_API_BASE_URL;
+    delete process.env.YASHIE_APP_SECRET;
     delete process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
     delete process.env.YASHIE_SESSION_SECRET;
     sessionCookieValue = null;
@@ -72,4 +77,144 @@ describe("yashie session validation", () => {
       });
     });
   }
+
+  test("reports expired access with a valid refresh token as refreshable", async () => {
+    const { getYashieSessionReadStateFromCookies, setYashieSessionCookie } =
+      await import("./yashie-session");
+    const response = NextResponse.json({});
+    setYashieSessionCookie(
+      response,
+      createSession({
+        expiresAt: new Date(Date.now() - 1_000).toISOString(),
+        refreshEarlySeconds: 900,
+        refreshExpiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+        refreshToken: "refresh-token",
+      }),
+    );
+    sessionCookieValue = readSessionCookieValue(response);
+
+    const calls: Array<{ init?: RequestInit; input: RequestInfo | URL }> = [];
+    globalThis.fetch = (async (input, init) => {
+      calls.push({ init, input });
+      return Response.json({ ok: true });
+    }) as typeof fetch;
+
+    const state = await getYashieSessionReadStateFromCookies();
+
+    expect(state.status).toBe("refreshable");
+    expect(state.session?.refreshToken).toBe("refresh-token");
+    expect(calls).toHaveLength(0);
+  });
+
+  test("refreshes stored sessions through the explicit refresh helper", async () => {
+    const { refreshYashieSessionFromCookies, setYashieSessionCookie } =
+      await import("./yashie-session");
+    const response = NextResponse.json({});
+    setYashieSessionCookie(
+      response,
+      createSession({
+        expiresAt: new Date(Date.now() - 1_000).toISOString(),
+        refreshEarlySeconds: 900,
+        refreshExpiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+        refreshToken: "refresh-token",
+      }),
+    );
+    sessionCookieValue = readSessionCookieValue(response);
+
+    const calls: Array<{ init?: RequestInit; input: RequestInfo | URL }> = [];
+    globalThis.fetch = (async (input, init) => {
+      calls.push({ init, input });
+
+      if (String(input).endsWith("/auth/app-token/exchange")) {
+        return Response.json({
+          accessToken: "new-app-token",
+          app: { name: "yashie" },
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          refreshEarlySeconds: 900,
+          refreshExpiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+          refreshToken: "new-refresh-token",
+          tokenType: "Bearer",
+          user: { email: "admin@example.com", id: "user-1" },
+          workspaceId: "ws-linked",
+        });
+      }
+
+      return Response.json({ ok: true });
+    }) as typeof fetch;
+
+    const session = await refreshYashieSessionFromCookies();
+
+    expect(session?.accessToken).toBe("new-app-token");
+    expect(session?.refreshToken).toBe("new-refresh-token");
+    expect(calls).toHaveLength(2);
+    expect(String(calls[0]?.input)).toBe(
+      "https://platform.example.com/api/v1/auth/app-token/exchange",
+    );
+    expect(JSON.parse(calls[0]?.init?.body as string)).toMatchObject({
+      appId: "yashie",
+      appSecret: "app-secret",
+      refreshToken: "refresh-token",
+      requestedScopes: ["external-projects:*"],
+      workspaceId: "ws-linked",
+    });
+    expect(calls[1]?.init?.headers).toMatchObject({
+      Accept: "application/json",
+      Authorization: "Bearer new-app-token",
+    });
+  });
+
+  test("refresh route rotates and persists the refreshed admin session cookie", async () => {
+    const { setYashieSessionCookie } = await import("./yashie-session");
+    const { POST } = await import("../app/api/auth/session/refresh/route");
+    const response = NextResponse.json({});
+    setYashieSessionCookie(
+      response,
+      createSession({
+        expiresAt: new Date(Date.now() - 1_000).toISOString(),
+        refreshEarlySeconds: 900,
+        refreshExpiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+        refreshToken: "refresh-token",
+      }),
+    );
+    sessionCookieValue = readSessionCookieValue(response);
+
+    const calls: Array<{ init?: RequestInit; input: RequestInfo | URL }> = [];
+    globalThis.fetch = (async (input, init) => {
+      calls.push({ init, input });
+
+      if (String(input).endsWith("/auth/app-token/exchange")) {
+        return Response.json({
+          accessToken: "new-app-token",
+          app: { name: "yashie" },
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          refreshEarlySeconds: 900,
+          refreshExpiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+          refreshToken: "new-refresh-token",
+          tokenType: "Bearer",
+          user: { email: "admin@example.com", id: "user-1" },
+          workspaceId: "ws-linked",
+        });
+      }
+
+      return Response.json({ ok: true });
+    }) as typeof fetch;
+
+    const refreshResponse = await POST();
+    const payload = await refreshResponse.json();
+
+    expect(refreshResponse.status).toBe(200);
+    expect(payload).toMatchObject({
+      refreshEarlySeconds: 900,
+      userId: "user-1",
+      valid: true,
+    });
+    expect(refreshResponse.headers.get("set-cookie")).toContain(
+      "yashie_admin_session=",
+    );
+    expect(calls).toHaveLength(2);
+    expect(JSON.parse(calls[0]?.init?.body as string)).toMatchObject({
+      refreshToken: "refresh-token",
+      workspaceId: "ws-linked",
+    });
+  });
 });

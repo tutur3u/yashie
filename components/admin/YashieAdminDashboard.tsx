@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import type {
   YashieAdminCollectionKey,
@@ -15,6 +15,10 @@ import type {
 } from "@/lib/yashie-storage-files";
 import { YashieAdminSyncPanel } from "./YashieAdminSyncPanel";
 import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
+import {
+  adminFetch,
+  scheduleYashieAdminSessionRefresh,
+} from "./yashie-admin-session-client";
 
 type AdminTab = YashieAdminCollectionKey | "account" | "publish" | "storage";
 
@@ -418,8 +422,8 @@ function StoragePanel({
       }
 
       const [filesResponse, analyticsResponse] = await Promise.all([
-        fetch(filesUrl, { cache: "no-store" }),
-        fetch("/api/admin/storage/analytics", { cache: "no-store" }),
+        adminFetch(filesUrl, { cache: "no-store" }),
+        adminFetch("/api/admin/storage/analytics", { cache: "no-store" }),
       ]);
       const filesPayload = (await filesResponse.json().catch(() => null)) as {
         data?: unknown;
@@ -503,7 +507,7 @@ function StoragePanel({
     body.set("upsert", "true");
 
     await runStorageMutation(
-      fetch("/api/admin/storage", {
+      adminFetch("/api/admin/storage", {
         body,
         method: "POST",
       }),
@@ -518,7 +522,7 @@ function StoragePanel({
     if (!name) return;
 
     await runStorageMutation(
-      fetch("/api/admin/storage", {
+      adminFetch("/api/admin/storage", {
         body: JSON.stringify({ name, path: currentPath }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
@@ -530,7 +534,7 @@ function StoragePanel({
 
   const renameItem = (item: YashieStorageFileItem) => {
     void runStorageMutation(
-      fetch("/api/admin/storage", {
+      adminFetch("/api/admin/storage", {
         body: JSON.stringify({
           kind: item.kind,
           newName: renameValue.trim(),
@@ -546,7 +550,7 @@ function StoragePanel({
 
   const deleteItem = (item: YashieStorageFileItem) => {
     void runStorageMutation(
-      fetch("/api/admin/storage", {
+      adminFetch("/api/admin/storage", {
         body: JSON.stringify({ kind: item.kind, path: item.path }),
         headers: { "Content-Type": "application/json" },
         method: "DELETE",
@@ -563,7 +567,7 @@ function StoragePanel({
     try {
       const url = new URL("/api/admin/storage", window.location.origin);
       url.searchParams.set("filePath", item.path);
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await adminFetch(url, { cache: "no-store" });
       const payload = (await response.json().catch(() => null)) as {
         data?: { signedUrl?: string };
         error?: string;
@@ -1040,7 +1044,7 @@ function ContentForm({
     }
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         item
           ? `/api/admin/content/${collectionKey}/${encodeURIComponent(item.id)}`
           : `/api/admin/content/${collectionKey}`,
@@ -1078,7 +1082,7 @@ function ContentForm({
     setMessage(null);
 
     try {
-      const response = await fetch(
+      const response = await adminFetch(
         `/api/admin/content/${collectionKey}/${encodeURIComponent(item.id)}`,
         {
           method: "DELETE",
@@ -1364,11 +1368,15 @@ function ContentForm({
 
 export function YashieAdminDashboard({
   initialContent,
+  sessionExpiresAt,
+  sessionRefreshEarlySeconds,
   storageAnalytics,
   storageFiles,
   userEmail,
 }: {
   initialContent: DashboardContent;
+  sessionExpiresAt: string;
+  sessionRefreshEarlySeconds?: number;
   storageAnalytics: YashieStorageAnalyticsState;
   storageFiles: YashieStorageFilesState;
   userEmail: string | null;
@@ -1383,12 +1391,21 @@ export function YashieAdminDashboard({
     shop: initialContent.shop[0]?.id ?? null,
   });
 
+  useEffect(
+    () =>
+      scheduleYashieAdminSessionRefresh({
+        expiresAt: sessionExpiresAt,
+        refreshEarlySeconds: sessionRefreshEarlySeconds,
+      }),
+    [sessionExpiresAt, sessionRefreshEarlySeconds],
+  );
+
   const refreshContent = async () => {
     const nextContent = { ...content };
 
     await Promise.all(
       contentTabs.map(async (collectionKey) => {
-        const response = await fetch(`/api/admin/content/${collectionKey}`, {
+        const response = await adminFetch(`/api/admin/content/${collectionKey}`, {
           cache: "no-store",
         });
         const payload = (await response

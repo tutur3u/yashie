@@ -1,23 +1,12 @@
 import { getYashieApiBaseUrl, getYashieAppId, getYashieAppSecret, getYashieWorkspaceId } from "@/lib/yashie-config";
-import { setYashieSessionCookie, type YashieAdminSession } from "@/lib/yashie-session";
+import {
+  createYashieSessionFromExchangePayload,
+  setYashieSessionCookie,
+  type YashieAppTokenExchangeResponse,
+} from "@/lib/yashie-session";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-
-type AppTokenExchangeResponse = {
-  accessToken?: string;
-  app?: {
-    name?: string;
-  };
-  error?: string;
-  expiresAt?: string;
-  tokenType?: string;
-  workspaceId?: string | null;
-  user?: {
-    email?: string | null;
-    id?: string;
-  };
-};
 
 class TokenExchangeError extends Error {
   constructor(
@@ -34,7 +23,9 @@ function normalizeApiBaseUrl() {
 
 async function readExchangeError(response: Response) {
   const fallback = `Tuturuuu app token exchange failed with status ${response.status}`;
-  const payload = (await response.json().catch(() => null)) as AppTokenExchangeResponse | null;
+  const payload = (await response.json().catch(() => null)) as
+    | YashieAppTokenExchangeResponse
+    | null;
 
   return payload?.error || fallback;
 }
@@ -60,27 +51,7 @@ async function exchangeCrossAppToken(token: string) {
     throw new TokenExchangeError(await readExchangeError(response), response.status);
   }
 
-  return (await response.json()) as AppTokenExchangeResponse;
-}
-
-function toYashieSession(payload: AppTokenExchangeResponse): YashieAdminSession {
-  if (!payload.accessToken || !payload.expiresAt || !payload.user?.id || !payload.workspaceId) {
-    throw new Error("Invalid Tuturuuu app token exchange response.");
-  }
-
-  return {
-    accessToken: payload.accessToken,
-    app: {
-      name: payload.app?.name ?? getYashieAppId(),
-    },
-    expiresAt: payload.expiresAt,
-    tokenType: "Bearer",
-    workspaceId: payload.workspaceId,
-    user: {
-      email: payload.user.email ?? null,
-      id: payload.user.id,
-    },
-  };
+  return (await response.json()) as YashieAppTokenExchangeResponse;
 }
 
 export async function POST(request: NextRequest) {
@@ -92,9 +63,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required parameter: token" }, { status: 400 });
     }
 
-    const session = toYashieSession(await exchangeCrossAppToken(token));
+    const session = createYashieSessionFromExchangePayload(
+      await exchangeCrossAppToken(token),
+    );
     const response = NextResponse.json({
       expiresAt: session.expiresAt,
+      refreshEarlySeconds: session.refreshEarlySeconds,
       userId: session.user.id,
       valid: true,
     });
