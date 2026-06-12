@@ -34,7 +34,7 @@ export function SiteFooter({
 					<p className="font-display text-2xl text-[var(--gold)]">
 						Always {author.alias}
 					</p>
-					<p className="mt-1 text-xs font-bold uppercase tracking-[0.38em] text-[var(--parchment-soft)]">
+					<p className="mt-1 whitespace-nowrap text-xs font-bold uppercase tracking-[0.38em] text-[var(--parchment-soft)]">
 						{author.brand}
 					</p>
 					<div className="mt-4 flex flex-wrap gap-2 lg:justify-end">
@@ -56,8 +56,20 @@ export function SiteFooter({
 
 			<div className="border-t border-[rgba(239,207,178,0.2)] px-4 py-4 text-xs text-[var(--parchment-soft)]">
 				<div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-					<p>
-						© 2026 {author.name}. Mock portfolio concept for {author.brand}.
+					<p className="flex flex-wrap items-center gap-1">
+						<span>© 2026 {author.name}.</span>
+						<span>
+							Made with ❤️ by sokora from{" "}
+							<a
+								href="https://tuturuuu.com"
+								target="_blank"
+								rel="noreferrer"
+								className="font-semibold text-[var(--gold)] underline-offset-4 hover:underline"
+							>
+								Tuturuuu
+							</a>
+							.
+						</span>
 					</p>
 					<div className="flex flex-wrap gap-x-4 gap-y-2">
 						{navItems.slice(0, 6).map((item) => (

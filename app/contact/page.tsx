@@ -24,19 +24,19 @@ export default async function ContactPage() {
 
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-					<div>
+					<div className="min-w-0">
 						<SectionHeader
 							label="Social shelf"
 							title={`Find ${author.shortName}`}
 							description={`Most links use the public handle ${author.alias} or the InkedByYashie brand. This is a mock contact experience.`}
 						/>
-						<div className="parchment-card mb-5 p-5">
+						<div className="parchment-card mb-5 min-w-0 p-5">
 							<p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]">
 								Preferred note
 							</p>
 							<a
 								href={`mailto:${author.email}`}
-								className="mt-2 block break-words font-display text-3xl leading-tight text-[var(--navy)] transition hover:text-[var(--clay)]"
+								className="mt-2 block max-w-full overflow-x-auto whitespace-nowrap font-display text-2xl leading-tight text-[var(--navy)] transition hover:text-[var(--clay)] sm:text-3xl"
 							>
 								{author.email}
 							</a>

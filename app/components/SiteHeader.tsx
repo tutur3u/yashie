@@ -68,7 +68,7 @@ export function SiteHeader({
 						<span className="block truncate font-display text-xl leading-none text-[var(--gold)] sm:text-3xl">
 							{author.name}
 						</span>
-						<span className="mt-1 block truncate text-[0.58rem] font-bold uppercase tracking-[0.24em] text-[var(--parchment-soft)] sm:text-xs sm:tracking-[0.42em]">
+						<span className="mt-1 block truncate whitespace-nowrap text-[0.58rem] font-bold uppercase tracking-[0.24em] text-[var(--parchment-soft)] sm:text-xs sm:tracking-[0.42em]">
 							{author.brand}
 						</span>
 					</span>
@@ -141,7 +141,7 @@ export function SiteHeader({
 									<span className="block truncate font-display text-xl leading-none text-[var(--gold)]">
 										{author.shortName}
 									</span>
-									<span className="mt-1 block truncate text-[0.62rem] font-bold uppercase tracking-[0.28em] text-[var(--parchment-soft)]">
+									<span className="mt-1 block truncate whitespace-nowrap text-[0.62rem] font-bold uppercase tracking-[0.28em] text-[var(--parchment-soft)]">
 										{author.brand}
 									</span>
 								</span>

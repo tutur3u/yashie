@@ -51,20 +51,22 @@ function WorldNotebookCard({ world }: { world: WritingWorld }) {
 			className="world-notebook-card"
 			aria-label={`Read more about ${world.title}`}
 		>
-			<span className="world-badge">{world.kicker}</span>
+			<span className="world-card-head">
+				<span className="world-badge">{world.kicker}</span>
+				<span className="world-card-art" aria-hidden="true">
+					<SmartImage
+						src={world.image}
+						alt=""
+						fill
+						sizes="96px"
+						className="object-cover"
+						style={{ objectPosition: world.imagePosition ?? "center" }}
+					/>
+				</span>
+			</span>
 			<h3>{world.title}</h3>
 			<p>{world.description}</p>
 			<span className="read-link">Read more {"->"}</span>
-			<span className="world-card-art" aria-hidden="true">
-				<SmartImage
-					src={world.image}
-					alt=""
-					fill
-					sizes="140px"
-					className="object-cover opacity-50"
-					style={{ objectPosition: world.imagePosition ?? "center" }}
-				/>
-			</span>
 		</Link>
 	);
 }
@@ -317,7 +319,7 @@ export default async function Home() {
 									<small>{social.handle}</small>
 								</a>
 							))}
-							<a href={`mailto:${author.email}`}>
+							<a href={`mailto:${author.email}`} className="social-ledger-email">
 								<span className="social-orb">@</span>
 								<strong>Email</strong>
 								<small>{author.email}</small>
