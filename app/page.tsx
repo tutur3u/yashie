@@ -1,242 +1,334 @@
 import { MobileCarousel } from "@/app/components/MobileCarousel";
-import {
-    BlogCard,
-    GalleryCard,
-    ProductCard,
-    QuotePanel,
-    SectionHeader,
-    WorldCard,
-} from "@/app/components/PortfolioSections";
+import { SmartImage } from "@/app/components/SmartImage";
 import { SocialIcon } from "@/app/components/SocialIcon";
 import {
-    author,
-    profileFacts,
-    socials,
-    worlds,
+	getBlogHref,
+	getGalleryHref,
+	getProductHref,
+	getWorldHref,
+	type BlogPost,
+	type GalleryItem,
+	type Product,
+	type WritingWorld,
 } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
-import Image from "next/image";
 import Link from "next/link";
+
+function SectionRibbon({
+	label,
+	title,
+}: {
+	label: string;
+	title: string;
+}) {
+	return (
+		<div className="landing-ribbon">
+			<h2>{title}</h2>
+			<span>{label}</span>
+		</div>
+	);
+}
+
+function QuoteNote({
+	quote,
+	tone = "light",
+}: {
+	quote: string;
+	tone?: "light" | "small";
+}) {
+	return (
+		<aside className={`quote-note ${tone === "small" ? "quote-note-small" : ""}`}>
+			<span aria-hidden="true" className="quote-note-pin" />
+			<p>&ldquo;{quote}&rdquo;</p>
+		</aside>
+	);
+}
+
+function WorldNotebookCard({ world }: { world: WritingWorld }) {
+	return (
+		<Link
+			href={getWorldHref(world)}
+			className="world-notebook-card"
+			aria-label={`Read more about ${world.title}`}
+		>
+			<span className="world-badge">{world.kicker}</span>
+			<h3>{world.title}</h3>
+			<p>{world.description}</p>
+			<span className="read-link">Read more {"->"}</span>
+			<span className="world-card-art" aria-hidden="true">
+				<SmartImage
+					src={world.image}
+					alt=""
+					fill
+					sizes="140px"
+					className="object-cover opacity-50"
+					style={{ objectPosition: world.imagePosition ?? "center" }}
+				/>
+			</span>
+		</Link>
+	);
+}
+
+function GalleryBook({ item }: { item: GalleryItem }) {
+	return (
+		<Link
+			href={getGalleryHref(item)}
+			className="gallery-book-card"
+			aria-label={`Open gallery item ${item.title}`}
+		>
+			<span className="gallery-book-cover">
+				<SmartImage
+					src={item.image}
+					alt={item.imageAlt}
+					fill
+					sizes="(min-width: 1024px) 12vw, 48vw"
+					className="object-cover"
+					style={{ objectPosition: item.imagePosition ?? "center" }}
+				/>
+			</span>
+			<strong>{item.title}</strong>
+			<small>{item.type}</small>
+		</Link>
+	);
+}
+
+function BlogLeaf({ post }: { post: BlogPost }) {
+	return (
+		<Link
+			href={getBlogHref(post)}
+			className="blog-leaf-card"
+			aria-label={`Read ${post.title}`}
+		>
+			<span className="blog-leaf-image">
+				<SmartImage
+					src={post.image}
+					alt={post.imageAlt}
+					fill
+					sizes="(min-width: 1024px) 14vw, 80vw"
+					className="object-cover"
+					style={{ objectPosition: post.imagePosition ?? "center" }}
+				/>
+			</span>
+			<span className="blog-category">{post.category}</span>
+			<h3>{post.title}</h3>
+			<p>{post.excerpt}</p>
+			<span className="read-link">Read more {"->"}</span>
+		</Link>
+	);
+}
+
+function ShopShelfItem({ product }: { product: Product }) {
+	return (
+		<Link
+			href={getProductHref(product)}
+			className="shop-shelf-item"
+			aria-label={`Open shop item ${product.title}`}
+		>
+			<span className="shop-shelf-image">
+				<SmartImage
+					src={product.image}
+					alt={product.imageAlt}
+					fill
+					sizes="(min-width: 1024px) 13vw, 68vw"
+					className="object-cover"
+					style={{ objectPosition: product.imagePosition ?? "center" }}
+				/>
+			</span>
+			<span>
+				<strong>{product.title}</strong>
+				<small>{product.description}</small>
+				<em>Shop now {"->"}</em>
+			</span>
+		</Link>
+	);
+}
 
 export default async function Home() {
 	const content = await getYashieContent();
+	const { author, profileFacts, socials, worlds } = content;
 
 	return (
-		<main>
-			<section className="hero-shell relative overflow-hidden border-b border-[var(--copper)]">
-				<Image
-					src="/images/artworks/firelit-water-embrace.png"
-					alt="Painted couple embracing in water before a wall of fire, used as Yashie story-world art."
+		<main className="landing-page">
+			<section className="landing-hero" aria-labelledby="landing-title">
+				<SmartImage
+					src="/images/portfolio/hero-still-life.png"
+					alt="Parchment writing desk with peacock notebook, ink, flowers, and brass objects."
 					fill
 					priority
 					sizes="100vw"
-					className="object-cover object-center"
+					className="object-cover"
 				/>
-				<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(246,221,205,0.96)_0%,rgba(246,221,205,0.9)_44%,rgba(246,221,205,0.18)_74%)]" />
-				<div className="relative mx-auto grid min-h-[640px] max-w-7xl items-center gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-					<div className="max-w-3xl">
+				<div className="landing-hero-content">
+					<div className="landing-hero-copy">
 						<p className="script-label">Namaste, I&apos;m Yashie</p>
-						<h1 className="font-display text-6xl leading-[0.9] text-[var(--navy)] sm:text-7xl lg:text-8xl">
-							{author.name}
-						</h1>
-						<p className="mt-3 font-display text-3xl text-[var(--clay)]">
-							{author.title}
+						<h1 id="landing-title">{author.name}</h1>
+						<p className="landing-byline">Writer * Author * Storyteller</p>
+						<div className="landing-rule" />
+						<p className="landing-intro">
+							I write a lot: essays, reflections, books, stories, poetry,
+							blog posts, and personal writings. Through words, I explore life,
+							memory, identity, emotion, and everything in between.
 						</p>
-						<div className="mt-4 h-px w-64 bg-[var(--copper)]" />
-						<p className="mt-5 max-w-xl text-lg leading-8 text-[var(--ink)]">
-							{author.tagline}
-						</p>
-						<div className="mt-7 flex flex-col gap-3 sm:flex-row">
+						<div className="landing-actions">
 							<Link href="/blog" className="button-primary">
-								Read My Writing
+								Read My Writings
 							</Link>
 							<Link href="/gallery" className="button-secondary">
 								Explore Gallery
 							</Link>
 						</div>
-						<p className="mt-7 inline-block border border-[rgba(184,112,81,0.35)] bg-[rgba(255,246,239,0.72)] px-5 py-3 font-display text-xl italic text-[var(--ink-soft)]">
-							also known online as <span className="text-[var(--clay)]">{author.alias}</span>
+						<p className="alias-slip">
+							also known online as <span>{author.alias}</span>
 						</p>
 					</div>
-
-					<div className="hidden lg:block">
-						<QuotePanel quote={author.quote} />
+					<div className="landing-hero-quote">
+						<QuoteNote quote={author.quote} />
 					</div>
 				</div>
 			</section>
 
-			<section
-				id="worlds"
-				className="bg-[var(--navy)] px-4 py-8 text-[var(--parchment)] sm:px-6 lg:px-8"
-			>
-				<div className="mx-auto max-w-7xl">
-					<h2 className="font-display text-3xl text-[var(--gold)]">
-						Explore My Worlds
-					</h2>
+			<section id="worlds" className="ink-manuscript-band">
+				<div className="landing-container">
+					<SectionRibbon title="Explore My Worlds" label="Essays, books, poetry, posts" />
 					<MobileCarousel
 						label="World"
 						tone="dark"
-						desktopClassName="md:grid md:grid-cols-2 xl:grid-cols-5"
+						desktopClassName="md:grid md:grid-cols-2 md:gap-3 xl:grid-cols-5"
 					>
 						{worlds.map((world) => (
-							<WorldCard key={world.title} world={world} />
+							<WorldNotebookCard key={world.title} world={world} />
 						))}
 					</MobileCarousel>
 				</div>
 			</section>
 
-			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
-				<div className="mx-auto max-w-7xl">
-					<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-						<SectionHeader
-							label="A peek into books, writing, journals, and poetry"
-							title="Gallery"
-							description="Covers, journals, and world fragments arranged like a shelf of secret rooms."
-						/>
-						<Link href="/gallery" className="link-cta">
-							View full gallery {"->"}
-						</Link>
-					</div>
-					<MobileCarousel
-						label="Gallery"
-						desktopClassName="md:grid md:grid-cols-2 md:gap-5 lg:grid-cols-3 xl:grid-cols-6"
-					>
-						{content.galleryItems.slice(0, 6).map((item) => (
-							<GalleryCard key={item.title} item={item} />
-						))}
-					</MobileCarousel>
-				</div>
-			</section>
-
-			<section className="bg-[var(--parchment-rose)] px-4 py-12 sm:px-6 lg:px-8">
-				<div className="mx-auto grid max-w-7xl gap-8 xl:grid-cols-[1fr_320px]">
-					<div className="min-w-0">
-						<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-							<SectionHeader
-								label="Latest thoughts, stories, and posts"
-								title="From the Blog"
-								description="Posts shaped around writing practice, becoming, reading, and reclamation."
-							/>
-							<Link href="/blog" className="link-cta">
-								Visit blog {"->"}
-							</Link>
+			<section className="manuscript-section manuscript-section-framed">
+				<div className="landing-container">
+					<div className="manuscript-paper">
+						<div className="section-heading-line">
+							<h2>Gallery</h2>
+							<p>A peek into my books, writing, journals, and poetry</p>
 						</div>
-						<MobileCarousel
-							label="Post"
-							desktopClassName="md:grid md:gap-5 lg:grid-cols-2"
-						>
-							{content.blogPosts.map((post) => (
-								<BlogCard key={post.title} post={post} />
-							))}
-						</MobileCarousel>
-					</div>
-					<div className="min-w-0 self-stretch">
-						<QuotePanel quote="Words are how I make sense of the world." />
+						<div className="gallery-layout">
+							<MobileCarousel
+								label="Gallery"
+								desktopClassName="md:grid md:grid-cols-3 md:gap-4 xl:grid-cols-6"
+							>
+								{content.galleryItems.slice(0, 6).map((item) => (
+									<GalleryBook key={item.title} item={item} />
+								))}
+							</MobileCarousel>
+							<QuoteNote quote={author.quote} tone="small" />
+						</div>
 					</div>
 				</div>
 			</section>
 
-			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
-				<div className="mx-auto max-w-7xl">
-					<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-						<SectionHeader
-							label="Books, prints, merch, and stationery"
-							title="From My Desk to Yours"
-							description="A shop shelf for signed copies, art prints, notebooks, bookmarks, and merch."
-						/>
-						<Link href="/shop" className="link-cta">
-							Open shop {"->"}
-						</Link>
+			<section className="manuscript-section manuscript-section-blog">
+				<div className="landing-container">
+					<div className="blog-ledger">
+						<div className="blog-ledger-main">
+							<div className="section-heading-line">
+								<h2>From the Blog</h2>
+								<p>Latest thoughts, stories, and posts</p>
+							</div>
+							<MobileCarousel
+								label="Post"
+								desktopClassName="md:grid md:grid-cols-2 md:gap-4 xl:grid-cols-4"
+							>
+								{content.blogPosts.map((post) => (
+									<BlogLeaf key={post.title} post={post} />
+								))}
+							</MobileCarousel>
+						</div>
+						<div className="blog-side-note">
+							<QuoteNote quote="Words are how I make sense of the world." tone="small" />
+							<div className="vertical-tabs" aria-hidden="true">
+								<span>Writing</span>
+								<span>Journal</span>
+								<span>Memories</span>
+							</div>
+						</div>
 					</div>
-					<MobileCarousel
-						label="Shop"
-						desktopClassName="md:grid md:grid-cols-2 md:gap-5 xl:grid-cols-5"
-					>
+				</div>
+			</section>
+
+			<section className="shop-manuscript-strip">
+				<div className="landing-container">
+					<div className="section-heading-line">
+						<h2>From My Desk to Yours</h2>
+						<p>Shop books, prints, merch, and stationery</p>
+					</div>
+					<div className="shop-shelf">
 						{content.products.map((product) => (
-							<ProductCard key={product.title} product={product} />
+							<ShopShelfItem key={product.title} product={product} />
 						))}
-					</MobileCarousel>
+						<div className="shop-peacock" aria-hidden="true">
+							<SmartImage
+								src="/images/artworks/blue-peacock-mascot.png"
+								alt=""
+								fill
+								sizes="180px"
+								className="object-contain"
+							/>
+						</div>
+					</div>
 				</div>
 			</section>
 
-			<section
-				id="about"
-				className="bg-[var(--parchment-rose)] px-4 py-14 sm:px-6 lg:px-8"
-			>
-				<div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_1fr_320px]">
+			<section id="about" className="about-ledger">
+				<div className="landing-container about-ledger-grid">
 					<div>
-						<SectionHeader label="Who is Yashie?" title="About Me" />
-						<p className="text-base leading-8 text-[var(--ink)]">
-							I am Yashie, Yashoda U. Itwaru. I write essays, reflections,
-							books, stories, poetry, blog posts, and personal writing. My work
-							is a love letter to the cultures and identity I once felt pushed
-							to hide, and a rebellion against erasure.
+						<div className="section-heading-line">
+							<h2>About Me</h2>
+							<p>Writing, reading, journaling, traveling, nature, and tea</p>
+						</div>
+						<p className="about-copy">
+							I&apos;m Yashie: Yashoda U. Itwaru. I write essays, reflections,
+							books, stories, poetry, blog posts, and personal writings. I&apos;m
+							drawn to the beauty in everyday moments and the stories we carry
+							within. Writing helps me connect, heal, express, and leave behind
+							pieces of truth for the future.
 						</p>
-						<div className="mt-5 flex flex-wrap gap-2">
-							{author.values.map((value) => (
-								<span key={value} className="tag-chip">
-									{value}
-								</span>
+						<div className="fact-tags">
+							{profileFacts.slice(0, 5).map((fact) => (
+								<span key={fact}>{fact.split(" ")[0]}</span>
 							))}
 						</div>
 					</div>
 
 					<div>
-						<SectionHeader label="Connect" title="Let's Connect" />
-						<p className="text-base leading-7 text-[var(--ink-soft)]">
-							You can find me everywhere as {author.alias}. DMs are welcome so
-							long as everyone is respectful.
-						</p>
-						<Link href="/contact" className="mt-5 button-primary">
-							Contact
-						</Link>
-						<div className="mt-5 grid gap-3 sm:grid-cols-2">
+						<div className="section-heading-line">
+							<h2>Let&apos;s Connect</h2>
+							<p>You can find me everywhere as {author.alias}</p>
+						</div>
+						<div className="social-ledger">
 							{socials.map((social) => (
 								<a
 									key={social.label}
 									href={social.href}
 									target="_blank"
 									rel="noreferrer"
-									className="social-row"
 								>
 									<span className="social-orb">
 										<SocialIcon platform={social.platform} />
 									</span>
-									<span>
-										<span className="block font-semibold text-[var(--navy)]">
-											{social.label}
-										</span>
-										<span className="text-sm text-[var(--ink-soft)]">
-											{social.handle}
-										</span>
-									</span>
+									<strong>{social.label}</strong>
+									<small>{social.handle}</small>
 								</a>
 							))}
+							<a href={`mailto:${author.email}`}>
+								<span className="social-orb">@</span>
+								<strong>Email</strong>
+								<small>{author.email}</small>
+							</a>
 						</div>
 					</div>
 
-					<div className="parchment-card p-5">
-						<p className="script-label">Author Brand</p>
-						<h3 className="font-display text-3xl text-[var(--navy)]">
-							{author.brand}
-						</h3>
-						<div className="relative mt-4 h-24 overflow-hidden border border-[rgba(184,112,81,0.32)] bg-[rgba(255,246,239,0.72)]">
-							<Image
-								src="/images/artworks/yashie-author-signature.png"
-								alt="Maroon Yashoda Itwaru signature mark with a peacock form."
-								fill
-								sizes="320px"
-								className="object-contain p-3"
-							/>
-						</div>
-						<ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--ink-soft)]">
-							{profileFacts.map((fact) => (
-								<li key={fact} className="flex gap-3">
-									<span className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--copper)]" />
-									<span>{fact}</span>
-								</li>
-							))}
-						</ul>
+					<div className="brand-seal">
+						<span className="brand-quill" aria-hidden="true" />
+						<p>Author Brand</p>
+						<h3>{author.brand}</h3>
 					</div>
 				</div>
 			</section>

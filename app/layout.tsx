@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SiteHeader } from "@/app/components/SiteHeader";
+import { getYashieContent } from "@/lib/yashie-delivery";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,20 +32,26 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const content = await getYashieContent();
+
 	return (
 		<html
 			lang="en"
 			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
 		>
 			<body className="min-h-full">
-				<SiteHeader />
+				<SiteHeader author={content.author} navItems={content.navItems} />
 				{children}
-				<SiteFooter />
+				<SiteFooter
+					author={content.author}
+					navItems={content.navItems}
+					socials={content.socials}
+				/>
 				<Analytics />
 			</body>
 		</html>

@@ -10,6 +10,8 @@ import {
   type BlogPost,
   type GalleryItem,
   type Product,
+  type SocialLink,
+  type SocialPlatform,
 } from "@/app/data/portfolio";
 
 type JsonObject = Record<string, unknown>;
@@ -136,6 +138,24 @@ function getMarkdown(entry: DeliveryEntry | null | undefined) {
   return asString(markdown);
 }
 
+function getListBlock(entry: DeliveryEntry | null | undefined, title: string) {
+  const block = entry?.blocks
+    .filter((item) => item.block_type === "list")
+    .find((item) => item.title?.toLowerCase() === title.toLowerCase());
+  const items = asRecord(block?.content).items;
+
+  return Array.isArray(items)
+    ? items.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+    : null;
+}
+
+function getQuoteBlock(entry: DeliveryEntry | null | undefined) {
+  const block = entry?.blocks
+    .filter((item) => item.block_type === "quote")
+    .sort((left, right) => left.sort_order - right.sort_order)[0];
+  return asString(asRecord(block?.content).quote);
+}
+
 function getLeadImage(entry: DeliveryEntry | null | undefined) {
   return (
     entry?.assets
@@ -147,6 +167,85 @@ function getLeadImage(entry: DeliveryEntry | null | undefined) {
 function getImageUrl(entry: DeliveryEntry, apiBaseUrl: string) {
   const image = getLeadImage(entry);
   return absolutizeUrl(apiBaseUrl, image?.assetUrl ?? image?.source_url ?? null);
+}
+
+function buildAuthor(delivery: YashieDeliveryPayload) {
+  const profileEntry =
+    getPublishedEntries(delivery, "profile").find((entry) => entry.slug === "profile") ??
+    getPublishedEntries(delivery, "profile")[0] ??
+    null;
+
+  if (!profileEntry) {
+    return author;
+  }
+
+  const profileData = asRecord(profileEntry.profile_data);
+  const tagline = getMarkdown(profileEntry) ?? profileEntry.summary ?? author.tagline;
+
+  return {
+    ...author,
+    alias: asString(profileData.alias) ?? author.alias,
+    brand: asString(profileData.brand) ?? author.brand,
+    email: asString(profileData.email) ?? author.email,
+    location: asString(profileData.location) ?? author.location,
+    name: profileEntry.title || author.name,
+    quote: getQuoteBlock(profileEntry) ?? author.quote,
+    shortName: asString(profileData.shortName) ?? author.shortName,
+    tagline,
+    title: asString(profileData.title) ?? profileEntry.subtitle ?? author.title,
+    values: getListBlock(profileEntry, "Values") ?? author.values,
+  };
+}
+
+function buildProfileFacts(delivery: YashieDeliveryPayload) {
+  const profileEntry =
+    getPublishedEntries(delivery, "profile").find((entry) => entry.slug === "profile") ??
+    getPublishedEntries(delivery, "profile")[0] ??
+    null;
+
+  return getListBlock(profileEntry, "Profile facts") ?? profileFacts;
+}
+
+function isSocialPlatform(value: string | null): value is SocialPlatform {
+  return Boolean(
+    value &&
+      ["instagram", "threads", "bluesky", "linktree", "goodreads"].includes(value),
+  );
+}
+
+function buildSocials(delivery: YashieDeliveryPayload) {
+  const mapped = getPublishedEntries(delivery, "social-links")
+    .map<SocialLink | null>((entry, index) => {
+      const profileData = asRecord(entry.profile_data);
+      const platform = asString(profileData.platform);
+
+      if (!isSocialPlatform(platform)) {
+        return null;
+      }
+
+      const fallback =
+        socials.find((social) => social.platform === platform) ??
+        socials[index % socials.length] ??
+        socials[0]!;
+
+      return {
+        handle: asString(profileData.handle) ?? entry.summary ?? fallback.handle,
+        href: asString(profileData.href) ?? fallback.href,
+        label: entry.title || fallback.label,
+        platform,
+      };
+    })
+    .filter((social): social is SocialLink => Boolean(social));
+
+  if (mapped.length === 0) {
+    return socials;
+  }
+
+  return mapped.sort((left, right) => {
+    const leftIndex = socials.findIndex((social) => social.platform === left.platform);
+    const rightIndex = socials.findIndex((social) => social.platform === right.platform);
+    return (leftIndex === -1 ? 99 : leftIndex) - (rightIndex === -1 ? 99 : rightIndex);
+  });
 }
 
 function buildBlogPosts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
@@ -227,8 +326,11 @@ export function buildYashieContent(
 
   return {
     ...DEFAULT_YASHIE_CONTENT,
+    author: buildAuthor(delivery),
     blogPosts: buildBlogPosts(delivery, apiBaseUrl),
     galleryItems: buildGalleryItems(delivery, apiBaseUrl),
     products: buildProducts(delivery, apiBaseUrl),
+    profileFacts: buildProfileFacts(delivery),
+    socials: buildSocials(delivery),
   };
 }

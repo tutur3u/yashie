@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { NewsletterForm } from "@/app/components/MockForms";
 import { SocialIcon } from "@/app/components/SocialIcon";
-import { author, navItems, socials } from "@/app/data/portfolio";
+import type { YashieContent } from "@/lib/yashie-content";
 
-export function SiteFooter() {
+export function SiteFooter({
+	author,
+	navItems,
+	socials,
+}: {
+	author: YashieContent["author"];
+	navItems: YashieContent["navItems"];
+	socials: YashieContent["socials"];
+}) {
 	return (
 		<footer className="border-t border-[var(--copper)] bg-[var(--navy)] text-[var(--parchment)]">
 			<div className="edge-frame mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_1.2fr_1fr] lg:px-8">

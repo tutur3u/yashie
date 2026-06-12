@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { author, navItems } from "@/app/data/portfolio";
+import type { YashieContent } from "@/lib/yashie-content";
 
 function isActivePath(pathname: string, href: string) {
 	if (href === "/") {
@@ -17,7 +17,13 @@ function isActivePath(pathname: string, href: string) {
 	return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SiteHeader() {
+export function SiteHeader({
+	author,
+	navItems,
+}: {
+	author: YashieContent["author"];
+	navItems: YashieContent["navItems"];
+}) {
 	const pathname = usePathname();
 	const [openAtPath, setOpenAtPath] = useState<string | null>(null);
 	const menuOpen = openAtPath === pathname;

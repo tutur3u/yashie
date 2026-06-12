@@ -6,7 +6,7 @@ import {
 	QuotePanel,
 	SectionHeader,
 } from "@/app/components/PortfolioSections";
-import { author, getWorldHref, worlds } from "@/app/data/portfolio";
+import { getWorldHref, worlds } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
 
 export const metadata: Metadata = {
@@ -69,7 +69,7 @@ export default async function GalleryPage() {
 						</div>
 					</div>
 					<div className="self-center">
-						<QuotePanel quote={author.quote} />
+						<QuotePanel quote={content.author.quote} />
 					</div>
 				</div>
 			</section>

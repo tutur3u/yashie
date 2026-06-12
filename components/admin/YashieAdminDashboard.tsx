@@ -7,6 +7,10 @@ import type {
   YashieAdminContentItem,
   YashieContentStatus,
 } from "@/lib/yashie-admin-content-model";
+import type {
+  YashieAdminSiteSettings,
+  YashieAdminSiteSettingsInput,
+} from "@/lib/yashie-admin-site-settings";
 import { slugifyYashieContent } from "@/lib/yashie-admin-content-model";
 import type { YashieStorageAnalyticsState } from "@/lib/yashie-storage-analytics";
 import type {
@@ -20,7 +24,12 @@ import {
   scheduleYashieAdminSessionRefresh,
 } from "./yashie-admin-session-client";
 
-type AdminTab = YashieAdminCollectionKey | "account" | "publish" | "storage";
+type AdminTab =
+  | YashieAdminCollectionKey
+  | "account"
+  | "profile"
+  | "publish"
+  | "storage";
 
 type DashboardContent = Record<
   YashieAdminCollectionKey,
@@ -55,12 +64,19 @@ type MutationResponse = {
   items?: YashieAdminContentItem[];
 };
 
+type SiteSettingsMutationResponse = {
+  error?: string;
+  errors?: Record<string, string>;
+  settings?: YashieAdminSiteSettings;
+};
+
 const contentTabs: YashieAdminCollectionKey[] = ["blog", "gallery", "shop"];
 
 const tabLabels: Array<{ id: AdminTab; label: string }> = [
   { id: "blog", label: YASHIE_ADMIN_COPY.tabs.blog },
   { id: "gallery", label: YASHIE_ADMIN_COPY.tabs.gallery },
   { id: "shop", label: YASHIE_ADMIN_COPY.tabs.shop },
+  { id: "profile", label: YASHIE_ADMIN_COPY.tabs.profile },
   { id: "publish", label: YASHIE_ADMIN_COPY.tabs.publish },
   { id: "storage", label: YASHIE_ADMIN_COPY.tabs.storage },
   { id: "account", label: YASHIE_ADMIN_COPY.tabs.account },
@@ -881,6 +897,277 @@ function TextAreaField<TName extends keyof Draft>({
   );
 }
 
+function siteSettingsDraftFromSettings(
+  settings: YashieAdminSiteSettings,
+): YashieAdminSiteSettingsInput {
+  return {
+    profile: {
+      alias: settings.profile.alias,
+      brand: settings.profile.brand,
+      email: settings.profile.email,
+      location: settings.profile.location,
+      name: settings.profile.name,
+      shortName: settings.profile.shortName,
+      status: settings.profile.status,
+      summary: settings.profile.summary,
+      title: settings.profile.title,
+    },
+    socials: settings.socials.map((social) => ({
+      handle: social.handle,
+      href: social.href,
+      label: social.label,
+      platform: social.platform,
+      status: social.status,
+    })),
+  };
+}
+
+function SettingsTextField({
+  error,
+  label,
+  onChange,
+  placeholder,
+  required,
+  type = "text",
+  value,
+}: {
+  error?: string;
+  label: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  type?: string;
+  value: string;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+        {label}
+      </span>
+      <input
+        className={`min-h-11 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+          error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
+        }`}
+        onChange={(event) => onChange(event.currentTarget.value)}
+        placeholder={placeholder}
+        required={required}
+        type={type}
+        value={value}
+      />
+      {error ? <span className="text-xs text-red-700">{error}</span> : null}
+    </label>
+  );
+}
+
+function SiteSettingsPanel({
+  settings,
+  onSaved,
+}: {
+  settings: YashieAdminSiteSettings;
+  onSaved: (settings: YashieAdminSiteSettings) => void;
+}) {
+  const [draft, setDraft] = useState(() =>
+    siteSettingsDraftFromSettings(settings),
+  );
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [message, setMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setDraft(siteSettingsDraftFromSettings(settings));
+  }, [settings]);
+
+  const updateProfile = (
+    name: keyof YashieAdminSiteSettingsInput["profile"],
+    value: string,
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      profile: {
+        ...current.profile,
+        [name]: value,
+      },
+    }));
+  };
+
+  const updateSocial = (
+    index: number,
+    name: keyof YashieAdminSiteSettingsInput["socials"][number],
+    value: string,
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      socials: current.socials.map((social, socialIndex) =>
+        socialIndex === index ? { ...social, [name]: value } : social,
+      ),
+    }));
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setFieldErrors({});
+    setMessage(null);
+
+    try {
+      const response = await adminFetch("/api/admin/site-settings", {
+        body: JSON.stringify(draft),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+      });
+      const payload = (await response
+        .json()
+        .catch(() => ({}))) as SiteSettingsMutationResponse;
+
+      if (!response.ok || !payload.settings) {
+        setFieldErrors(payload.errors ?? {});
+        setMessage(readFriendlyError(payload, YASHIE_ADMIN_COPY.errors.save));
+        return;
+      }
+
+      onSaved(payload.settings);
+      setMessage(YASHIE_ADMIN_COPY.profile.saved);
+    } catch {
+      setMessage(YASHIE_ADMIN_COPY.errors.save);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form className="grid gap-6" onSubmit={submit}>
+      <div className="flex flex-col gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="script-label">{YASHIE_ADMIN_COPY.profile.title}</p>
+          <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+            {YASHIE_ADMIN_COPY.profile.heading}
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
+            {YASHIE_ADMIN_COPY.profile.description}
+          </p>
+        </div>
+        <button
+          className="button-primary min-w-28 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={submitting}
+          type="submit"
+        >
+          {submitting
+            ? YASHIE_ADMIN_COPY.actions.saving
+            : YASHIE_ADMIN_COPY.actions.save}
+        </button>
+      </div>
+
+      {message ? (
+        <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
+          {message}
+        </div>
+      ) : null}
+
+      <section className="grid gap-4">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+          {YASHIE_ADMIN_COPY.profile.title}
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <SettingsTextField
+            error={fieldErrors["profile.name"]}
+            label="Author name"
+            onChange={(value) => updateProfile("name", value)}
+            required
+            value={draft.profile.name}
+          />
+          <SettingsTextField
+            error={fieldErrors["profile.title"]}
+            label="Public title"
+            onChange={(value) => updateProfile("title", value)}
+            required
+            value={draft.profile.title}
+          />
+          <SettingsTextField
+            error={fieldErrors["profile.alias"]}
+            label="Public handle"
+            onChange={(value) => updateProfile("alias", value)}
+            required
+            value={draft.profile.alias}
+          />
+          <SettingsTextField
+            error={fieldErrors["profile.email"]}
+            label="Email"
+            onChange={(value) => updateProfile("email", value)}
+            required
+            type="email"
+            value={draft.profile.email}
+          />
+          <SettingsTextField
+            error={fieldErrors["profile.brand"]}
+            label="Brand"
+            onChange={(value) => updateProfile("brand", value)}
+            required
+            value={draft.profile.brand}
+          />
+          <SettingsTextField
+            error={fieldErrors["profile.shortName"]}
+            label="Short name"
+            onChange={(value) => updateProfile("shortName", value)}
+            required
+            value={draft.profile.shortName}
+          />
+        </div>
+        <label className="grid gap-2">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+            Intro line
+          </span>
+          <textarea
+            className="min-h-28 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
+            onChange={(event) => updateProfile("summary", event.currentTarget.value)}
+            value={draft.profile.summary}
+          />
+        </label>
+      </section>
+
+      <section className="grid gap-4">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+          {YASHIE_ADMIN_COPY.profile.links}
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {draft.socials.map((social, index) => (
+            <div
+              className="grid gap-4 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
+              key={social.platform}
+            >
+              <div>
+                <p className="font-display text-3xl leading-none text-[var(--navy)]">
+                  {social.label}
+                </p>
+                <p className="mt-1 text-sm capitalize text-[var(--ink-soft)]">
+                  {social.platform}
+                </p>
+              </div>
+              <SettingsTextField
+                error={fieldErrors[`socials.${index}.handle`]}
+                label="Handle"
+                onChange={(value) => updateSocial(index, "handle", value)}
+                required
+                value={social.handle}
+              />
+              <SettingsTextField
+                error={fieldErrors[`socials.${index}.href`]}
+                label="Link"
+                onChange={(value) => updateSocial(index, "href", value)}
+                required
+                type="url"
+                value={social.href}
+              />
+            </div>
+          ))}
+        </div>
+        {fieldErrors.socials ? (
+          <span className="text-xs text-red-700">{fieldErrors.socials}</span>
+        ) : null}
+      </section>
+    </form>
+  );
+}
+
 function ContentList({
   collectionKey,
   items,
@@ -1368,6 +1655,7 @@ function ContentForm({
 
 export function YashieAdminDashboard({
   initialContent,
+  initialSiteSettings,
   sessionExpiresAt,
   sessionRefreshEarlySeconds,
   storageAnalytics,
@@ -1375,6 +1663,7 @@ export function YashieAdminDashboard({
   userEmail,
 }: {
   initialContent: DashboardContent;
+  initialSiteSettings: YashieAdminSiteSettings;
   sessionExpiresAt: string;
   sessionRefreshEarlySeconds?: number;
   storageAnalytics: YashieStorageAnalyticsState;
@@ -1383,6 +1672,7 @@ export function YashieAdminDashboard({
 }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("blog");
   const [content, setContent] = useState(initialContent);
+  const [siteSettings, setSiteSettings] = useState(initialSiteSettings);
   const [selectedIds, setSelectedIds] = useState<
     Record<YashieAdminCollectionKey, string | null>
   >({
@@ -1541,6 +1831,15 @@ export function YashieAdminDashboard({
           : null}
 
         {activeTab === "publish" ? <YashieAdminSyncPanel /> : null}
+
+        {activeTab === "profile" ? (
+          <section className="parchment-card p-5">
+            <SiteSettingsPanel
+              onSaved={setSiteSettings}
+              settings={siteSettings}
+            />
+          </section>
+        ) : null}
 
         {activeTab === "storage" ? (
           <StoragePanel

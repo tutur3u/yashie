@@ -7,6 +7,7 @@ import {
   readYashieAdminContent,
   type YashieAdminStudioPayload,
 } from "@/lib/yashie-admin-content-model";
+import { readYashieAdminSiteSettings } from "@/lib/yashie-admin-site-settings";
 import { resolveYashieAdminTargetKey } from "@/lib/yashie-config";
 import {
   getYashieAdminSessionReadState,
@@ -66,6 +67,7 @@ export default async function AdminPage({
         gallery: readYashieAdminContent(studio, "gallery"),
         shop: readYashieAdminContent(studio, "shop"),
       }}
+      initialSiteSettings={readYashieAdminSiteSettings(studio)}
       sessionExpiresAt={session.expiresAt}
       sessionRefreshEarlySeconds={session.refreshEarlySeconds}
       storageAnalytics={storageAnalytics}

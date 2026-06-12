@@ -27,6 +27,20 @@ const manifest = {
         summary: "Profile summary",
         title: "Profile",
       },
+      {
+        blocks: [],
+        collectionSlug: "social-links",
+        profileData: {
+          handle: "@inkedbyyashie",
+          href: "https://www.instagram.com/inkedbyyashie",
+          platform: "instagram",
+        },
+        slug: "instagram",
+        stableSourceId: "yashie:social-links:instagram",
+        status: "published",
+        summary: "@inkedbyyashie",
+        title: "Instagram",
+      },
     ],
   },
   schema: {
@@ -36,6 +50,11 @@ const manifest = {
         collection_type: "profile",
         slug: "profile",
         title: "Profile",
+      },
+      {
+        collection_type: "social-links",
+        slug: "social-links",
+        title: "Social Links",
       },
     ],
   },
@@ -85,6 +104,9 @@ type ManifestRequestPayload = {
     content: {
       entries: Array<{
         assets?: ManifestAssetPayload[];
+        collectionSlug?: string;
+        profileData?: Record<string, unknown>;
+        slug?: string;
       }>;
     };
   };
@@ -251,11 +273,28 @@ describe("Yashie admin sync apply route", () => {
 
     const applyBody = parseBody(findCall(calls, "/external-projects/sync/apply"));
     const applyAsset = applyBody.manifest.content.entries[0]?.assets?.[0];
+    const applyEntries = applyBody.manifest.content.entries;
 
     expect(applyBody.force).toBe(false);
     expect(applyAsset?.sourceUrl).toBeNull();
     expect(applyAsset?.storagePath).toBe(
       "external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
+    );
+    expect(applyEntries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collectionSlug: "profile",
+          slug: "profile",
+        }),
+        expect.objectContaining({
+          collectionSlug: "social-links",
+          profileData: expect.objectContaining({
+            handle: "@inkedbyyashie",
+            href: "https://www.instagram.com/inkedbyyashie",
+            platform: "instagram",
+          }),
+        }),
+      ]),
     );
   });
 });

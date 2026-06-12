@@ -14,6 +14,95 @@ describe("Yashie public content", () => {
         workspaceId: "workspace-1",
         collections: [
           {
+            collection_type: "profile",
+            config: null,
+            description: null,
+            id: "collection-profile",
+            slug: "profile",
+            title: "Profile",
+            entries: [
+              {
+                assets: [],
+                blocks: [
+                  {
+                    block_type: "markdown",
+                    content: { markdown: "Published profile intro." },
+                    entry_id: "profile-1",
+                    id: "block-profile-intro",
+                    sort_order: 0,
+                    title: "Tagline",
+                  },
+                  {
+                    block_type: "quote",
+                    content: { quote: "Published quote." },
+                    entry_id: "profile-1",
+                    id: "block-profile-quote",
+                    sort_order: 1,
+                    title: "Quote",
+                  },
+                  {
+                    block_type: "list",
+                    content: { items: ["Published value"] },
+                    entry_id: "profile-1",
+                    id: "block-profile-values",
+                    sort_order: 2,
+                    title: "Values",
+                  },
+                  {
+                    block_type: "list",
+                    content: { items: ["Published fact"] },
+                    entry_id: "profile-1",
+                    id: "block-profile-facts",
+                    sort_order: 3,
+                    title: "Profile facts",
+                  },
+                ],
+                id: "profile-1",
+                metadata: {},
+                profile_data: {
+                  alias: "@published",
+                  brand: "Published Brand",
+                  email: "published@example.com",
+                  shortName: "Published",
+                  title: "Published Writer",
+                },
+                published_at: null,
+                slug: "profile",
+                status: "published",
+                subtitle: "Published Writer",
+                summary: "Published summary.",
+                title: "Published Name",
+              },
+            ],
+          },
+          {
+            collection_type: "social-links",
+            config: null,
+            description: null,
+            id: "collection-socials",
+            slug: "social-links",
+            title: "Social Links",
+            entries: [
+              {
+                assets: [],
+                blocks: [],
+                id: "social-instagram",
+                metadata: {},
+                profile_data: {
+                  handle: "@published",
+                  href: "https://example.com/published",
+                  platform: "instagram",
+                },
+                published_at: null,
+                slug: "instagram",
+                status: "published",
+                subtitle: "instagram",
+                summary: "@published",
+                title: "Instagram",
+              },
+            ],
+          },
+          {
             collection_type: "blog-posts",
             config: null,
             description: null,
@@ -135,6 +224,28 @@ describe("Yashie public content", () => {
         price: "$40",
         slug: "published-shop",
         title: "Published Shop",
+      }),
+    );
+    expect(content.author).toEqual(
+      expect.objectContaining({
+        alias: "@published",
+        brand: "Published Brand",
+        email: "published@example.com",
+        name: "Published Name",
+        quote: "Published quote.",
+        shortName: "Published",
+        tagline: "Published profile intro.",
+        title: "Published Writer",
+        values: ["Published value"],
+      }),
+    );
+    expect(content.profileFacts).toEqual(["Published fact"]);
+    expect(content.socials[0]).toEqual(
+      expect.objectContaining({
+        handle: "@published",
+        href: "https://example.com/published",
+        label: "Instagram",
+        platform: "instagram",
       }),
     );
   });

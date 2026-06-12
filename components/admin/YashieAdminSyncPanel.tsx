@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { adminFetch } from "./yashie-admin-session-client";
 import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
 
 async function readAdminError(response: Response) {
@@ -11,7 +12,7 @@ async function readAdminError(response: Response) {
 }
 
 async function postAdminJson<T>(url: string, body?: unknown) {
-  const response = await fetch(url, {
+  const response = await adminFetch(url, {
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: "no-store",
     headers: {

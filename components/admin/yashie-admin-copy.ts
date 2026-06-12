@@ -37,6 +37,13 @@ export const YASHIE_ADMIN_COPY = {
     delete: "We could not delete this item. Please try again.",
     save: "We could not save this item. Please try again.",
   },
+  profile: {
+    description: "Update the name, public handle, email, and links visitors see.",
+    heading: "Profile and links",
+    links: "Links",
+    saved: "Saved.",
+    title: "Public profile",
+  },
   publish: {
     check: "Check for changes",
     description:
@@ -86,6 +93,7 @@ export const YASHIE_ADMIN_COPY = {
     blog: "Blog",
     gallery: "Gallery",
     publish: "Publish",
+    profile: "Profile & Links",
     shop: "Shop",
     storage: "Storage",
   },

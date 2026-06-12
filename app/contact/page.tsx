@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ContactForm } from "@/app/components/MockForms";
 import { PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
 import { SocialIcon } from "@/app/components/SocialIcon";
-import { author, socials } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 export const metadata: Metadata = {
 	title: "Contact | Yashoda U. Itwaru",
@@ -11,7 +11,9 @@ export const metadata: Metadata = {
 		"Mock contact page for Yashoda U. Itwaru, also known as InkedByYashie.",
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+	const { author, socials } = await getYashieContent();
+
 	return (
 		<main>
 			<PageIntro
