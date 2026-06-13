@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
 	DetailCopyBlock,
-	DetailFeatureGrid,
 	DetailPageShell,
 } from "@/app/components/DetailPageShell";
 import {
@@ -66,7 +65,7 @@ export default async function GalleryDetailPage({ params }: DetailParams) {
 			image={item.image}
 			imageAlt={item.imageAlt}
 			imagePosition={item.imagePosition}
-			meta={[item.type, "Gallery piece", "Concept art"]}
+			meta={[item.type]}
 			nextHref={nextItem ? getGalleryHref(nextItem) : undefined}
 			nextLabel={nextItem ? nextItem.title : undefined}
 			title={item.title}
@@ -75,27 +74,6 @@ export default async function GalleryDetailPage({ params }: DetailParams) {
 				<p>
 					{item.description}
 				</p>
-				<p>
-					The piece belongs to the portfolio&apos;s shelf of book-world fragments:
-					part story prompt, part visual memory, and part future anchor for
-					chapters, collections, or world notes.
-				</p>
-				<DetailFeatureGrid
-					items={[
-						{
-							label: "Format",
-							text: item.type,
-						},
-						{
-							label: "Use",
-							text: "A concept surface for covers, scene notes, bookish keepsakes, and portfolio storytelling.",
-						},
-						{
-							label: "Texture",
-							text: "A larger image treatment with copper framing, parchment copy, and direct next-piece navigation.",
-						},
-					]}
-				/>
 			</DetailCopyBlock>
 		</DetailPageShell>
 	);

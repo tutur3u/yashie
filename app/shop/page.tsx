@@ -6,7 +6,7 @@ import { getYashieContent } from "@/lib/yashie-delivery";
 export const metadata: Metadata = {
 	title: "Shop | Yashoda U. Itwaru",
 	description:
-		"Mock shop for signed books, stationery, bookmarks, art prints, and author merch from InkedByYashie.",
+		"Shop for signed books, stationery, bookmarks, art prints, and author merch from InkedByYashie.",
 };
 
 export default async function ShopPage() {
@@ -16,7 +16,7 @@ export default async function ShopPage() {
 		<main>
 			<PageIntro
 				title="From My Desk to Yours"
-				description="A frontend-only mock shop for books, prints, stationery, bookmarks, and merch."
+				description="Books, prints, stationery, bookmarks, and merch from the InkedByYashie shelf."
 				image="/images/artworks/chibi-forest-campfire.jpg"
 			/>
 
@@ -41,14 +41,14 @@ export default async function ShopPage() {
 						<SectionHeader
 							label="Merch language"
 							title="Bookish, soft, and sharp"
-							description="The mock shop leans into clothbound textures, peacock ornament, botanical print work, and practical writer desk objects."
+							description="The shop leans into clothbound textures, peacock ornament, botanical print work, and practical writer desk objects."
 						/>
 						<div className="grid gap-4 sm:grid-cols-3">
 							{["Signed", "Printed", "Carried"].map((word) => (
 								<div key={word} className="parchment-card p-5 text-center">
 									<p className="font-display text-3xl text-[var(--navy)]">{word}</p>
 									<p className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--clay)]">
-										mock item family
+										item family
 									</p>
 								</div>
 							))}

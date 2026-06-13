@@ -12,7 +12,7 @@ import { getYashieContent } from "@/lib/yashie-delivery";
 export const metadata: Metadata = {
 	title: "Gallery | Yashoda U. Itwaru",
 	description:
-		"Mock gallery of book worlds, journals, poetry collections, and personal writing from InkedByYashie.",
+		"Gallery of book worlds, journals, poetry collections, and personal writing from InkedByYashie.",
 };
 
 export default async function GalleryPage() {
@@ -22,7 +22,7 @@ export default async function GalleryPage() {
 		<main>
 			<PageIntro
 				title="Gallery"
-				description="A mock shelf of covers, journals, and writing-world fragments for the InkedByYashie portfolio."
+				description="A shelf of covers, journals, and writing-world fragments for the InkedByYashie portfolio."
 			/>
 
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">

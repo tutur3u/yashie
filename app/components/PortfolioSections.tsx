@@ -150,7 +150,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
 		<Link
 			href={getBlogHref(post)}
 			className="parchment-card group grid overflow-hidden transition duration-200 hover:-translate-y-1 hover:border-[var(--gold)] focus:outline-none focus:ring-2 focus:ring-[var(--gold)] focus:ring-offset-2 focus:ring-offset-[var(--parchment)] sm:grid-cols-[0.95fr_1fr]"
-			aria-label={`Read mock post ${post.title}`}
+			aria-label={`Read post ${post.title}`}
 		>
 			<div className="relative min-h-64 overflow-hidden border-b border-[rgba(184,112,81,0.45)] sm:border-b-0 sm:border-r">
 				<SmartImage
@@ -179,7 +179,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
 					{post.excerpt}
 				</p>
 				<p className="mt-4 inline-block text-sm font-semibold text-[var(--clay)]">
-					Read mock post {"->"}
+					Read post {"->"}
 				</p>
 			</div>
 		</Link>
@@ -218,7 +218,7 @@ export function ProductCard({ product }: { product: Product }) {
 					{product.description}
 				</p>
 				<p className="mt-5 text-sm font-semibold text-[var(--clay)]">
-					View mock item {"->"}
+					View item {"->"}
 				</p>
 			</div>
 		</Link>

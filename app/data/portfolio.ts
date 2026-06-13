@@ -119,7 +119,7 @@ export const worlds: WritingWorld[] = [
 		description:
 			"Fiction, non-fiction, and tales stitched with faith, truth, grief, and devotion.",
 		detail:
-			"Mock previews of dark fantasy worlds, short stories, and character-centered mythic arcs.",
+			"Previews of dark fantasy worlds, short stories, and character-centered mythic arcs.",
 		image: "/images/artworks/anirvrita-samsaya-vadha-collage.png",
 		imageAlt: "Three-panel story collage with forest, temple, and urban fantasy scenes.",
 		imagePosition: "center",
@@ -230,7 +230,7 @@ export const blogPosts: BlogPost[] = [
 		category: "Blog",
 		date: "Apr 27, 2024",
 		excerpt:
-			"A mock reading list of books that rewired thought, craft, and tenderness.",
+			"A reading list of books that rewired thought, craft, and tenderness.",
 		image: "/images/artworks/chibi-family-cast.jpg",
 		imageAlt: "Warm chibi-style cast scene gathered around a blue peacock mascot.",
 		imagePosition: "center 18%",
@@ -252,7 +252,7 @@ export const products: Product[] = [
 	{
 		title: "Signed Copy of My Book",
 		price: "$28",
-		description: "A mock autographed edition with a tucked-in thank-you note.",
+		description: "An autographed edition with a tucked-in thank-you note.",
 		image: "/images/artworks/yashie-author-signature.png",
 		imageAlt: "Maroon Yashoda Itwaru signature mark with a peacock form.",
 		imagePosition: "center",
@@ -267,7 +267,7 @@ export const products: Product[] = [
 	{
 		title: "Stationery & Notebooks",
 		price: "$16",
-		description: "Mock notebooks for writers, dreamers, and annotators.",
+		description: "Notebooks for writers, dreamers, and annotators.",
 		image: "/images/artworks/lotus-blade-ornament.jpg",
 		imageAlt: "Black line art of an ornamental blade with lotus flowers.",
 	},
@@ -282,7 +282,7 @@ export const products: Product[] = [
 	{
 		title: "Merch Collection",
 		price: "$34",
-		description: "A mock tote and small goods for carrying the book world with you.",
+		description: "A tote and small goods for carrying the book world with you.",
 		image: "/images/artworks/chibi-forest-campfire.jpg",
 		imageAlt: "Chibi-style forest campsite scene with two figures beside a campfire.",
 		imagePosition: "center 15%",

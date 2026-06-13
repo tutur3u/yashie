@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
 	DetailCopyBlock,
-	DetailFeatureGrid,
 	DetailPageShell,
 } from "@/app/components/DetailPageShell";
 import {
@@ -61,23 +60,18 @@ export default async function ProductDetailPage({ params }: DetailParams) {
 			backHref="/shop"
 			backLabel="Back to shop"
 			description={product.description}
-			eyebrow="Mock shop item"
+			eyebrow="Shop item"
 			image={product.image}
 			imageAlt={product.imageAlt}
 			imagePosition={product.imagePosition}
-			meta={[product.price, "Desk shelf", "Mock product"]}
+			meta={[product.price]}
 			nextHref={nextProduct ? getProductHref(nextProduct) : undefined}
 			nextLabel={nextProduct ? nextProduct.title : undefined}
 			title={product.title}
 		>
-			<DetailCopyBlock label="Shelf note" title={`${product.price} concept item`}>
+			<DetailCopyBlock label="Shelf note" title={product.title}>
 				<p>
 					{product.description}
-				</p>
-				<p>
-					This detail page gives the item a proper stop in the shop flow, with
-					price, mood, image, and next-item movement all available without
-					dropping the reader back into the grid.
 				</p>
 				<div className="flex flex-col gap-3 sm:flex-row">
 					<Link href="/contact" className="button-primary">
@@ -87,22 +81,6 @@ export default async function ProductDetailPage({ params }: DetailParams) {
 						Browse shop
 					</Link>
 				</div>
-				<DetailFeatureGrid
-					items={[
-						{
-							label: "Price",
-							text: product.price,
-						},
-						{
-							label: "Finish",
-							text: "Parchment, copper, navy, and peacock-world visual language.",
-						},
-						{
-							label: "Status",
-							text: "Mock storefront item ready for future checkout or preorder wiring.",
-						},
-					]}
-				/>
 			</DetailCopyBlock>
 		</DetailPageShell>
 	);

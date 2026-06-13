@@ -74,14 +74,6 @@ export default async function BlogPostPage({ params }: DetailParams) {
 					<p>
 						{post.body ?? post.excerpt}
 					</p>
-					<p>
-						The writing lane is personal and reflective: a place for craft,
-						memory, books, poetry, culture, and the private weather behind a
-						larger fantasy world.
-					</p>
-					<blockquote className="border-l-4 border-[var(--copper)] bg-[rgba(255,246,239,0.58)] px-5 py-4 font-display text-3xl leading-10 text-[var(--navy)]">
-						Words become a room when a reader is invited to stay.
-					</blockquote>
 					<DetailFeatureGrid
 						items={[
 							{

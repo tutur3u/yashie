@@ -468,7 +468,7 @@ export const yashieExternalProjectManifest = {
       {
         assetTypes: ["image"],
         collection_type: "shop-products",
-        description: "Mock shop items and author merchandise concepts.",
+        description: "Shop items and author merchandise.",
         profileFields: productFields,
         slug: "shop-products",
         title: "Shop Products",

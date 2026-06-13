@@ -18,8 +18,7 @@ export function SiteFooter({
 				<div>
 					<p className="font-display text-3xl text-[var(--gold)]">Stay in the Loop</p>
 					<p className="mt-2 max-w-sm text-sm leading-6 text-[var(--parchment-soft)]">
-						Get mock essays, poems, stories, and update notes straight to your
-						inbox.
+						Get essays, poems, stories, and update notes straight to your inbox.
 					</p>
 				</div>
 

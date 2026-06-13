@@ -8,7 +8,7 @@ import { getYashieContent } from "@/lib/yashie-delivery";
 export const metadata: Metadata = {
 	title: "Blog | Yashoda U. Itwaru",
 	description:
-		"Mock essays, reflections, poetry notes, and bookish posts from InkedByYashie.",
+		"Essays, reflections, poetry notes, and bookish posts from InkedByYashie.",
 };
 
 export default async function BlogPage() {
@@ -18,7 +18,7 @@ export default async function BlogPage() {
 		<main>
 			<PageIntro
 				title="From the Blog"
-				description="Mock essays and reflections about culture, writing, memory, books, and the soft violence of becoming yourself."
+				description="Essays and reflections about culture, writing, memory, books, and becoming yourself."
 				image="/images/artworks/chibi-family-cast.jpg"
 			/>
 
@@ -45,7 +45,7 @@ export default async function BlogPage() {
 						<SectionHeader
 							label="Latest posts"
 							title="Essays, poems, and notes"
-							description="A living notebook for culture, writing, memory, books, and the private weather behind a larger fantasy world."
+							description="A living notebook for culture, writing, memory, books, and personal updates."
 						/>
 						<div className="grid gap-6">
 							{content.blogPosts.map((post) => (
@@ -81,7 +81,7 @@ export default async function BlogPage() {
 											{topic}
 										</p>
 										<p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-											A mock editorial lane for future essays and updates.
+											Essays and updates in this writing lane.
 										</p>
 									</div>
 								),
