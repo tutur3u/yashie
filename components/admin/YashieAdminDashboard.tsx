@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import type {
   YashieAdminCollectionKey,
   YashieAdminContentItem,
@@ -36,6 +37,8 @@ import {
 } from "./yashie-admin-save-progress";
 import {
   canSaveYashieEditor,
+  getYashieDateInputValue,
+  getYashieDisplayDateFromInput,
   getYashieEditorSteps,
   getYashieEditorCloseIntent,
   hasYashieEditorDirtyChanges,
@@ -1063,6 +1066,41 @@ function TextField<TName extends keyof Draft>({
   );
 }
 
+function DateField<TName extends keyof Draft>({
+  disabled,
+  label,
+  name,
+  onChange,
+  value,
+}: {
+  disabled?: boolean;
+  label: string;
+  name: TName;
+  onChange: (name: TName, value: string) => void;
+  value: string;
+}) {
+  return (
+    <label className="grid min-w-0 gap-2">
+      <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+        {label}
+      </span>
+      <input
+        className="min-h-11 w-full min-w-0 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]"
+        disabled={disabled}
+        name={name}
+        onChange={(event) =>
+          onChange(name, getYashieDisplayDateFromInput(event.currentTarget.value))
+        }
+        type="date"
+        value={getYashieDateInputValue(value)}
+      />
+      {value ? (
+        <span className="truncate text-xs text-[var(--ink-soft)]">{value}</span>
+      ) : null}
+    </label>
+  );
+}
+
 function SelectField<TName extends keyof Draft>({
   disabled,
   label,
@@ -1789,6 +1827,13 @@ function ContentForm({
       } else {
         setDraft((current) => ({ ...current, removeImage: false }));
       }
+
+      setSaveProgress({
+        label: "",
+        percent: 0,
+        status: "idle",
+      });
+      toast.success(YASHIE_ADMIN_COPY.editor.saved);
     } catch (error) {
       const saveError = error as SaveFlowError;
       const fallback =
@@ -1807,6 +1852,7 @@ function ContentForm({
         statusCode: saveError.statusCode,
         step: saveError.step ?? current.step,
       }));
+      toast.error(YASHIE_ADMIN_COPY.errors.save);
     } finally {
       setSubmitting(false);
     }
@@ -1893,7 +1939,9 @@ function ContentForm({
         </div>
       </div>
 
-      <SaveProgressPanel state={saveProgress} />
+      {saveProgress.status === "running" || saveProgress.status === "error" ? (
+        <SaveProgressPanel state={saveProgress} />
+      ) : null}
 
       {message ? (
         <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
@@ -2015,7 +2063,7 @@ function ContentForm({
               placeholder="Choose a category"
               value={draft.category}
             />
-            <TextField
+            <DateField
               disabled={isBusy}
               label="Date"
               name="date"
@@ -2276,6 +2324,21 @@ export function YashieAdminDashboard({
     [sessionExpiresAt, sessionRefreshEarlySeconds],
   );
 
+  useEffect(() => {
+    if (!editorTarget) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [editorTarget]);
+
   const refreshContent = async () => {
     const nextContent = { ...content };
 
@@ -2434,7 +2497,7 @@ export function YashieAdminDashboard({
 
         {editorTarget ? (
           <div
-            className="fixed inset-0 z-50 grid bg-[rgba(12,31,52,0.58)] px-3 py-4 backdrop-blur-sm sm:px-6"
+            className="fixed inset-0 z-50 grid overscroll-contain bg-[rgba(12,31,52,0.58)] px-3 py-4 backdrop-blur-sm sm:px-6"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) {
                 requestCloseEditor();
@@ -2445,7 +2508,7 @@ export function YashieAdminDashboard({
             <section
               aria-label={`${editorTarget.itemId ? "Edit" : "Create"} ${sectionCopy[editorTarget.collectionKey].singular}`}
               aria-modal="true"
-              className="parchment-card mx-auto grid max-h-[calc(100vh-2rem)] w-full max-w-5xl min-w-0 self-center overflow-y-auto p-4 shadow-[0_28px_90px_rgba(12,31,52,0.38)] sm:p-5"
+              className="parchment-card mx-auto grid max-h-[calc(100vh-2rem)] w-full max-w-5xl min-w-0 overscroll-contain self-center overflow-y-auto p-4 shadow-[0_28px_90px_rgba(12,31,52,0.38)] sm:p-5"
               role="dialog"
             >
               <ContentForm

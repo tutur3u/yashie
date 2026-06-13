@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SiteHeader } from "@/app/components/SiteHeader";
+import { YashieToaster } from "@/app/components/YashieToaster";
 import { getYashieContent } from "@/lib/yashie-delivery";
 import "./globals.css";
 
@@ -52,6 +53,7 @@ export default async function RootLayout({
 					navItems={content.navItems}
 					socials={content.socials}
 				/>
+				<YashieToaster />
 				<Analytics />
 			</body>
 		</html>

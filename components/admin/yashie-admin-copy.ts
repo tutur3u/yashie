@@ -31,6 +31,7 @@ export const YASHIE_ADMIN_COPY = {
     imageHelp: "Choose a clear picture visitors will recognize.",
     keepEditing: "Keep editing",
     publicView: "Visitor view",
+    saved: "Saved.",
     steps: {
       basics: {
         description: "Title, link, and visibility",

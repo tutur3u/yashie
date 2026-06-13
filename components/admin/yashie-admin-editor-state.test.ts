@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
   canSaveYashieEditor,
+  getYashieDateInputValue,
+  getYashieDisplayDateFromInput,
   getYashieEditorSteps,
   getYashieEditorCloseIntent,
   hasYashieEditorDirtyChanges,
@@ -80,5 +82,17 @@ describe("Yashie admin editor state", () => {
     expect(
       getYashieEditorSteps({ collectionKey: "categories", hasItem: false }),
     ).toEqual(["basics", "details"]);
+  });
+
+  test("normalizes display dates for the native date picker", () => {
+    expect(getYashieDateInputValue("Apr 27, 2024")).toBe("2024-04-27");
+    expect(getYashieDateInputValue("June 13, 2026")).toBe("2026-06-13");
+    expect(getYashieDateInputValue("not a date")).toBe("");
+  });
+
+  test("formats picked dates back to visitor-friendly copy", () => {
+    expect(getYashieDisplayDateFromInput("2024-05-12")).toBe("May 12, 2024");
+    expect(getYashieDisplayDateFromInput("2026-06-13")).toBe("Jun 13, 2026");
+    expect(getYashieDisplayDateFromInput("2026-02-31")).toBe("");
   });
 });

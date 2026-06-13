@@ -300,16 +300,12 @@ async function saveImageAsset({
   const upload = await uploadImageFile(client, workspaceId, input);
   const payload = buildImageAssetPayload({ entryId, input, upload });
 
-  if (item?.imageAssetId) {
-    await client.updateAsset(workspaceId, item.imageAssetId, {
-      ...payload,
-      storage_path: upload?.path ?? item.imageStoragePath,
-    });
-    return;
-  }
-
   if (upload) {
     await client.createAsset(workspaceId, payload);
+
+    if (item?.imageAssetId) {
+      await client.deleteAsset(workspaceId, item.imageAssetId);
+    }
   }
 }
 

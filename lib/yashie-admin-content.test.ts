@@ -82,13 +82,17 @@ function readRecord(value: unknown) {
 
 class FakeCrudClient implements CrudClient {
   calls = {
+    createAsset: [] as unknown[],
     createBlock: [] as unknown[],
     createEntry: [] as unknown[],
+    deleteAsset: [] as unknown[],
     deleteEntry: [] as unknown[],
     getStudio: [] as unknown[],
     publishEntry: [] as unknown[],
+    updateAsset: [] as unknown[],
     updateBlock: [] as unknown[],
     updateEntry: [] as unknown[],
+    uploadAssetFile: [] as unknown[],
   };
 
   private nextAssetId = 0;
@@ -98,6 +102,7 @@ class FakeCrudClient implements CrudClient {
   studio = createStudio();
 
   async createAsset(_workspaceId: string, payload: Record<string, unknown>) {
+    this.calls.createAsset.push(payload);
     const asset = { ...payload, id: `asset-${++this.nextAssetId}` };
     this.studio.assets.push(asset);
     return asset;
@@ -127,6 +132,7 @@ class FakeCrudClient implements CrudClient {
   }
 
   async deleteAsset(_workspaceId: string, assetId: string) {
+    this.calls.deleteAsset.push(assetId);
     this.studio.assets = this.studio.assets.filter(
       (asset) => String(asset.id) !== assetId,
     );
@@ -159,6 +165,7 @@ class FakeCrudClient implements CrudClient {
     assetId: string,
     payload: Record<string, unknown>,
   ) {
+    this.calls.updateAsset.push({ assetId, payload });
     this.studio.assets = this.studio.assets.map((asset) =>
       String(asset.id) === assetId ? { ...asset, ...payload, id: assetId } : asset,
     );
@@ -190,6 +197,7 @@ class FakeCrudClient implements CrudClient {
   }
 
   async uploadAssetFile() {
+    this.calls.uploadAssetFile.push("uploadAssetFile");
     return { path: "external-projects/yashie/uploaded.png" };
   }
 }
@@ -322,6 +330,51 @@ describe("Yashie admin content mutations", () => {
       "save-visibility",
       "refresh-dashboard",
     ]);
+  });
+
+  test("replaces cover images by deleting old media after creating the new asset", async () => {
+    const client = new FakeCrudClient();
+    const created = await createYashieContentItem(
+      client,
+      "workspace-1",
+      "gallery",
+      createInput("gallery", {
+        imageAlt: "Old cover",
+        imageFile: new File(["old"], "old-cover.png", { type: "image/png" }),
+      }),
+    );
+    const entryId = created.item?.id;
+    const oldAssetId = created.item?.imageAssetId;
+
+    expect(entryId).toBeTruthy();
+    expect(oldAssetId).toBe("asset-1");
+
+    const updated = await updateYashieContentItem(
+      client,
+      "workspace-1",
+      "gallery",
+      entryId!,
+      createInput("gallery", {
+        imageAlt: "New cover",
+        imageFile: new File(["new"], "new-cover.png", { type: "image/png" }),
+        slug: "gallery-with-new-cover",
+        title: "Gallery with new cover",
+      }),
+    );
+
+    expect(client.calls.uploadAssetFile).toHaveLength(2);
+    expect(client.calls.createAsset).toHaveLength(2);
+    expect(client.calls.deleteAsset).toContain(oldAssetId);
+    expect(client.calls.updateAsset).toEqual([]);
+    expect(updated.item).toEqual(
+      expect.objectContaining({
+        imageAlt: "New cover",
+        imageAssetId: "asset-2",
+      }),
+    );
+    expect(
+      client.studio.assets.map((asset) => String(readRecord(asset).id)),
+    ).toEqual(["asset-2"]);
   });
 
   test("saves published visibility without calling the downstream publish endpoint", async () => {
