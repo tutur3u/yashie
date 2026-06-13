@@ -39,6 +39,7 @@ import {
   canSaveYashieEditor,
   getYashieDateInputValue,
   getYashieDisplayDateFromInput,
+  getYashieEditorPreviewHref,
   getYashieEditorSteps,
   getYashieEditorCloseIntent,
   hasYashieEditorDirtyChanges,
@@ -1091,12 +1092,10 @@ function DateField<TName extends keyof Draft>({
         onChange={(event) =>
           onChange(name, getYashieDisplayDateFromInput(event.currentTarget.value))
         }
+        title={value}
         type="date"
         value={getYashieDateInputValue(value)}
       />
-      {value ? (
-        <span className="truncate text-xs text-[var(--ink-soft)]">{value}</span>
-      ) : null}
     </label>
   );
 }
@@ -1739,6 +1738,12 @@ function ContentForm({
     savedDraft,
   });
   const canSave = canSaveYashieEditor({ isBusy, isDirty });
+  const previewHref = effectiveItem
+    ? getYashieEditorPreviewHref({
+        collectionKey,
+        slug: effectiveItem.slug,
+      })
+    : null;
 
   useEffect(() => {
     onBusyChange(isBusy);
@@ -1919,6 +1924,16 @@ function ContentForm({
           ) : null}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+          {previewHref ? (
+            <Link
+              className="button-secondary min-w-32 w-full text-center sm:w-auto"
+              href={previewHref}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {YASHIE_ADMIN_COPY.editor.openPreview}
+            </Link>
+          ) : null}
           <button
             className="button-secondary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             disabled={isBusy}

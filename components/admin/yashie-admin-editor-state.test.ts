@@ -3,6 +3,7 @@ import {
   canSaveYashieEditor,
   getYashieDateInputValue,
   getYashieDisplayDateFromInput,
+  getYashieEditorPreviewHref,
   getYashieEditorSteps,
   getYashieEditorCloseIntent,
   hasYashieEditorDirtyChanges,
@@ -94,5 +95,32 @@ describe("Yashie admin editor state", () => {
     expect(getYashieDisplayDateFromInput("2024-05-12")).toBe("May 12, 2024");
     expect(getYashieDisplayDateFromInput("2026-06-13")).toBe("Jun 13, 2026");
     expect(getYashieDisplayDateFromInput("2026-02-31")).toBe("");
+  });
+
+  test("builds preview links only for routed items with valid slugs", () => {
+    expect(
+      getYashieEditorPreviewHref({
+        collectionKey: "blog",
+        slug: "books-that-changed-me",
+      }),
+    ).toBe("/blog/books-that-changed-me");
+    expect(
+      getYashieEditorPreviewHref({
+        collectionKey: "gallery",
+        slug: "palace-window",
+      }),
+    ).toBe("/gallery/palace-window");
+    expect(
+      getYashieEditorPreviewHref({
+        collectionKey: "categories",
+        slug: "blog",
+      }),
+    ).toBeNull();
+    expect(
+      getYashieEditorPreviewHref({
+        collectionKey: "shop",
+        slug: "Bad Slug",
+      }),
+    ).toBeNull();
   });
 });

@@ -30,6 +30,7 @@ export const YASHIE_ADMIN_COPY = {
     image: "Image",
     imageHelp: "Choose a clear picture visitors will recognize.",
     keepEditing: "Keep editing",
+    openPreview: "Open preview",
     publicView: "Visitor view",
     saved: "Saved.",
     steps: {

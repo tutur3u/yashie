@@ -43,6 +43,14 @@ const draftKeys: Array<keyof YashieAdminEditorDraft> = [
   "type",
 ];
 
+const previewRouteByCollection: Partial<Record<YashieAdminCollectionKey, string>> =
+  {
+    blog: "/blog",
+    gallery: "/gallery",
+    shop: "/shop",
+    worlds: "/worlds",
+  };
+
 function formatDatePart(value: number) {
   return String(value).padStart(2, "0");
 }
@@ -102,6 +110,23 @@ export function getYashieDisplayDateFromInput(inputDate: string) {
     month: "short",
     year: "numeric",
   }).format(new Date(parts.year, parts.month - 1, parts.day));
+}
+
+export function getYashieEditorPreviewHref({
+  collectionKey,
+  slug,
+}: {
+  collectionKey: YashieAdminCollectionKey;
+  slug: string;
+}) {
+  const basePath = previewRouteByCollection[collectionKey];
+  const safeSlug = slug.trim();
+
+  if (!basePath || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(safeSlug)) {
+    return null;
+  }
+
+  return `${basePath}/${safeSlug}`;
 }
 
 export function hasYashieEditorDirtyChanges({
