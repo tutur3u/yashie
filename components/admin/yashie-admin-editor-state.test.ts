@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   canSaveYashieEditor,
+  getYashieEditorSteps,
   getYashieEditorCloseIntent,
   hasYashieEditorDirtyChanges,
   type YashieAdminEditorDraft,
@@ -67,5 +68,17 @@ describe("Yashie admin editor state", () => {
     expect(getYashieEditorCloseIntent({ isBusy: true, isDirty: true })).toBe(
       "ignore",
     );
+  });
+
+  test("uses focused steps for each content type", () => {
+    expect(
+      getYashieEditorSteps({ collectionKey: "blog", hasItem: true }),
+    ).toEqual(["basics", "details", "writing", "image", "danger"]);
+    expect(
+      getYashieEditorSteps({ collectionKey: "gallery", hasItem: true }),
+    ).toEqual(["basics", "details", "image", "danger"]);
+    expect(
+      getYashieEditorSteps({ collectionKey: "categories", hasItem: false }),
+    ).toEqual(["basics", "details"]);
   });
 });

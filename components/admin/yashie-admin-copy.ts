@@ -31,6 +31,28 @@ export const YASHIE_ADMIN_COPY = {
     imageHelp: "Choose a clear picture visitors will recognize.",
     keepEditing: "Keep editing",
     publicView: "Visitor view",
+    steps: {
+      basics: {
+        description: "Title, link, and visibility",
+        label: "Basics",
+      },
+      danger: {
+        description: "Remove this item",
+        label: "Remove",
+      },
+      details: {
+        description: "Category, timing, and summary",
+        label: "Details",
+      },
+      image: {
+        description: "Cover and image details",
+        label: "Cover",
+      },
+      writing: {
+        description: "Long-form body copy",
+        label: "Writing",
+      },
+    },
     unsavedDescription:
       "You have changes that have not been saved yet. Keep editing or discard them before closing.",
     unsavedHeading: "Close without saving?",

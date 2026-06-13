@@ -1,4 +1,7 @@
-import type { YashieContentStatus } from "@/lib/yashie-admin-content-model";
+import type {
+  YashieAdminCollectionKey,
+  YashieContentStatus,
+} from "@/lib/yashie-admin-content-model";
 
 export type YashieAdminEditorDraft = {
   body: string;
@@ -17,6 +20,12 @@ export type YashieAdminEditorDraft = {
 };
 
 export type YashieEditorCloseIntent = "close" | "ignore" | "warn";
+export type YashieEditorStepId =
+  | "basics"
+  | "danger"
+  | "details"
+  | "image"
+  | "writing";
 
 const draftKeys: Array<keyof YashieAdminEditorDraft> = [
   "body",
@@ -68,4 +77,28 @@ export function getYashieEditorCloseIntent({
 }): YashieEditorCloseIntent {
   if (isBusy) return "ignore";
   return isDirty ? "warn" : "close";
+}
+
+export function getYashieEditorSteps({
+  collectionKey,
+  hasItem,
+}: {
+  collectionKey: YashieAdminCollectionKey;
+  hasItem: boolean;
+}): YashieEditorStepId[] {
+  const steps: YashieEditorStepId[] = ["basics", "details"];
+
+  if (collectionKey === "blog" || collectionKey === "worlds") {
+    steps.push("writing");
+  }
+
+  if (collectionKey !== "categories") {
+    steps.push("image");
+  }
+
+  if (hasItem) {
+    steps.push("danger");
+  }
+
+  return steps;
 }

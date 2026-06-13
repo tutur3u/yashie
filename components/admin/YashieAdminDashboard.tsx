@@ -36,9 +36,11 @@ import {
 } from "./yashie-admin-save-progress";
 import {
   canSaveYashieEditor,
+  getYashieEditorSteps,
   getYashieEditorCloseIntent,
   hasYashieEditorDirtyChanges,
   type YashieAdminEditorDraft,
+  type YashieEditorStepId,
 } from "./yashie-admin-editor-state";
 
 type AdminTab =
@@ -921,6 +923,106 @@ function categoryGroupLabel(value: string) {
   );
 }
 
+function contentItemMetaLabel(
+  collectionKey: YashieAdminCollectionKey,
+  item: YashieAdminContentItem,
+) {
+  if (collectionKey === "blog") return item.category || "Post";
+  if (collectionKey === "categories") return categoryGroupLabel(item.category);
+  if (collectionKey === "gallery") return item.type || "Gallery piece";
+  if (collectionKey === "worlds") return item.category || "Writing world";
+  return item.price || "Shop item";
+}
+
+function coverBackgroundStyle(item: YashieAdminContentItem | null) {
+  if (!item?.imageUrl) return undefined;
+
+  return {
+    backgroundImage: `url(${JSON.stringify(item.imageUrl)})`,
+    backgroundPosition: item.imagePosition || "center",
+  };
+}
+
+function ContentCardCover({ item }: { item: YashieAdminContentItem }) {
+  return (
+    <span
+      className={`relative block min-h-28 overflow-hidden border border-[rgba(184,112,81,0.34)] bg-[rgba(239,207,178,0.55)] bg-cover bg-center ${
+        item.imageUrl ? "" : "grid place-items-center"
+      }`}
+      style={coverBackgroundStyle(item)}
+    >
+      {item.imageUrl ? (
+        <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,31,52,0.02),rgba(12,31,52,0.12))]" />
+      ) : (
+        <span className="px-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+          No cover
+        </span>
+      )}
+    </span>
+  );
+}
+
+function EditorCoverSummary({
+  draft,
+  imageFileLabel,
+  item,
+}: {
+  draft: Draft;
+  imageFileLabel: string;
+  item: YashieAdminContentItem | null;
+}) {
+  const hasVisibleCover = Boolean(item?.imageUrl && !draft.removeImage);
+  const status = imageFileLabel
+    ? "New cover selected"
+    : hasVisibleCover
+      ? "Current cover"
+      : draft.removeImage
+        ? "Cover will be removed"
+        : "No cover yet";
+
+  return (
+    <aside className="grid min-w-0 gap-2 border border-[rgba(184,112,81,0.32)] bg-white/50 p-3">
+      <span
+        className={`relative block min-h-36 overflow-hidden border border-[rgba(184,112,81,0.28)] bg-[rgba(239,207,178,0.55)] bg-cover bg-center ${
+          hasVisibleCover ? "" : "grid place-items-center"
+        }`}
+        style={hasVisibleCover ? coverBackgroundStyle(item) : undefined}
+      >
+        {hasVisibleCover ? (
+          <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,31,52,0.02),rgba(12,31,52,0.14))]" />
+        ) : (
+          <span className="px-3 text-center text-xs font-bold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+            Cover preview
+          </span>
+        )}
+      </span>
+      <span className="truncate text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+        {status}
+      </span>
+      {imageFileLabel ? (
+        <span className="truncate text-xs text-[var(--ink-soft)]">
+          {imageFileLabel}
+        </span>
+      ) : null}
+    </aside>
+  );
+}
+
+function EditorStepHeader({ step }: { step: YashieEditorStepId }) {
+  const copy = YASHIE_ADMIN_COPY.editor.steps[step];
+
+  return (
+    <div>
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+        {copy.label}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+        {copy.description}
+      </p>
+    </div>
+  );
+}
+
 function TextField<TName extends keyof Draft>({
   disabled,
   error,
@@ -1476,44 +1578,46 @@ function ContentList({
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <button
-              className={`grid min-w-0 gap-3 border p-4 text-left transition ${
+              className={`grid min-w-0 gap-4 border bg-white/72 p-4 text-left transition ${
                 selectedId === item.id
-                  ? "border-[var(--gold)] bg-white shadow-[0_18px_46px_rgba(82,40,37,0.12)]"
-                  : "border-[rgba(184,112,81,0.38)] bg-white/70 hover:border-[var(--copper)]"
+                  ? "border-[var(--gold)] shadow-[0_18px_46px_rgba(82,40,37,0.12)]"
+                  : "border-[rgba(184,112,81,0.38)] hover:border-[var(--copper)]"
               }`}
               key={item.id}
               onClick={() => onSelect(item.id)}
               type="button"
             >
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`border px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] ${statusClass(
-                    item.status,
-                  )}`}
-                >
-                  {statusLabel(item.status)}
-                </span>
-                {item.imageUrl ? (
-                  <span className="border border-[rgba(31,107,115,0.22)] bg-[rgba(31,107,115,0.08)] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--teal)]">
-                    Image ready
-                  </span>
-                ) : null}
-              </div>
-              <div className="min-w-0">
-                <strong className="block break-words text-base text-[var(--ink)]">
-                  {item.title}
-                </strong>
-                <span className="mt-1 block break-words text-sm text-[var(--ink-soft)]">
-                  {collectionKey === "blog"
-                    ? item.category || "Post"
-                    : collectionKey === "categories"
-                      ? categoryGroupLabel(item.category)
-                    : collectionKey === "gallery"
-                      ? item.type || "Gallery piece"
-                      : collectionKey === "worlds"
-                        ? item.category || "Writing world"
-                        : item.price || "Shop item"}
-                </span>
+              <div className="grid min-w-0 gap-4 sm:grid-cols-[112px_minmax(0,1fr)]">
+                <ContentCardCover item={item} />
+                <div className="grid min-w-0 content-start gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`border px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] ${statusClass(
+                        item.status,
+                      )}`}
+                    >
+                      {statusLabel(item.status)}
+                    </span>
+                    {item.imageUrl ? (
+                      <span className="border border-[rgba(31,107,115,0.22)] bg-[rgba(31,107,115,0.08)] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--teal)]">
+                        Image ready
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <strong className="block break-words text-base text-[var(--ink)]">
+                      {item.title}
+                    </strong>
+                    <span className="mt-1 block break-words text-sm text-[var(--ink-soft)]">
+                      {contentItemMetaLabel(collectionKey, item)}
+                    </span>
+                  </div>
+                  {item.summary ? (
+                    <span className="line-clamp-2 text-xs leading-5 text-[var(--ink-soft)]">
+                      {item.summary}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </button>
           ))}
@@ -1575,8 +1679,22 @@ function ContentForm({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [activeStep, setActiveStep] = useState<YashieEditorStepId>("basics");
   const savedDraft = draftFromItem(effectiveItem);
   const isBusy = submitting || deleting;
+  const supportsImage = collectionKey !== "categories";
+  const editorSteps = getYashieEditorSteps({
+    collectionKey,
+    hasItem: Boolean(effectiveItem),
+  });
+  const visibleStep = editorSteps.includes(activeStep)
+    ? activeStep
+    : editorSteps[0] ?? "basics";
+  const visibleStepIndex = Math.max(editorSteps.indexOf(visibleStep), 0);
+  const isFirstStep = visibleStepIndex === 0;
+  const isLastStep = visibleStepIndex === editorSteps.length - 1;
+  const sectionSurfaceClass =
+    "grid gap-4 border border-[rgba(184,112,81,0.28)] bg-white/42 p-4 sm:p-5";
   const isDirty = hasYashieEditorDirtyChanges({
     draft,
     hasPendingImageFile: Boolean(imageFile),
@@ -1725,18 +1843,36 @@ function ContentForm({
     }
   };
 
+  const goToStep = (offset: number) => {
+    const nextStep = editorSteps[visibleStepIndex + offset];
+    if (nextStep) setActiveStep(nextStep);
+  };
+
   return (
     <form className="grid min-w-0 gap-6" onSubmit={submit}>
-      <div className="flex flex-col gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <p className="script-label">
-            {effectiveItem ? `Edit ${copy.singular}` : copy.newLabel}
-          </p>
-          <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
-            {draft.title || `Untitled ${copy.singular}`}
-          </h2>
+      <div className="grid gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+        <div
+          className={`grid min-w-0 gap-4 ${
+            supportsImage ? "lg:grid-cols-[minmax(0,1fr)_220px]" : ""
+          }`}
+        >
+          <div className="min-w-0">
+            <p className="script-label">
+              {effectiveItem ? `Edit ${copy.singular}` : copy.newLabel}
+            </p>
+            <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
+              {draft.title || `Untitled ${copy.singular}`}
+            </h2>
+          </div>
+          {supportsImage ? (
+            <EditorCoverSummary
+              draft={draft}
+              imageFileLabel={imageFileLabel}
+              item={effectiveItem}
+            />
+          ) : null}
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
           <button
             className="button-secondary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             disabled={isBusy}
@@ -1765,11 +1901,43 @@ function ContentForm({
         </div>
       ) : null}
 
-      <section className="grid gap-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-            {YASHIE_ADMIN_COPY.editor.basics}
-          </p>
+      <nav
+        aria-label="Editor sections"
+        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
+      >
+        {editorSteps.map((step, index) => {
+          const stepCopy = YASHIE_ADMIN_COPY.editor.steps[step];
+          const isActive = step === visibleStep;
+
+          return (
+            <button
+              className={`grid min-h-16 min-w-0 border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-55 ${
+                isActive
+                  ? "border-[var(--gold)] bg-[var(--navy)] text-[var(--parchment)]"
+                  : "border-[rgba(184,112,81,0.34)] bg-white/52 text-[var(--ink)] hover:border-[var(--copper)]"
+              }`}
+              disabled={isBusy}
+              key={step}
+              onClick={() => setActiveStep(step)}
+              type="button"
+            >
+              <span className="text-[0.65rem] font-black uppercase tracking-[0.16em] opacity-75">
+                Step {index + 1}
+              </span>
+              <span className="truncate text-sm font-black">
+                {stepCopy.label}
+              </span>
+              <span className="truncate text-xs opacity-75">
+                {stepCopy.description}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {visibleStep === "basics" ? (
+        <section className={sectionSurfaceClass}>
+          <EditorStepHeader step="basics" />
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <TextField
               disabled={isBusy}
@@ -1819,13 +1987,12 @@ function ContentForm({
               value={draft.slug}
             />
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="grid gap-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-          {YASHIE_ADMIN_COPY.editor.details}
-        </p>
+      {visibleStep === "details" ? (
+        <section className={sectionSurfaceClass}>
+          <EditorStepHeader step="details" />
         {collectionKey === "categories" ? (
           <SelectField
             disabled={isBusy}
@@ -1902,7 +2069,13 @@ function ContentForm({
           onChange={updateDraft}
           value={draft.summary}
         />
-        {collectionKey === "blog" || collectionKey === "worlds" ? (
+        </section>
+      ) : null}
+
+      {visibleStep === "writing" ? (
+        <section className={sectionSurfaceClass}>
+          <EditorStepHeader step="writing" />
+          {collectionKey === "blog" || collectionKey === "worlds" ? (
           <TextAreaField
             disabled={isBusy}
             label={collectionKey === "worlds" ? "Detail copy" : "Post body"}
@@ -1911,15 +2084,14 @@ function ContentForm({
             rows={8}
             value={draft.body}
           />
-        ) : null}
-      </section>
+          ) : null}
+        </section>
+      ) : null}
 
-      {collectionKey === "categories" ? null : (
-        <section className="grid gap-4">
+      {visibleStep === "image" && supportsImage ? (
+        <section className={sectionSurfaceClass}>
+          <EditorStepHeader step="image" />
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-              {YASHIE_ADMIN_COPY.editor.image}
-            </p>
             <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
               {YASHIE_ADMIN_COPY.editor.imageHelp}
             </p>
@@ -1990,10 +2162,11 @@ function ContentForm({
             </div>
           </div>
         </section>
-      )}
+      ) : null}
 
-      {effectiveItem ? (
-        <section className="border-t border-[rgba(184,112,81,0.28)] pt-5">
+      {visibleStep === "danger" && effectiveItem ? (
+        <section className={sectionSurfaceClass}>
+          <EditorStepHeader step="danger" />
           {confirmDelete ? (
             <div className="grid gap-3 border border-red-300 bg-red-500/10 p-4">
               <p className="text-sm text-red-800">
@@ -2030,6 +2203,28 @@ function ContentForm({
           )}
         </section>
       ) : null}
+
+      <div className="flex flex-col gap-3 border-t border-[rgba(184,112,81,0.28)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          className="button-secondary min-w-28 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isBusy || isFirstStep}
+          onClick={() => goToStep(-1)}
+          type="button"
+        >
+          Back
+        </button>
+        <span className="text-center text-xs font-bold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+          Step {visibleStepIndex + 1} of {editorSteps.length}
+        </span>
+        <button
+          className="button-secondary min-w-28 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isBusy || isLastStep}
+          onClick={() => goToStep(1)}
+          type="button"
+        >
+          Next
+        </button>
+      </div>
     </form>
   );
 }
