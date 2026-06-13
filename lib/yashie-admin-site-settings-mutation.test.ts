@@ -1,0 +1,141 @@
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
+import type { YashieAdminSiteSettingsInput } from "./yashie-admin-site-settings";
+
+const originalWorkspaceId = process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
+const revalidatePath = mock(() => undefined);
+
+mock.module("next/cache", () => ({
+  revalidatePath,
+}));
+
+mock.module("tuturuuu/external-projects", () => ({
+  ExternalProjectsClient: mock(function ExternalProjectsClient() {
+    return client;
+  }),
+}));
+
+let studio: YashieAdminStudioPayload;
+let calls: {
+  publishEntry: unknown[];
+  updateEntry: unknown[];
+};
+
+const input: YashieAdminSiteSettingsInput = {
+  profile: {
+    alias: "@inkedbyyashie",
+    brand: "InkedByYashie",
+    email: "hello@example.com",
+    location: "Everywhere",
+    name: "Yashoda U. Itwaru",
+    shortName: "Yashie",
+    status: "published",
+    summary: "Profile summary.",
+    title: "Writer",
+  },
+  socials: [
+    {
+      handle: "@inkedbyyashie",
+      href: "https://www.instagram.com/inkedbyyashie",
+      label: "Instagram",
+      platform: "instagram",
+      status: "published",
+    },
+  ],
+};
+
+const client = {
+  async createCollection() {
+    throw new Error("Collection should already exist.");
+  },
+  async createEntry() {
+    throw new Error("Entry should already exist.");
+  },
+  async getStudio() {
+    return studio;
+  },
+  async publishEntry(...args: unknown[]) {
+    calls.publishEntry.push(args);
+    throw new Error("Failed to publish workspace external project entry");
+  },
+  async updateEntry(_workspaceId: string, entryId: string, payload: Record<string, unknown>) {
+    calls.updateEntry.push({ entryId, payload });
+    studio.entries = studio.entries.map((entry) =>
+      String(entry.id) === entryId ? { ...entry, ...payload, id: entryId } : entry,
+    );
+    return {};
+  },
+};
+
+const { updateYashieAdminSiteSettings } = await import(
+  "./yashie-admin-site-settings"
+);
+
+function createStudio(): YashieAdminStudioPayload {
+  return {
+    assets: [],
+    blocks: [],
+    collections: [
+      {
+        collection_type: "profile",
+        id: "collection-profile",
+        slug: "profile",
+        title: "Profile",
+      },
+      {
+        collection_type: "social-links",
+        id: "collection-socials",
+        slug: "social-links",
+        title: "Social Links",
+      },
+    ],
+    entries: [
+      {
+        collection_id: "collection-profile",
+        id: "profile-1",
+        profile_data: {},
+        slug: "profile",
+        status: "published",
+        title: "Old profile",
+      },
+      {
+        collection_id: "collection-socials",
+        id: "social-instagram",
+        profile_data: {
+          platform: "instagram",
+        },
+        slug: "instagram",
+        status: "published",
+        title: "Instagram",
+      },
+    ],
+  };
+}
+
+describe("Yashie admin site settings mutations", () => {
+  beforeEach(() => {
+    process.env.TUTURUUU_YASHIE_WORKSPACE_ID = "workspace-1";
+    studio = createStudio();
+    calls = {
+      publishEntry: [],
+      updateEntry: [],
+    };
+    revalidatePath.mockClear();
+  });
+
+  afterEach(() => {
+    if (originalWorkspaceId === undefined) {
+      delete process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
+    } else {
+      process.env.TUTURUUU_YASHIE_WORKSPACE_ID = originalWorkspaceId;
+    }
+  });
+
+  test("saves published profile and social status without downstream publish", async () => {
+    const settings = await updateYashieAdminSiteSettings("admin-token", input);
+
+    expect(settings.profile.name).toBe("Yashoda U. Itwaru");
+    expect(calls.updateEntry).toHaveLength(2);
+    expect(calls.publishEntry).toEqual([]);
+  });
+});

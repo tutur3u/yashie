@@ -37,7 +37,6 @@ type SettingsClient = Pick<
   | "createCollection"
   | "createEntry"
   | "getStudio"
-  | "publishEntry"
   | "updateEntry"
 >;
 
@@ -370,22 +369,6 @@ async function ensureCollection(
   return created;
 }
 
-function readCreatedEntryId(response: unknown) {
-  const record = readRecord(response);
-  return readString(record, "id") ?? readString(readRecord(record.entry), "id");
-}
-
-async function savePublishedEntryStatus(
-  client: SettingsClient,
-  workspaceId: string,
-  entryId: string,
-  status: YashieContentStatus,
-) {
-  if (status === "published") {
-    await client.publishEntry(workspaceId, entryId, "publish");
-  }
-}
-
 async function saveProfileSettings({
   client,
   input,
@@ -424,15 +407,10 @@ async function saveProfileSettings({
 
   if (current) {
     await client.updateEntry(workspaceId, String(current.id), payload);
-    await savePublishedEntryStatus(client, workspaceId, String(current.id), input.status);
     return;
   }
 
-  const created = await client.createEntry(workspaceId, payload);
-  const entryId = readCreatedEntryId(created);
-  if (entryId) {
-    await savePublishedEntryStatus(client, workspaceId, entryId, input.status);
-  }
+  await client.createEntry(workspaceId, payload);
 }
 
 async function saveSocialSettings({
@@ -477,15 +455,10 @@ async function saveSocialSettings({
 
     if (current) {
       await client.updateEntry(workspaceId, String(current.id), payload);
-      await savePublishedEntryStatus(client, workspaceId, String(current.id), social.status);
       continue;
     }
 
-    const created = await client.createEntry(workspaceId, payload);
-    const entryId = readCreatedEntryId(created);
-    if (entryId) {
-      await savePublishedEntryStatus(client, workspaceId, entryId, social.status);
-    }
+    await client.createEntry(workspaceId, payload);
   }
 }
 

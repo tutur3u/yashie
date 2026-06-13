@@ -9,8 +9,8 @@ import {
 } from "@/lib/yashie-admin-content-model";
 import { readYashieAdminSiteSettings } from "@/lib/yashie-admin-site-settings";
 import {
-  buildYashieCmsUrl,
   buildYashieDriveUrl,
+  buildYashieWorkspaceUrl,
   resolveYashieAdminTargetKey,
 } from "@/lib/yashie-config";
 import {
@@ -75,7 +75,7 @@ export default async function AdminPage({
       }}
       initialSiteSettings={readYashieAdminSiteSettings(studio)}
       driveHref={buildYashieDriveUrl()}
-      membersHref={buildYashieCmsUrl({ targetKey: "members" })}
+      membersHref={buildYashieWorkspaceUrl({ targetKey: "members" })}
       sessionExpiresAt={session.expiresAt}
       sessionRefreshEarlySeconds={session.refreshEarlySeconds}
       storageAnalytics={storageAnalytics}

@@ -216,6 +216,18 @@ export function buildYashieCmsUrl({
   return new URL(getYashieCmsWorkspacePath(targetKey, workspaceId), cmsBaseUrl).toString();
 }
 
+export function buildYashieWorkspaceUrl({
+  targetKey,
+  webAppUrl = getYashieWebAppUrl(),
+  workspaceId = getYashieWorkspaceId(),
+}: {
+  targetKey: YashieAdminTargetKey;
+  webAppUrl?: string;
+  workspaceId?: string;
+}) {
+  return new URL(getYashieCmsWorkspacePath(targetKey, workspaceId), webAppUrl).toString();
+}
+
 export function buildYashieDriveUrl({
   webAppUrl = getYashieWebAppUrl(),
   workspaceId = getYashieWorkspaceId(),

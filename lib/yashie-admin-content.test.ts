@@ -199,7 +199,7 @@ describe("Yashie admin content mutations", () => {
     revalidatePath.mockClear();
   });
 
-  test("creates, updates, publishes, unpublishes, and deletes every dashboard collection", async () => {
+  test("creates, updates, saves visibility, and deletes every dashboard collection", async () => {
     for (const collectionKey of collectionKeys) {
       const client = new FakeCrudClient();
       const config = YASHIE_ADMIN_COLLECTIONS[collectionKey];
@@ -226,11 +226,6 @@ describe("Yashie admin content mutations", () => {
           (collection) => collection.id === `collection-${collectionKey}`,
         )).slug,
       );
-      expect(client.calls.publishEntry).toContainEqual({
-        action: "publish",
-        entryId,
-      });
-
       if (collectionKey === "blog" || collectionKey === "worlds") {
         expect(client.calls.createBlock).toHaveLength(1);
       } else {
@@ -263,10 +258,7 @@ describe("Yashie admin content mutations", () => {
           title: `${collectionKey} updated`,
         }),
       );
-      expect(client.calls.publishEntry).toContainEqual({
-        action: "unpublish",
-        entryId,
-      });
+      expect(client.calls.publishEntry).toEqual([]);
 
       const deleted = await deleteYashieContentItem(
         client,
@@ -330,5 +322,38 @@ describe("Yashie admin content mutations", () => {
       "save-visibility",
       "refresh-dashboard",
     ]);
+  });
+
+  test("saves published visibility without calling the downstream publish endpoint", async () => {
+    const client = new FakeCrudClient();
+    const created = await createYashieContentItem(
+      client,
+      "workspace-1",
+      "blog",
+      createInput("blog", { status: "draft" }),
+    );
+    const entryId = created.item?.id;
+    client.publishEntry = async () => {
+      throw new Error("Failed to publish workspace external project entry");
+    };
+
+    const updated = await updateYashieContentItem(
+      client,
+      "workspace-1",
+      "blog",
+      entryId!,
+      createInput("blog", { status: "published" }),
+    );
+
+    expect(updated.item).toEqual(
+      expect.objectContaining({
+        id: entryId,
+        status: "published",
+      }),
+    );
+    expect(client.calls.updateEntry.at(-1)).toEqual(
+      expect.objectContaining({ status: "published" }),
+    );
+    expect(client.calls.publishEntry).toEqual([]);
   });
 });

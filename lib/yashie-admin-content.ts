@@ -6,7 +6,6 @@ import {
   type YashieAdminContentItem,
   type YashieAdminStudioPayload,
   type YashieContentMutationInput,
-  type YashieContentStatus,
 } from "./yashie-admin-content-model";
 import {
   createYashieExternalProjectsClient,
@@ -24,7 +23,6 @@ type YashieCrudClient = Pick<
   | "deleteAsset"
   | "deleteEntry"
   | "getStudio"
-  | "publishEntry"
   | "updateAsset"
   | "updateBlock"
   | "updateEntry"
@@ -315,23 +313,6 @@ async function saveImageAsset({
   }
 }
 
-async function publishForStatus(
-  client: YashieCrudClient,
-  workspaceId: string,
-  entryId: string,
-  status: YashieContentStatus,
-  previousStatus?: YashieContentStatus,
-) {
-  if (status === "published") {
-    await client.publishEntry(workspaceId, entryId, "publish");
-    return;
-  }
-
-  if (previousStatus === "published") {
-    await client.publishEntry(workspaceId, entryId, "unpublish");
-  }
-}
-
 async function finalizeMutation(
   client: YashieCrudClient,
   workspaceId: string,
@@ -402,7 +383,6 @@ export async function createYashieContentItem(
     percent: 84,
     step: "save-visibility",
   });
-  await publishForStatus(client, workspaceId, entryId, input.status);
 
   await reportProgress(options, {
     label: "Refreshing dashboard",
@@ -462,7 +442,6 @@ export async function updateYashieContentItem(
     percent: 84,
     step: "save-visibility",
   });
-  await publishForStatus(client, workspaceId, entryId, input.status, current.status);
 
   await reportProgress(options, {
     label: "Refreshing dashboard",
