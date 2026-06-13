@@ -50,7 +50,6 @@ export type SocialPlatform =
 	| "instagram"
 	| "threads"
 	| "bluesky"
-	| "linktree"
 	| "goodreads";
 
 export type SocialLink = {
@@ -307,12 +306,6 @@ export const socials: SocialLink[] = [
 		handle: "@inkedbyyashie.bsky.social",
 		href: "https://bsky.app/profile/inkedbyyashie.bsky.social",
 		platform: "bluesky",
-	},
-	{
-		label: "Linktree",
-		handle: "inkedbyyashie",
-		href: "https://linktr.ee/inkedbyyashie",
-		platform: "linktree",
 	},
 	{
 		label: "Goodreads",

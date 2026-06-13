@@ -338,6 +338,7 @@ button {
 .landing-container {
   margin-inline: auto;
   max-width: 82rem;
+  min-width: 0;
   padding-inline: clamp(1rem, 3vw, 2.5rem);
   width: 100%;
 }
@@ -700,6 +701,8 @@ button {
   box-shadow:
     0 18px 36px rgba(82, 40, 37, 0.1),
     inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  max-width: 100%;
+  min-width: 0;
   padding: clamp(1rem, 2.5vw, 1.6rem);
 }
 
@@ -709,6 +712,17 @@ button {
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.section-heading-line > * {
+  min-width: 0;
+}
+
+.section-heading-line p {
+  max-width: 100%;
+  text-wrap: pretty;
 }
 
 .gallery-layout {
@@ -721,6 +735,7 @@ button {
   color: var(--ink);
   display: grid;
   gap: 0.4rem;
+  max-width: 100%;
   min-width: 9rem;
   text-align: center;
   transition: transform 180ms ease;
@@ -763,11 +778,19 @@ button {
   grid-template-columns: minmax(0, 1fr) minmax(12rem, 17rem);
 }
 
+.blog-ledger-main,
+.blog-side-note {
+  min-width: 0;
+}
+
 .blog-leaf-card {
   background: rgba(246, 221, 205, 0.8);
   border: 1px solid rgba(184, 112, 81, 0.4);
   color: var(--ink);
   display: grid;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   padding: 0.75rem;
   transition:
     border-color 180ms ease,
@@ -817,7 +840,9 @@ button {
   display: grid;
   gap: 0.8rem;
   grid-template-columns: 5.2rem minmax(0, 1fr);
+  max-width: 100%;
   min-height: 8.4rem;
+  min-width: 0;
   transition: transform 180ms ease;
 }
 
@@ -1014,6 +1039,32 @@ button {
 
   .shop-shelf-item {
     grid-template-columns: 4.8rem minmax(0, 1fr);
+  }
+
+  .landing-ribbon,
+  .section-heading-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .landing-ribbon span,
+  .section-heading-line p {
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .blog-side-note {
+    grid-template-columns: 1fr;
+  }
+
+  .vertical-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .vertical-tabs span {
+    text-align: center;
+    writing-mode: horizontal-tb;
   }
 
   .landing-hero-copy h1 {

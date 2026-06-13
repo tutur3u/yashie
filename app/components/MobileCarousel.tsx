@@ -132,7 +132,7 @@ export function MobileCarousel({
 				{slides.map((slide, index) => (
 					<div
 						key={index}
-						className="min-w-[86%] snap-center md:min-w-0"
+						className="min-w-0 w-[86%] max-w-[86%] shrink-0 snap-center md:w-auto md:max-w-none md:shrink"
 						aria-label={`${index + 1} of ${slides.length}`}
 						aria-roledescription="slide"
 						role="group"

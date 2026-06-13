@@ -209,7 +209,7 @@ function buildProfileFacts(delivery: YashieDeliveryPayload) {
 function isSocialPlatform(value: string | null): value is SocialPlatform {
   return Boolean(
     value &&
-      ["instagram", "threads", "bluesky", "linktree", "goodreads"].includes(value),
+      ["instagram", "threads", "bluesky", "goodreads"].includes(value),
   );
 }
 

@@ -23,7 +23,6 @@ const VALID_SOCIAL_PLATFORMS = new Set<SocialPlatform>([
   "instagram",
   "threads",
   "bluesky",
-  "linktree",
   "goodreads",
 ]);
 const VALID_STATUSES = new Set<YashieContentStatus>([

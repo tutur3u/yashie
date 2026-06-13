@@ -45,16 +45,6 @@ export function SocialIcon({ platform, ...props }: SocialIconProps) {
 					/>
 				</svg>
 			);
-		case "linktree":
-			return (
-				<svg {...sharedProps}>
-					<path d="M12 4v16" strokeWidth="2" />
-					<path d="M7.4 8.7h9.2" strokeWidth="2" />
-					<path d="m8.2 6 3.8 3.8L15.8 6" strokeWidth="2" />
-					<path d="m8.2 11.5 3.8-3.8 3.8 3.8" strokeWidth="2" />
-					<path d="M9.1 20h5.8" strokeWidth="2" />
-				</svg>
-			);
 		case "goodreads":
 			return (
 				<svg {...sharedProps}>

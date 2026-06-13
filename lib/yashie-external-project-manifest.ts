@@ -119,7 +119,7 @@ const socialFields = [
   {
     key: "platform",
     label: "Platform",
-    options: ["instagram", "threads", "bluesky", "linktree", "goodreads"],
+    options: ["instagram", "threads", "bluesky", "goodreads"],
     type: "string",
   },
 ] satisfies YashieSyncField[];
