@@ -26,9 +26,15 @@ export const YASHIE_ADMIN_COPY = {
   editor: {
     basics: "Basics",
     details: "Details",
+    discardChanges: "Discard changes",
     image: "Image",
     imageHelp: "Choose a clear picture visitors will recognize.",
+    keepEditing: "Keep editing",
     publicView: "Visitor view",
+    unsavedDescription:
+      "You have changes that have not been saved yet. Keep editing or discard them before closing.",
+    unsavedHeading: "Close without saving?",
+    unsavedTitle: "Unsaved changes",
     visibility: "Visibility",
   },
   empty: {

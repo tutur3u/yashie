@@ -34,6 +34,12 @@ import {
   type SaveFlowError,
   type SaveProgressState,
 } from "./yashie-admin-save-progress";
+import {
+  canSaveYashieEditor,
+  getYashieEditorCloseIntent,
+  hasYashieEditorDirtyChanges,
+  type YashieAdminEditorDraft,
+} from "./yashie-admin-editor-state";
 
 type AdminTab =
   | YashieAdminCollectionKey
@@ -53,21 +59,7 @@ type ReadyStorageAnalytics = Extract<
 >;
 type ReadyStorageFiles = Extract<YashieStorageFilesState, { status: "ready" }>;
 
-type Draft = {
-  body: string;
-  category: string;
-  date: string;
-  imageAlt: string;
-  imagePosition: string;
-  price: string;
-  readTime: string;
-  removeImage: boolean;
-  slug: string;
-  status: YashieContentStatus;
-  summary: string;
-  title: string;
-  type: string;
-};
+type Draft = YashieAdminEditorDraft;
 
 type SiteSettingsMutationResponse = {
   error?: string;
@@ -930,6 +922,7 @@ function categoryGroupLabel(value: string) {
 }
 
 function TextField<TName extends keyof Draft>({
+  disabled,
   error,
   label,
   name,
@@ -938,6 +931,7 @@ function TextField<TName extends keyof Draft>({
   required,
   value,
 }: {
+  disabled?: boolean;
   error?: string;
   label: string;
   name: TName;
@@ -954,7 +948,8 @@ function TextField<TName extends keyof Draft>({
       <input
         className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
           error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
-        }`}
+        } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+        disabled={disabled}
         name={name}
         onChange={(event) => onChange(name, event.currentTarget.value)}
         placeholder={placeholder}
@@ -967,6 +962,7 @@ function TextField<TName extends keyof Draft>({
 }
 
 function SelectField<TName extends keyof Draft>({
+  disabled,
   label,
   name,
   onChange,
@@ -974,6 +970,7 @@ function SelectField<TName extends keyof Draft>({
   placeholder = "Choose one",
   value,
 }: {
+  disabled?: boolean;
   label: string;
   name: TName;
   onChange: (name: TName, value: string) => void;
@@ -990,7 +987,8 @@ function SelectField<TName extends keyof Draft>({
         {label}
       </span>
       <select
-        className="min-h-11 w-full min-w-0 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
+        className="min-h-11 w-full min-w-0 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]"
+        disabled={disabled}
         name={name}
         onChange={(event) => onChange(name, event.currentTarget.value)}
         value={value}
@@ -1008,6 +1006,7 @@ function SelectField<TName extends keyof Draft>({
 }
 
 function TextAreaField<TName extends keyof Draft>({
+  disabled,
   label,
   name,
   onChange,
@@ -1015,6 +1014,7 @@ function TextAreaField<TName extends keyof Draft>({
   rows = 4,
   value,
 }: {
+  disabled?: boolean;
   label: string;
   name: TName;
   onChange: (name: TName, value: string) => void;
@@ -1028,7 +1028,8 @@ function TextAreaField<TName extends keyof Draft>({
         {label}
       </span>
       <textarea
-        className="min-h-28 w-full min-w-0 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
+        className="min-h-28 w-full min-w-0 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)] disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]"
+        disabled={disabled}
         name={name}
         onChange={(event) => onChange(name, event.currentTarget.value)}
         placeholder={placeholder}
@@ -1536,14 +1537,20 @@ function ContentForm({
   collectionKey,
   item,
   onClose,
+  onCloseRequest,
+  onBusyChange,
   onDeleted,
+  onDirtyChange,
   onSaved,
 }: {
   categories: YashieAdminContentItem[];
   collectionKey: YashieAdminCollectionKey;
   item: YashieAdminContentItem | null;
   onClose: () => void;
+  onCloseRequest: () => void;
+  onBusyChange: (isBusy: boolean) => void;
   onDeleted: (items: YashieAdminContentItem[]) => void;
+  onDirtyChange: (isDirty: boolean) => void;
   onSaved: (
     items: YashieAdminContentItem[],
     item: YashieAdminContentItem | null,
@@ -1568,6 +1575,22 @@ function ContentForm({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const savedDraft = draftFromItem(effectiveItem);
+  const isBusy = submitting || deleting;
+  const isDirty = hasYashieEditorDirtyChanges({
+    draft,
+    hasPendingImageFile: Boolean(imageFile),
+    savedDraft,
+  });
+  const canSave = canSaveYashieEditor({ isBusy, isDirty });
+
+  useEffect(() => {
+    onBusyChange(isBusy);
+  }, [isBusy, onBusyChange]);
+
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const updateDraft = (name: keyof Draft, value: string | boolean) => {
     setDraft((current) => {
@@ -1600,6 +1623,8 @@ function ContentForm({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!canSave) return;
+
     setSubmitting(true);
     setFieldErrors({});
     setMessage(null);
@@ -1714,15 +1739,15 @@ function ContentForm({
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <button
             className="button-secondary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-            disabled={submitting || deleting}
-            onClick={onClose}
+            disabled={isBusy}
+            onClick={onCloseRequest}
             type="button"
           >
             Close
           </button>
           <button
             className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-            disabled={submitting || deleting}
+            disabled={!canSave}
             type="submit"
           >
             {submitting
@@ -1747,6 +1772,7 @@ function ContentForm({
           </p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <TextField
+              disabled={isBusy}
               error={fieldErrors.title}
               label="Title"
               name="title"
@@ -1763,7 +1789,8 @@ function ContentForm({
                   fieldErrors.status
                     ? "border-red-400"
                     : "border-[rgba(184,112,81,0.42)]"
-                }`}
+                } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+                disabled={isBusy}
                 onChange={(event) =>
                   updateDraft("status", event.currentTarget.value)
                 }
@@ -1782,6 +1809,7 @@ function ContentForm({
               ) : null}
             </label>
             <TextField
+              disabled={isBusy}
               label="Website link"
               name="slug"
               onChange={(name, value) => {
@@ -1800,6 +1828,7 @@ function ContentForm({
         </p>
         {collectionKey === "categories" ? (
           <SelectField
+            disabled={isBusy}
             label="Section"
             name="category"
             onChange={updateDraft}
@@ -1811,6 +1840,7 @@ function ContentForm({
         {collectionKey === "blog" ? (
           <div className="grid gap-4 md:grid-cols-3">
             <SelectField
+              disabled={isBusy}
               label="Category"
               name="category"
               onChange={updateDraft}
@@ -1819,12 +1849,14 @@ function ContentForm({
               value={draft.category}
             />
             <TextField
+              disabled={isBusy}
               label="Date"
               name="date"
               onChange={updateDraft}
               value={draft.date}
             />
             <TextField
+              disabled={isBusy}
               label="Reading time"
               name="readTime"
               onChange={updateDraft}
@@ -1834,6 +1866,7 @@ function ContentForm({
         ) : null}
         {collectionKey === "gallery" ? (
           <SelectField
+            disabled={isBusy}
             label="Category"
             name="type"
             onChange={updateDraft}
@@ -1844,6 +1877,7 @@ function ContentForm({
         ) : null}
         {collectionKey === "shop" ? (
           <TextField
+            disabled={isBusy}
             label="Price"
             name="price"
             onChange={updateDraft}
@@ -1852,6 +1886,7 @@ function ContentForm({
         ) : null}
         {collectionKey === "worlds" ? (
           <SelectField
+            disabled={isBusy}
             label="Category"
             name="category"
             onChange={updateDraft}
@@ -1861,6 +1896,7 @@ function ContentForm({
           />
         ) : null}
         <TextAreaField
+          disabled={isBusy}
           label={collectionKey === "blog" ? "Short intro" : "Description"}
           name="summary"
           onChange={updateDraft}
@@ -1868,6 +1904,7 @@ function ContentForm({
         />
         {collectionKey === "blog" || collectionKey === "worlds" ? (
           <TextAreaField
+            disabled={isBusy}
             label={collectionKey === "worlds" ? "Detail copy" : "Post body"}
             name="body"
             onChange={updateDraft}
@@ -1907,6 +1944,7 @@ function ContentForm({
             </div>
             <div className="grid min-w-0 content-start gap-4">
               <TextField
+                disabled={isBusy}
                 label="Image description"
                 name="imageAlt"
                 onChange={updateDraft}
@@ -1918,7 +1956,8 @@ function ContentForm({
                 </span>
                 <input
                   accept="image/*"
-                  className="min-h-11 w-full min-w-0 max-w-full border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
+                  className="min-h-11 w-full min-w-0 max-w-full border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)] disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]"
+                  disabled={isBusy}
                   name="imageFile"
                   onChange={updateImageFile}
                   type="file"
@@ -1939,6 +1978,7 @@ function ContentForm({
                   <input
                     checked={draft.removeImage}
                     className="size-4 accent-[var(--clay)]"
+                    disabled={isBusy}
                     onChange={(event) =>
                       updateDraft("removeImage", event.currentTarget.checked)
                     }
@@ -1962,7 +2002,7 @@ function ContentForm({
               <div className="flex flex-wrap gap-2">
                 <button
                   className="min-h-10 bg-red-800 px-4 text-sm font-bold text-white disabled:opacity-50"
-                  disabled={deleting || submitting}
+                  disabled={isBusy}
                   onClick={() => void deleteItem()}
                   type="button"
                 >
@@ -1970,7 +2010,7 @@ function ContentForm({
                 </button>
                 <button
                   className="button-secondary min-h-10"
-                  disabled={deleting}
+                  disabled={isBusy}
                   onClick={() => setConfirmDelete(false)}
                   type="button"
                 >
@@ -1981,7 +2021,7 @@ function ContentForm({
           ) : (
             <button
               className="text-sm font-bold text-red-800 underline decoration-red-800/25 underline-offset-4"
-              disabled={submitting || deleting}
+              disabled={isBusy}
               onClick={() => setConfirmDelete(true)}
               type="button"
             >
@@ -2018,6 +2058,9 @@ export function YashieAdminDashboard({
   const [activeTab, setActiveTab] = useState<AdminTab>("blog");
   const [content, setContent] = useState(initialContent);
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
+  const [editorBusy, setEditorBusy] = useState(false);
+  const [editorDirty, setEditorDirty] = useState(false);
+  const [confirmEditorClose, setConfirmEditorClose] = useState(false);
   const [siteSettings, setSiteSettings] = useState(initialSiteSettings);
   const [selectedIds, setSelectedIds] = useState<
     Record<YashieAdminCollectionKey, string | null>
@@ -2074,6 +2117,36 @@ export function YashieAdminDashboard({
     });
   };
 
+  const openEditor = (target: EditorTarget) => {
+    setConfirmEditorClose(false);
+    setEditorBusy(false);
+    setEditorDirty(false);
+    setEditorTarget(target);
+  };
+
+  const closeEditor = () => {
+    setConfirmEditorClose(false);
+    setEditorBusy(false);
+    setEditorDirty(false);
+    setEditorTarget(null);
+  };
+
+  const requestCloseEditor = () => {
+    const intent = getYashieEditorCloseIntent({
+      isBusy: editorBusy,
+      isDirty: editorDirty,
+    });
+
+    if (intent === "close") {
+      closeEditor();
+      return;
+    }
+
+    if (intent === "warn") {
+      setConfirmEditorClose(true);
+    }
+  };
+
   const renderContentTab = (collectionKey: YashieAdminCollectionKey) => {
     const items = content[collectionKey];
     const selectedId = selectedIds[collectionKey];
@@ -2088,14 +2161,14 @@ export function YashieAdminDashboard({
               ...current,
               [collectionKey]: null,
             }));
-            setEditorTarget({ collectionKey, itemId: null });
+            openEditor({ collectionKey, itemId: null });
           }}
           onSelect={(id) => {
             setSelectedIds((current) => ({
               ...current,
               [collectionKey]: id,
             }));
-            setEditorTarget({ collectionKey, itemId: id });
+            openEditor({ collectionKey, itemId: id });
           }}
           selectedId={selectedId}
         />
@@ -2110,7 +2183,6 @@ export function YashieAdminDashboard({
     editorTarget?.itemId && editorItems.length > 0
       ? (editorItems.find((item) => item.id === editorTarget.itemId) ?? null)
       : null;
-  const closeEditor = () => setEditorTarget(null);
 
   return (
     <main className="section-band min-h-screen px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -2168,6 +2240,11 @@ export function YashieAdminDashboard({
         {editorTarget ? (
           <div
             className="fixed inset-0 z-50 grid bg-[rgba(12,31,52,0.58)] px-3 py-4 backdrop-blur-sm sm:px-6"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                requestCloseEditor();
+              }
+            }}
             role="presentation"
           >
             <section
@@ -2181,7 +2258,9 @@ export function YashieAdminDashboard({
                 collectionKey={editorTarget.collectionKey}
                 item={editorItem}
                 key={`${editorTarget.collectionKey}-${editorTarget.itemId ?? "new"}`}
+                onBusyChange={setEditorBusy}
                 onClose={closeEditor}
+                onCloseRequest={requestCloseEditor}
                 onDeleted={(items) => {
                   setContent((current) => ({
                     ...current,
@@ -2192,6 +2271,7 @@ export function YashieAdminDashboard({
                     [editorTarget.collectionKey]: items[0]?.id ?? null,
                   }));
                 }}
+                onDirtyChange={setEditorDirty}
                 onSaved={(items, savedItem) => {
                   setContent((current) => ({
                     ...current,
@@ -2205,6 +2285,44 @@ export function YashieAdminDashboard({
                 }}
               />
             </section>
+            {confirmEditorClose ? (
+              <div
+                className="absolute inset-0 z-10 grid place-items-center bg-[rgba(12,31,52,0.36)] px-4"
+                role="presentation"
+              >
+                <section
+                  aria-modal="true"
+                  className="parchment-card w-full max-w-md p-5 shadow-[0_24px_80px_rgba(12,31,52,0.34)]"
+                  role="alertdialog"
+                >
+                  <p className="script-label">
+                    {YASHIE_ADMIN_COPY.editor.unsavedTitle}
+                  </p>
+                  <h3 className="mt-2 font-display text-4xl leading-none text-[var(--navy)]">
+                    {YASHIE_ADMIN_COPY.editor.unsavedHeading}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
+                    {YASHIE_ADMIN_COPY.editor.unsavedDescription}
+                  </p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <button
+                      className="button-secondary w-full"
+                      onClick={() => setConfirmEditorClose(false)}
+                      type="button"
+                    >
+                      {YASHIE_ADMIN_COPY.editor.keepEditing}
+                    </button>
+                    <button
+                      className="button-primary w-full"
+                      onClick={closeEditor}
+                      type="button"
+                    >
+                      {YASHIE_ADMIN_COPY.editor.discardChanges}
+                    </button>
+                  </div>
+                </section>
+              </div>
+            ) : null}
           </div>
         ) : null}
 

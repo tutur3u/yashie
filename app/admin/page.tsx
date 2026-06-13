@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { YashieAdminDashboard } from "@/components/admin/YashieAdminDashboard";
+import { YashieAdminLoadingPanel } from "@/components/admin/YashieAdminLoadingPanel";
 import { YashieAdminLoginPanel } from "@/components/admin/YashieAdminLoginPanel";
 import { YashieAdminSessionRestorer } from "@/components/admin/YashieAdminSessionRestorer";
 import { getYashieCentralizedLoginHref } from "./login-link";
@@ -26,6 +28,11 @@ export const metadata: Metadata = {
   title: "Yashie Dashboard",
   description: "Friendly website dashboard for InkedByYashie.",
 };
+
+type AuthenticatedYashieAdminSession = Extract<
+  Awaited<ReturnType<typeof getYashieAdminSessionReadState>>,
+  { status: "authenticated" }
+>["session"];
 
 function emptyStudio(): YashieAdminStudioPayload {
   return {
@@ -58,6 +65,18 @@ export default async function AdminPage({
 
   const { session } = sessionState;
 
+  return (
+    <Suspense fallback={<YashieAdminLoadingPanel />}>
+      <AuthenticatedAdminDashboard session={session} />
+    </Suspense>
+  );
+}
+
+async function AuthenticatedAdminDashboard({
+  session,
+}: {
+  session: AuthenticatedYashieAdminSession;
+}) {
   const [studio, storageAnalytics, storageFiles] = await Promise.all([
     getYashieAdminStudio(session.accessToken).catch(() => emptyStudio()),
     getYashieStorageAnalytics(session.accessToken),
