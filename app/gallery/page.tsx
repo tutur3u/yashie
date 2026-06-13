@@ -6,7 +6,7 @@ import {
 	QuotePanel,
 	SectionHeader,
 } from "@/app/components/PortfolioSections";
-import { getWorldHref, worlds } from "@/app/data/portfolio";
+import { getWorldHref } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
 
 export const metadata: Metadata = {
@@ -49,7 +49,7 @@ export default async function GalleryPage() {
 							description="The portfolio treats each genre and format as a doorway into Yashie's larger world."
 						/>
 						<div className="grid gap-4 md:grid-cols-2">
-							{worlds.map((world) => (
+							{content.worlds.map((world) => (
 								<Link
 									key={world.title}
 									href={getWorldHref(world)}

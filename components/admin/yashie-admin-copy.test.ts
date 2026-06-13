@@ -9,7 +9,6 @@ const bannedWords = [
   "manifest",
   "payload",
   "sync",
-  "tuturuuu",
   "workspace",
 ];
 

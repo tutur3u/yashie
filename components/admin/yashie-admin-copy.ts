@@ -9,15 +9,18 @@ export const YASHIE_ADMIN_COPY = {
     cancel: "Cancel",
     delete: "Delete",
     keep: "Keep it",
+    newCategory: "New category",
     newGallery: "New gallery piece",
     newPost: "New post",
     newShop: "New shop item",
+    newWorld: "New writing world",
     save: "Save",
     saving: "Saving",
   },
   dashboard: {
     eyebrow: "InkedByYashie",
-    subtitle: "Manage posts, artwork, and shop items in one calm place.",
+    subtitle:
+      "Manage writing worlds, posts, artwork, and shop items in one calm place.",
     title: "Yashie Dashboard",
   },
   editor: {
@@ -30,8 +33,10 @@ export const YASHIE_ADMIN_COPY = {
   },
   empty: {
     blog: "Start the first post from the editor.",
+    categories: "Create labels first, then apply them to worlds, posts, and gallery pieces.",
     gallery: "Add the first gallery piece from the editor.",
     shop: "Add the first shop item from the editor.",
+    worlds: "Add the first writing world from the editor.",
   },
   errors: {
     delete: "We could not delete this item. Please try again.",
@@ -43,6 +48,15 @@ export const YASHIE_ADMIN_COPY = {
     links: "Links",
     saved: "Saved.",
     title: "Public profile",
+  },
+  members: {
+    description:
+      "See who can help edit this site. Manage invitations and access in Tuturuuu.",
+    empty: "No team members were returned.",
+    loading: "Loading team members...",
+    manage: "Manage in Tuturuuu",
+    title: "Team members",
+    unavailable: "Team members are not available right now.",
   },
   publish: {
     check: "Check for changes",
@@ -64,6 +78,9 @@ export const YASHIE_ADMIN_COPY = {
       "This also clears it from any post, gallery piece, or shop item using it.",
     description:
       "See how much room your images, posts, and downloads are using.",
+    driveDescription:
+      "Open Tuturuuu Drive for deeper file management, sharing, and team folders.",
+    driveLink: "Open Tuturuuu Drive",
     emptyFiles: "No files in this spot yet.",
     files: "Files",
     folderDone: "Folder added.",
@@ -91,11 +108,14 @@ export const YASHIE_ADMIN_COPY = {
   tabs: {
     account: "Account",
     blog: "Blog",
+    categories: "Categories",
     gallery: "Gallery",
+    members: "Members",
     publish: "Publish",
     profile: "Profile & Links",
     shop: "Shop",
     storage: "Storage",
+    worlds: "Worlds",
   },
   visibility: {
     archived: "Hidden",

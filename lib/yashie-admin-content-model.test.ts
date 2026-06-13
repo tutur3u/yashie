@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   parseYashieContentFormData,
   readYashieAdminContent,
+  resolveYashieAdminCollectionKey,
   type YashieAdminStudioPayload,
 } from "./yashie-admin-content-model";
 
@@ -44,6 +45,12 @@ const studio = {
       title: "Blog Posts",
     },
     {
+      collection_type: "categories",
+      id: "collection-categories",
+      slug: "categories",
+      title: "Categories",
+    },
+    {
       collection_type: "gallery",
       id: "collection-gallery",
       slug: "gallery",
@@ -54,6 +61,12 @@ const studio = {
       id: "collection-shop",
       slug: "shop-products",
       title: "Shop Products",
+    },
+    {
+      collection_type: "writing-worlds",
+      id: "collection-worlds",
+      slug: "writing-worlds",
+      title: "Writing Worlds",
     },
   ],
   entries: [
@@ -71,6 +84,18 @@ const studio = {
       subtitle: "Reflection",
       summary: "A short public intro.",
       title: "First Post",
+    },
+    {
+      collection_id: "collection-categories",
+      id: "category-1",
+      profile_data: {
+        group: "blog",
+      },
+      slug: "blog-essay",
+      status: "published",
+      subtitle: "blog",
+      summary: "Long-form posts.",
+      title: "Essay",
     },
     {
       collection_id: "collection-gallery",
@@ -92,11 +117,31 @@ const studio = {
       summary: "A signed keepsake.",
       title: "Signed Book",
     },
+    {
+      collection_id: "collection-worlds",
+      id: "world-1",
+      profile_data: {
+        imagePosition: "center 40%",
+        kicker: "Poetry",
+      },
+      slug: "poems-that-breathe",
+      status: "published",
+      subtitle: "Poetry",
+      summary: "A doorway into softer poems.",
+      title: "Poems That Breathe",
+    },
   ],
 } satisfies YashieAdminStudioPayload;
 
 describe("Yashie admin content model", () => {
-  test("normalizes blog, gallery, and shop items for the editor", () => {
+  test("resolves dashboard keys and CMS collection slugs", () => {
+    expect(resolveYashieAdminCollectionKey("worlds")).toBe("worlds");
+    expect(resolveYashieAdminCollectionKey("writing-worlds")).toBe("worlds");
+    expect(resolveYashieAdminCollectionKey("categories")).toBe("categories");
+    expect(resolveYashieAdminCollectionKey("blog-posts")).toBe("blog");
+  });
+
+  test("normalizes dashboard content items for the editor", () => {
     expect(readYashieAdminContent(studio, "blog")).toEqual([
       expect.objectContaining({
         body: "The full blog body.",
@@ -131,6 +176,29 @@ describe("Yashie admin content model", () => {
         price: "$28",
         status: "archived",
         title: "Signed Book",
+      }),
+    ]);
+
+    expect(readYashieAdminContent(studio, "worlds")).toEqual([
+      expect.objectContaining({
+        category: "Poetry",
+        id: "world-1",
+        imagePosition: "center 40%",
+        slug: "poems-that-breathe",
+        status: "published",
+        summary: "A doorway into softer poems.",
+        title: "Poems That Breathe",
+      }),
+    ]);
+
+    expect(readYashieAdminContent(studio, "categories")).toEqual([
+      expect.objectContaining({
+        category: "blog",
+        id: "category-1",
+        slug: "blog-essay",
+        status: "published",
+        summary: "Long-form posts.",
+        title: "Essay",
       }),
     ]);
   });

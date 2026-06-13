@@ -10,6 +10,9 @@ describe("Yashie external project manifest", () => {
     const socialLinks = entries.filter(
       (entry) => entry.collectionSlug === "social-links",
     );
+    const categories = entries.filter(
+      (entry) => entry.collectionSlug === "categories",
+    );
 
     expect(profile?.profileData).toEqual(
       expect.objectContaining({
@@ -32,6 +35,26 @@ describe("Yashie external project manifest", () => {
             href: "https://bsky.app/profile/inkedbyyashie.bsky.social",
             platform: "bluesky",
           }),
+        }),
+      ]),
+    );
+    expect(categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          profileData: expect.objectContaining({ group: "blog" }),
+          title: "Essay",
+        }),
+        expect.objectContaining({
+          profileData: expect.objectContaining({ group: "worlds" }),
+          title: "Poetry",
+        }),
+      ]),
+    );
+    expect(yashieExternalProjectManifest.schema.collections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          collection_type: "categories",
+          slug: "categories",
         }),
       ]),
     );

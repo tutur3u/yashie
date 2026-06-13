@@ -117,27 +117,39 @@ function buildProfileData(input: YashieContentMutationInput) {
     return {
       category: input.category,
       date: input.date,
-      imagePosition: input.imagePosition || null,
       readTime: input.readTime,
+    };
+  }
+
+  if (input.collectionKey === "categories") {
+    return {
+      group: input.category,
     };
   }
 
   if (input.collectionKey === "gallery") {
     return {
-      imagePosition: input.imagePosition || null,
       type: input.type,
     };
   }
 
+  if (input.collectionKey === "worlds") {
+    return {
+      detail: input.body,
+      kicker: input.category,
+    };
+  }
+
   return {
-    imagePosition: input.imagePosition || null,
     price: input.price,
   };
 }
 
 function getSubtitle(input: YashieContentMutationInput) {
   if (input.collectionKey === "blog") return input.category || null;
+  if (input.collectionKey === "categories") return input.category || null;
   if (input.collectionKey === "gallery") return input.type || null;
+  if (input.collectionKey === "worlds") return input.category || null;
   return input.price || null;
 }
 
@@ -162,7 +174,7 @@ function buildBlockPayload(entryId: string, input: YashieContentMutationInput) {
     },
     entry_id: entryId,
     sort_order: 0,
-    title: "Body",
+    title: input.collectionKey === "worlds" ? "Detail" : "Body",
   };
 }
 
@@ -179,7 +191,7 @@ async function saveBodyBlock({
   item: YashieAdminContentItem | null;
   workspaceId: string;
 }) {
-  if (input.collectionKey !== "blog") return;
+  if (input.collectionKey !== "blog" && input.collectionKey !== "worlds") return;
 
   const payload = buildBlockPayload(entryId, input);
 

@@ -10,7 +10,12 @@ export type YashieAdminStudioPayload = {
 };
 
 export type YashieContentStatus = "archived" | "draft" | "published" | "scheduled";
-export type YashieAdminCollectionKey = "blog" | "gallery" | "shop";
+export type YashieAdminCollectionKey =
+  | "blog"
+  | "categories"
+  | "gallery"
+  | "shop"
+  | "worlds";
 
 export type YashieAdminCollectionConfig = {
   collectionSlug: string;
@@ -75,6 +80,11 @@ export const YASHIE_ADMIN_COLLECTIONS: Record<
     key: "blog",
     singularLabel: "post",
   },
+  categories: {
+    collectionSlug: "categories",
+    key: "categories",
+    singularLabel: "category",
+  },
   gallery: {
     collectionSlug: "gallery",
     key: "gallery",
@@ -84,6 +94,11 @@ export const YASHIE_ADMIN_COLLECTIONS: Record<
     collectionSlug: "shop-products",
     key: "shop",
     singularLabel: "shop item",
+  },
+  worlds: {
+    collectionSlug: "writing-worlds",
+    key: "worlds",
+    singularLabel: "writing world",
   },
 };
 
@@ -219,7 +234,12 @@ export function readYashieAdminContent(
       return {
         blockId: markdownBlock ? String(markdownBlock.id) : null,
         body: getBlockMarkdown(markdownBlock),
-        category: readString(profileData, "category") ?? readString(entry, "subtitle") ?? "",
+        category:
+          readString(profileData, "category") ??
+          readString(profileData, "kicker") ??
+          readString(profileData, "group") ??
+          readString(entry, "subtitle") ??
+          "",
         collectionKey,
         date: readString(profileData, "date") ?? "",
         id: entryId,

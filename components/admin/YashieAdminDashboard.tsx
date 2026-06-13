@@ -11,6 +11,10 @@ import type {
   YashieAdminSiteSettings,
   YashieAdminSiteSettingsInput,
 } from "@/lib/yashie-admin-site-settings";
+import type {
+  YashieAdminMember,
+  YashieAdminMembersContext,
+} from "@/lib/yashie-admin-members";
 import { slugifyYashieContent } from "@/lib/yashie-admin-content-model";
 import type { YashieStorageAnalyticsState } from "@/lib/yashie-storage-analytics";
 import type {
@@ -27,6 +31,7 @@ import {
 type AdminTab =
   | YashieAdminCollectionKey
   | "account"
+  | "members"
   | "profile"
   | "publish"
   | "storage";
@@ -70,15 +75,30 @@ type SiteSettingsMutationResponse = {
   settings?: YashieAdminSiteSettings;
 };
 
-const contentTabs: YashieAdminCollectionKey[] = ["blog", "gallery", "shop"];
+type MembersResponse = {
+  context?: YashieAdminMembersContext;
+  error?: string;
+  members?: YashieAdminMember[];
+};
+
+const contentTabs: YashieAdminCollectionKey[] = [
+  "worlds",
+  "categories",
+  "blog",
+  "gallery",
+  "shop",
+];
 
 const tabLabels: Array<{ id: AdminTab; label: string }> = [
+  { id: "worlds", label: YASHIE_ADMIN_COPY.tabs.worlds },
+  { id: "categories", label: YASHIE_ADMIN_COPY.tabs.categories },
   { id: "blog", label: YASHIE_ADMIN_COPY.tabs.blog },
   { id: "gallery", label: YASHIE_ADMIN_COPY.tabs.gallery },
   { id: "shop", label: YASHIE_ADMIN_COPY.tabs.shop },
   { id: "profile", label: YASHIE_ADMIN_COPY.tabs.profile },
   { id: "publish", label: YASHIE_ADMIN_COPY.tabs.publish },
   { id: "storage", label: YASHIE_ADMIN_COPY.tabs.storage },
+  { id: "members", label: YASHIE_ADMIN_COPY.tabs.members },
   { id: "account", label: YASHIE_ADMIN_COPY.tabs.account },
 ];
 
@@ -99,6 +119,12 @@ const sectionCopy: Record<
     newLabel: YASHIE_ADMIN_COPY.actions.newPost,
     singular: "post",
   },
+  categories: {
+    empty: YASHIE_ADMIN_COPY.empty.categories,
+    listTitle: "Categories",
+    newLabel: YASHIE_ADMIN_COPY.actions.newCategory,
+    singular: "category",
+  },
   gallery: {
     empty: YASHIE_ADMIN_COPY.empty.gallery,
     listTitle: "Gallery pieces",
@@ -111,6 +137,12 @@ const sectionCopy: Record<
     newLabel: YASHIE_ADMIN_COPY.actions.newShop,
     singular: "shop item",
   },
+  worlds: {
+    empty: YASHIE_ADMIN_COPY.empty.worlds,
+    listTitle: "Writing worlds",
+    newLabel: YASHIE_ADMIN_COPY.actions.newWorld,
+    singular: "writing world",
+  },
 };
 
 const statusOptions: Array<{ label: string; value: YashieContentStatus }> = [
@@ -118,6 +150,16 @@ const statusOptions: Array<{ label: string; value: YashieContentStatus }> = [
   { label: YASHIE_ADMIN_COPY.visibility.published, value: "published" },
   { label: YASHIE_ADMIN_COPY.visibility.archived, value: "archived" },
   { label: YASHIE_ADMIN_COPY.visibility.scheduled, value: "scheduled" },
+];
+
+const categoryGroupOptions: Array<{
+  label: string;
+  value: YashieAdminCollectionKey;
+}> = [
+  { label: "Writing worlds", value: "worlds" },
+  { label: "Blog", value: "blog" },
+  { label: "Gallery", value: "gallery" },
+  { label: "Shop", value: "shop" },
 ];
 
 function getInitials(email: string | null) {
@@ -403,10 +445,12 @@ function StorageFileRow({
 }
 
 function StoragePanel({
+  driveHref,
   storageAnalytics,
   storageFiles,
   onResourcesChanged,
 }: {
+  driveHref: string;
   storageAnalytics: YashieStorageAnalyticsState;
   storageFiles: YashieStorageFilesState;
   onResourcesChanged: () => Promise<void>;
@@ -615,6 +659,14 @@ function StoragePanel({
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
           {analyticsState.message}
         </p>
+        <Link
+          className="button-secondary mt-5 inline-flex"
+          href={driveHref}
+          rel="noreferrer"
+          target="_blank"
+        >
+          {YASHIE_ADMIN_COPY.storage.driveLink}
+        </Link>
       </section>
     );
   }
@@ -639,10 +691,23 @@ function StoragePanel({
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
                 {YASHIE_ADMIN_COPY.storage.description}
               </p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
+                {YASHIE_ADMIN_COPY.storage.driveDescription}
+              </p>
             </div>
-            <strong className="font-display text-4xl leading-none text-[var(--clay)] sm:text-5xl">
-              {usagePercentage.toFixed(usagePercentage % 1 === 0 ? 0 : 1)}%
-            </strong>
+            <div className="grid gap-3 text-left lg:text-right">
+              <strong className="font-display text-4xl leading-none text-[var(--clay)] sm:text-5xl">
+                {usagePercentage.toFixed(usagePercentage % 1 === 0 ? 0 : 1)}%
+              </strong>
+              <Link
+                className="button-secondary w-full lg:w-auto"
+                href={driveHref}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {YASHIE_ADMIN_COPY.storage.driveLink}
+              </Link>
+            </div>
           </div>
           <div className="mt-6 h-3 overflow-hidden border border-[rgba(184,112,81,0.34)] bg-white/72">
             <div
@@ -828,6 +893,37 @@ function readFriendlyError(payload: MutationResponse, fallback: string) {
   return Object.values(payload.errors ?? {})[0] ?? fallback;
 }
 
+function categoryOptionsFor(
+  categories: YashieAdminContentItem[],
+  collectionKey: YashieAdminCollectionKey,
+  currentValue: string,
+) {
+  const values = categories
+    .filter(
+      (item) =>
+        item.status !== "archived" &&
+        item.category === collectionKey &&
+        item.title.trim(),
+    )
+    .map((item) => item.title.trim());
+  const uniqueValues = [...new Set(values)].sort((left, right) =>
+    left.localeCompare(right),
+  );
+
+  if (currentValue.trim() && !uniqueValues.includes(currentValue.trim())) {
+    uniqueValues.unshift(currentValue.trim());
+  }
+
+  return uniqueValues.map((value) => ({ label: value, value }));
+}
+
+function categoryGroupLabel(value: string) {
+  return (
+    categoryGroupOptions.find((option) => option.value === value)?.label ??
+    value
+  );
+}
+
 function TextField<TName extends keyof Draft>({
   error,
   label,
@@ -861,6 +957,47 @@ function TextField<TName extends keyof Draft>({
         value={value}
       />
       {error ? <span className="text-xs text-red-700">{error}</span> : null}
+    </label>
+  );
+}
+
+function SelectField<TName extends keyof Draft>({
+  label,
+  name,
+  onChange,
+  options,
+  placeholder = "Choose one",
+  value,
+}: {
+  label: string;
+  name: TName;
+  onChange: (name: TName, value: string) => void;
+  options: Array<{ label: string; value: string }>;
+  placeholder?: string;
+  value: string;
+}) {
+  const hasCurrentValue =
+    value.trim() && !options.some((option) => option.value === value);
+
+  return (
+    <label className="grid min-w-0 gap-2">
+      <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+        {label}
+      </span>
+      <select
+        className="min-h-11 w-full min-w-0 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
+        name={name}
+        onChange={(event) => onChange(name, event.currentTarget.value)}
+        value={value}
+      >
+        <option value="">{placeholder}</option>
+        {hasCurrentValue ? <option value={value}>{value}</option> : null}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -1168,6 +1305,130 @@ function SiteSettingsPanel({
   );
 }
 
+function MembersPanel({ membersHref }: { membersHref: string }) {
+  const [members, setMembers] = useState<YashieAdminMember[]>([]);
+  const [context, setContext] = useState<YashieAdminMembersContext | null>(
+    null,
+  );
+  const [status, setStatus] = useState<"error" | "loading" | "ready">(
+    "loading",
+  );
+  const [message, setMessage] = useState<string>(
+    YASHIE_ADMIN_COPY.members.loading,
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    const loadMembers = async () => {
+      setStatus("loading");
+      setMessage(YASHIE_ADMIN_COPY.members.loading);
+
+      try {
+        const response = await adminFetch("/api/admin/members", {
+          cache: "no-store",
+        });
+        const payload = (await response
+          .json()
+          .catch(() => ({}))) as MembersResponse;
+
+        if (!active) return;
+
+        if (!response.ok || !payload.members) {
+          setStatus("error");
+          setMessage(payload.error ?? YASHIE_ADMIN_COPY.members.unavailable);
+          return;
+        }
+
+        setMembers(payload.members);
+        setContext(payload.context ?? null);
+        setStatus("ready");
+      } catch {
+        if (!active) return;
+        setStatus("error");
+        setMessage(YASHIE_ADMIN_COPY.members.unavailable);
+      }
+    };
+
+    void loadMembers();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <section className="parchment-card grid min-w-0 gap-5 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="script-label">{YASHIE_ADMIN_COPY.members.title}</p>
+          <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
+            {context?.boundProjectName ?? "Site team"}
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
+            {YASHIE_ADMIN_COPY.members.description}
+          </p>
+        </div>
+        <Link
+          className="button-primary w-full sm:w-auto"
+          href={membersHref}
+          rel="noreferrer"
+          target="_blank"
+        >
+          {YASHIE_ADMIN_COPY.members.manage}
+        </Link>
+      </div>
+
+      {status === "loading" || status === "error" ? (
+        <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
+          {message}
+        </div>
+      ) : null}
+
+      {status === "ready" && members.length === 0 ? (
+        <p className="border border-dashed border-[rgba(184,112,81,0.5)] bg-white/58 p-6 text-sm leading-6 text-[var(--ink-soft)]">
+          {YASHIE_ADMIN_COPY.members.empty}
+        </p>
+      ) : null}
+
+      {members.length > 0 ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {members.map((member) => (
+            <div
+              className="grid min-w-0 gap-2 border border-[rgba(184,112,81,0.34)] bg-white/68 p-4"
+              key={member.id}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid size-11 shrink-0 place-items-center bg-[var(--navy)] font-display text-xl text-[var(--parchment)]">
+                  {member.initials}
+                </span>
+                <div className="min-w-0">
+                  <strong className="block truncate text-[var(--ink)]">
+                    {member.name}
+                  </strong>
+                  {member.email ? (
+                    <span className="mt-1 block truncate text-sm text-[var(--ink-soft)]">
+                      {member.email}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="border border-[rgba(184,112,81,0.34)] bg-white/72 px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--clay)]">
+                  {member.status}
+                </span>
+                <span className="border border-[rgba(31,107,115,0.22)] bg-[rgba(31,107,115,0.08)] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--teal)]">
+                  {member.role}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function ContentList({
   collectionKey,
   items,
@@ -1239,9 +1500,13 @@ function ContentList({
                 <span className="mt-1 block break-words text-sm text-[var(--ink-soft)]">
                   {collectionKey === "blog"
                     ? item.category || "Post"
+                    : collectionKey === "categories"
+                      ? categoryGroupLabel(item.category)
                     : collectionKey === "gallery"
                       ? item.type || "Gallery piece"
-                      : item.price || "Shop item"}
+                      : collectionKey === "worlds"
+                        ? item.category || "Writing world"
+                        : item.price || "Shop item"}
                 </span>
               </div>
             </button>
@@ -1262,11 +1527,13 @@ function ContentList({
 }
 
 function ContentForm({
+  categories,
   collectionKey,
   item,
   onDeleted,
   onSaved,
 }: {
+  categories: YashieAdminContentItem[];
   collectionKey: YashieAdminCollectionKey;
   item: YashieAdminContentItem | null;
   onDeleted: (items: YashieAdminContentItem[]) => void;
@@ -1470,13 +1737,6 @@ function ContentForm({
               }}
               value={draft.slug}
             />
-            <TextField
-              label="Image focus"
-              name="imagePosition"
-              onChange={updateDraft}
-              placeholder="center"
-              value={draft.imagePosition}
-            />
           </div>
         </div>
       </section>
@@ -1485,12 +1745,24 @@ function ContentForm({
         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
           {YASHIE_ADMIN_COPY.editor.details}
         </p>
+        {collectionKey === "categories" ? (
+          <SelectField
+            label="Section"
+            name="category"
+            onChange={updateDraft}
+            options={categoryGroupOptions}
+            placeholder="Choose a section"
+            value={draft.category}
+          />
+        ) : null}
         {collectionKey === "blog" ? (
           <div className="grid gap-4 md:grid-cols-3">
-            <TextField
+            <SelectField
               label="Category"
               name="category"
               onChange={updateDraft}
+              options={categoryOptionsFor(categories, "blog", draft.category)}
+              placeholder="Choose a category"
               value={draft.category}
             />
             <TextField
@@ -1508,10 +1780,12 @@ function ContentForm({
           </div>
         ) : null}
         {collectionKey === "gallery" ? (
-          <TextField
-            label="Kind"
+          <SelectField
+            label="Category"
             name="type"
             onChange={updateDraft}
+            options={categoryOptionsFor(categories, "gallery", draft.type)}
+            placeholder="Choose a category"
             value={draft.type}
           />
         ) : null}
@@ -1523,15 +1797,25 @@ function ContentForm({
             value={draft.price}
           />
         ) : null}
+        {collectionKey === "worlds" ? (
+          <SelectField
+            label="Category"
+            name="category"
+            onChange={updateDraft}
+            options={categoryOptionsFor(categories, "worlds", draft.category)}
+            placeholder="Choose a category"
+            value={draft.category}
+          />
+        ) : null}
         <TextAreaField
           label={collectionKey === "blog" ? "Short intro" : "Description"}
           name="summary"
           onChange={updateDraft}
           value={draft.summary}
         />
-        {collectionKey === "blog" ? (
+        {collectionKey === "blog" || collectionKey === "worlds" ? (
           <TextAreaField
-            label="Post body"
+            label={collectionKey === "worlds" ? "Detail copy" : "Post body"}
             name="body"
             onChange={updateDraft}
             rows={8}
@@ -1540,76 +1824,78 @@ function ContentForm({
         ) : null}
       </section>
 
-      <section className="grid gap-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-            {YASHIE_ADMIN_COPY.editor.image}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-            {YASHIE_ADMIN_COPY.editor.imageHelp}
-          </p>
-        </div>
-        <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
-          <div className="relative min-h-48 overflow-hidden border border-[rgba(184,112,81,0.42)] bg-white/58">
-            {item?.imageUrl && !draft.removeImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                alt={item.imageAlt}
-                className="h-full min-h-48 w-full object-cover"
-                src={item.imageUrl}
-                style={{ objectPosition: item.imagePosition || "center" }}
-              />
-            ) : (
-              <div className="grid min-h-48 place-items-center px-4 text-center text-sm text-[var(--ink-soft)]">
-                Choose an image when this is ready.
-              </div>
-            )}
+      {collectionKey === "categories" ? null : (
+        <section className="grid gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+              {YASHIE_ADMIN_COPY.editor.image}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+              {YASHIE_ADMIN_COPY.editor.imageHelp}
+            </p>
           </div>
-          <div className="grid min-w-0 content-start gap-4">
-            <TextField
-              label="Image description"
-              name="imageAlt"
-              onChange={updateDraft}
-              value={draft.imageAlt}
-            />
-            <label className="grid gap-2">
-              <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
-                Choose image
-              </span>
-              <input
-                accept="image/*"
-                className="min-h-11 w-full min-w-0 max-w-full border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
-                name="imageFile"
-                onChange={updateImageFile}
-                type="file"
-              />
-              {imageFileLabel ? (
-                <span className="text-xs text-[var(--ink-soft)]">
-                  {imageFileLabel}
-                </span>
-              ) : null}
-              {fieldErrors.imageFile ? (
-                <span className="text-xs text-red-700">
-                  {fieldErrors.imageFile}
-                </span>
-              ) : null}
-            </label>
-            {item?.imageAssetId ? (
-              <label className="flex items-center gap-3 border border-[rgba(184,112,81,0.32)] bg-white/58 px-3 py-3 text-sm text-[var(--ink)]">
-                <input
-                  checked={draft.removeImage}
-                  className="size-4 accent-[var(--clay)]"
-                  onChange={(event) =>
-                    updateDraft("removeImage", event.currentTarget.checked)
-                  }
-                  type="checkbox"
+          <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
+            <div className="relative min-h-48 overflow-hidden border border-[rgba(184,112,81,0.42)] bg-white/58">
+              {item?.imageUrl && !draft.removeImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt={item.imageAlt}
+                  className="h-full min-h-48 w-full object-cover"
+                  src={item.imageUrl}
+                  style={{ objectPosition: item.imagePosition || "center" }}
                 />
-                Remove the current image
+              ) : (
+                <div className="grid min-h-48 place-items-center px-4 text-center text-sm text-[var(--ink-soft)]">
+                  Choose an image when this is ready.
+                </div>
+              )}
+            </div>
+            <div className="grid min-w-0 content-start gap-4">
+              <TextField
+                label="Image description"
+                name="imageAlt"
+                onChange={updateDraft}
+                value={draft.imageAlt}
+              />
+              <label className="grid gap-2">
+                <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+                  Choose image
+                </span>
+                <input
+                  accept="image/*"
+                  className="min-h-11 w-full min-w-0 max-w-full border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
+                  name="imageFile"
+                  onChange={updateImageFile}
+                  type="file"
+                />
+                {imageFileLabel ? (
+                  <span className="text-xs text-[var(--ink-soft)]">
+                    {imageFileLabel}
+                  </span>
+                ) : null}
+                {fieldErrors.imageFile ? (
+                  <span className="text-xs text-red-700">
+                    {fieldErrors.imageFile}
+                  </span>
+                ) : null}
               </label>
-            ) : null}
+              {item?.imageAssetId ? (
+                <label className="flex items-center gap-3 border border-[rgba(184,112,81,0.32)] bg-white/58 px-3 py-3 text-sm text-[var(--ink)]">
+                  <input
+                    checked={draft.removeImage}
+                    className="size-4 accent-[var(--clay)]"
+                    onChange={(event) =>
+                      updateDraft("removeImage", event.currentTarget.checked)
+                    }
+                    type="checkbox"
+                  />
+                  Remove the current image
+                </label>
+              ) : null}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {item ? (
         <section className="border-t border-[rgba(184,112,81,0.28)] pt-5">
@@ -1654,16 +1940,20 @@ function ContentForm({
 }
 
 export function YashieAdminDashboard({
+  driveHref,
   initialContent,
   initialSiteSettings,
+  membersHref,
   sessionExpiresAt,
   sessionRefreshEarlySeconds,
   storageAnalytics,
   storageFiles,
   userEmail,
 }: {
+  driveHref: string;
   initialContent: DashboardContent;
   initialSiteSettings: YashieAdminSiteSettings;
+  membersHref: string;
   sessionExpiresAt: string;
   sessionRefreshEarlySeconds?: number;
   storageAnalytics: YashieStorageAnalyticsState;
@@ -1676,6 +1966,8 @@ export function YashieAdminDashboard({
   const [selectedIds, setSelectedIds] = useState<
     Record<YashieAdminCollectionKey, string | null>
   >({
+    worlds: initialContent.worlds[0]?.id ?? null,
+    categories: initialContent.categories[0]?.id ?? null,
     blog: initialContent.blog[0]?.id ?? null,
     gallery: initialContent.gallery[0]?.id ?? null,
     shop: initialContent.shop[0]?.id ?? null,
@@ -1754,6 +2046,7 @@ export function YashieAdminDashboard({
         />
         <div className="parchment-card min-w-0 p-4 sm:p-5">
           <ContentForm
+            categories={content.categories}
             collectionKey={collectionKey}
             item={selectedItem}
             key={selectedItem?.id ?? `new-${collectionKey}`}
@@ -1843,10 +2136,15 @@ export function YashieAdminDashboard({
 
         {activeTab === "storage" ? (
           <StoragePanel
+            driveHref={driveHref}
             onResourcesChanged={refreshContent}
             storageAnalytics={storageAnalytics}
             storageFiles={storageFiles}
           />
+        ) : null}
+
+        {activeTab === "members" ? (
+          <MembersPanel membersHref={membersHref} />
         ) : null}
 
         {activeTab === "account" ? (

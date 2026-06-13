@@ -85,4 +85,5 @@ export function revalidateYashieContent() {
   revalidatePath("/contact");
   revalidatePath("/gallery");
   revalidatePath("/shop");
+  revalidatePath("/worlds/[slug]", "page");
 }

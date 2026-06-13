@@ -11,6 +11,7 @@ import {
 	slugify,
 	worlds,
 } from "@/app/data/portfolio";
+import { getYashieContent } from "@/lib/yashie-delivery";
 
 type DetailParams = {
 	params: Promise<{ slug: string }>;
@@ -26,7 +27,8 @@ export async function generateMetadata({
 	params,
 }: DetailParams): Promise<Metadata> {
 	const { slug } = await params;
-	const world = findWorldBySlug(slug);
+	const content = await getYashieContent();
+	const world = findWorldBySlug(slug, content.worlds);
 
 	if (!world) {
 		return {};
@@ -43,14 +45,15 @@ export async function generateMetadata({
 
 export default async function WorldDetailPage({ params }: DetailParams) {
 	const { slug } = await params;
-	const world = findWorldBySlug(slug);
+	const content = await getYashieContent();
+	const world = findWorldBySlug(slug, content.worlds);
 
 	if (!world) {
 		notFound();
 	}
 
-	const currentIndex = worlds.findIndex((item) => item.title === world.title);
-	const nextWorld = worlds[(currentIndex + 1) % worlds.length];
+	const currentIndex = content.worlds.findIndex((item) => item.title === world.title);
+	const nextWorld = content.worlds[(currentIndex + 1) % content.worlds.length];
 
 	return (
 		<DetailPageShell

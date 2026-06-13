@@ -12,6 +12,7 @@ import {
   type Product,
   type SocialLink,
   type SocialPlatform,
+  type WritingWorld,
 } from "@/app/data/portfolio";
 
 type JsonObject = Record<string, unknown>;
@@ -312,6 +313,30 @@ function buildProducts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
   return mapped.length > 0 ? mapped : products;
 }
 
+function buildWorlds(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
+  const mapped = getPublishedEntries(delivery, "writing-worlds").map<WritingWorld>(
+    (entry, index) => {
+      const profileData = asRecord(entry.profile_data);
+      const fallback = worlds[index % worlds.length] ?? worlds[0]!;
+      const image = getLeadImage(entry);
+      const detail = getMarkdown(entry);
+
+      return {
+        description: entry.summary ?? "",
+        detail: detail ?? asString(profileData.detail) ?? entry.summary ?? "",
+        image: getImageUrl(entry, apiBaseUrl) ?? fallback.image,
+        imageAlt: image?.alt_text ?? fallback.imageAlt,
+        imagePosition: asString(profileData.imagePosition) ?? fallback.imagePosition,
+        kicker: asString(profileData.kicker) ?? entry.subtitle ?? fallback.kicker,
+        slug: entry.slug,
+        title: entry.title,
+      };
+    },
+  );
+
+  return mapped.length > 0 ? mapped : worlds;
+}
+
 export function buildYashieContent(
   delivery: YashieDeliveryPayload | null | undefined,
   {
@@ -332,5 +357,6 @@ export function buildYashieContent(
     products: buildProducts(delivery, apiBaseUrl),
     profileFacts: buildProfileFacts(delivery),
     socials: buildSocials(delivery),
+    worlds: buildWorlds(delivery, apiBaseUrl),
   };
 }

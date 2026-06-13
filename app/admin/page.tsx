@@ -8,7 +8,11 @@ import {
   type YashieAdminStudioPayload,
 } from "@/lib/yashie-admin-content-model";
 import { readYashieAdminSiteSettings } from "@/lib/yashie-admin-site-settings";
-import { resolveYashieAdminTargetKey } from "@/lib/yashie-config";
+import {
+  buildYashieCmsUrl,
+  buildYashieDriveUrl,
+  resolveYashieAdminTargetKey,
+} from "@/lib/yashie-config";
 import {
   getYashieAdminSessionReadState,
   getYashieAdminStudio,
@@ -63,11 +67,15 @@ export default async function AdminPage({
   return (
     <YashieAdminDashboard
       initialContent={{
+        worlds: readYashieAdminContent(studio, "worlds"),
+        categories: readYashieAdminContent(studio, "categories"),
         blog: readYashieAdminContent(studio, "blog"),
         gallery: readYashieAdminContent(studio, "gallery"),
         shop: readYashieAdminContent(studio, "shop"),
       }}
       initialSiteSettings={readYashieAdminSiteSettings(studio)}
+      driveHref={buildYashieDriveUrl()}
+      membersHref={buildYashieCmsUrl({ targetKey: "members" })}
       sessionExpiresAt={session.expiresAt}
       sessionRefreshEarlySeconds={session.refreshEarlySeconds}
       storageAnalytics={storageAnalytics}

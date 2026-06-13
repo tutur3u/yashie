@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { BlogCard, PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
-import { getWorldHref, worlds } from "@/app/data/portfolio";
+import { getWorldHref } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default async function BlogPage() {
 						<p className="script-label">Journal tabs</p>
 						<h2 className="font-display text-3xl text-[var(--navy)]">Categories</h2>
 						<div className="mt-4 grid gap-2">
-							{worlds.map((world) => (
+							{content.worlds.map((world) => (
 								<Link
 									key={world.kicker}
 									href={getWorldHref(world)}

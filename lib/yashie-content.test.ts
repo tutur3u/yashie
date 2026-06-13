@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { blogPosts, galleryItems, products } from "@/app/data/portfolio";
+import { blogPosts, galleryItems, products, worlds } from "@/app/data/portfolio";
 import { buildYashieContent, DEFAULT_YASHIE_CONTENT } from "./yashie-content";
 
 describe("Yashie public content", () => {
-  test("uses published delivery content for blog, gallery, and shop pages", () => {
+  test("uses published delivery content for worlds, blog, gallery, and shop pages", () => {
     const content = buildYashieContent(
       {
         adapter: "yashie",
@@ -152,6 +152,54 @@ describe("Yashie public content", () => {
             ],
           },
           {
+            collection_type: "writing-worlds",
+            config: null,
+            description: null,
+            id: "collection-worlds",
+            slug: "writing-worlds",
+            title: "Writing Worlds",
+            entries: [
+              {
+                assets: [
+                  {
+                    alt_text: "A blue room full of books",
+                    assetUrl: "/storage/world.jpg",
+                    asset_type: "image",
+                    block_id: null,
+                    entry_id: "world-1",
+                    id: "asset-world-1",
+                    metadata: {},
+                    sort_order: 0,
+                    source_url: null,
+                    storage_path: null,
+                  },
+                ],
+                blocks: [
+                  {
+                    block_type: "markdown",
+                    content: { markdown: "Published world detail." },
+                    entry_id: "world-1",
+                    id: "block-world-1",
+                    sort_order: 0,
+                    title: "Detail",
+                  },
+                ],
+                id: "world-1",
+                metadata: {},
+                profile_data: {
+                  imagePosition: "center 25%",
+                  kicker: "Worlds",
+                },
+                published_at: null,
+                slug: "published-world",
+                status: "published",
+                subtitle: "Worlds",
+                summary: "Published world doorway.",
+                title: "Published World",
+              },
+            ],
+          },
+          {
             collection_type: "gallery",
             config: null,
             description: null,
@@ -219,6 +267,18 @@ describe("Yashie public content", () => {
         type: "Story Art",
       }),
     );
+    expect(content.worlds[0]).toEqual(
+      expect.objectContaining({
+        description: "Published world doorway.",
+        detail: "Published world detail.",
+        image: "https://platform.example.com/storage/world.jpg",
+        imageAlt: "A blue room full of books",
+        imagePosition: "center 25%",
+        kicker: "Worlds",
+        slug: "published-world",
+        title: "Published World",
+      }),
+    );
     expect(content.products[0]).toEqual(
       expect.objectContaining({
         price: "$40",
@@ -257,5 +317,6 @@ describe("Yashie public content", () => {
     expect(DEFAULT_YASHIE_CONTENT.blogPosts).toBe(blogPosts);
     expect(DEFAULT_YASHIE_CONTENT.galleryItems).toBe(galleryItems);
     expect(DEFAULT_YASHIE_CONTENT.products).toBe(products);
+    expect(DEFAULT_YASHIE_CONTENT.worlds).toBe(worlds);
   });
 });

@@ -11,6 +11,7 @@ export type WritingWorld = {
 	image: string;
 	imageAlt: string;
 	imagePosition?: string;
+	slug?: string;
 };
 
 export type GalleryItem = {
@@ -332,7 +333,7 @@ export function slugify(value: string) {
 }
 
 export function getWorldHref(world: WritingWorld) {
-	return `/worlds/${slugify(world.title)}`;
+	return `/worlds/${world.slug ?? slugify(world.title)}`;
 }
 
 export function getGalleryHref(item: GalleryItem) {
@@ -347,8 +348,8 @@ export function getProductHref(product: Product) {
 	return `/shop/${product.slug ?? slugify(product.title)}`;
 }
 
-export function findWorldBySlug(slug: string) {
-	return worlds.find((world) => slugify(world.title) === slug);
+export function findWorldBySlug(slug: string, items: WritingWorld[] = worlds) {
+	return items.find((world) => (world.slug ?? slugify(world.title)) === slug);
 }
 
 export function findGalleryItemBySlug(slug: string, items: GalleryItem[] = galleryItems) {

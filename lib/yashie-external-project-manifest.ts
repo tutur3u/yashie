@@ -92,25 +92,31 @@ const profileFields = [
 
 const worldFields = [
   { key: "detail", label: "Detail", type: "markdown" },
-  { key: "imagePosition", label: "Image position", type: "string" },
   { key: "kicker", label: "Kicker", type: "string" },
 ] satisfies YashieSyncField[];
 
 const galleryFields = [
-  { key: "imagePosition", label: "Image position", type: "string" },
   { key: "type", label: "Type", type: "string" },
 ] satisfies YashieSyncField[];
 
 const blogFields = [
   { key: "category", label: "Category", type: "string" },
   { key: "date", label: "Date", type: "string" },
-  { key: "imagePosition", label: "Image position", type: "string" },
   { key: "readTime", label: "Read time", type: "string" },
 ] satisfies YashieSyncField[];
 
 const productFields = [
-  { key: "imagePosition", label: "Image position", type: "string" },
   { key: "price", label: "Price", type: "string" },
+] satisfies YashieSyncField[];
+
+const categoryFields = [
+  {
+    key: "group",
+    label: "Section",
+    options: ["worlds", "blog", "gallery", "shop"],
+    required: true,
+    type: "string",
+  },
 ] satisfies YashieSyncField[];
 
 const socialFields = [
@@ -144,6 +150,38 @@ function imageAsset({
     sortOrder: 0,
     sourceUrl: image,
     stableSourceId: `yashie:${collectionSlug}:${slug}:image`,
+  };
+}
+
+function uniqueLabels(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort(
+    (left, right) => left.localeCompare(right),
+  );
+}
+
+function categoryEntry({
+  description,
+  group,
+  label,
+}: {
+  description?: string | null;
+  group: "blog" | "gallery" | "shop" | "worlds";
+  label: string;
+}) {
+  const slug = `${group}-${slugify(label)}`;
+
+  return {
+    blocks: [],
+    collectionSlug: "categories",
+    profileData: {
+      group,
+    },
+    slug,
+    stableSourceId: `yashie:categories:${slug}`,
+    status: PUBLISHED_STATUS,
+    subtitle: group,
+    summary: description ?? `${label} category`,
+    title: label,
   };
 }
 
@@ -297,6 +335,18 @@ function socialEntry(social: SocialLink) {
   };
 }
 
+const categoryEntries = [
+  ...uniqueLabels(worlds.map((world) => world.kicker)).map((label) =>
+    categoryEntry({ group: "worlds", label }),
+  ),
+  ...uniqueLabels(blogPosts.map((post) => post.category)).map((label) =>
+    categoryEntry({ group: "blog", label }),
+  ),
+  ...uniqueLabels(galleryItems.map((item) => item.type)).map((label) =>
+    categoryEntry({ group: "gallery", label }),
+  ),
+];
+
 export const yashieExternalProjectManifest = {
   adapter: "yashie",
   content: {
@@ -363,6 +413,7 @@ export const yashieExternalProjectManifest = {
         summary: author.tagline,
         title: author.name,
       },
+      ...categoryEntries,
       ...worlds.map(worldEntry),
       ...galleryItems.map(galleryEntry),
       ...blogPosts.map(blogEntry),
@@ -380,6 +431,13 @@ export const yashieExternalProjectManifest = {
         profileFields,
         slug: "profile",
         title: "Profile",
+      },
+      {
+        collection_type: "categories",
+        description: "Reusable labels applied across posts, worlds, and gallery pieces.",
+        profileFields: categoryFields,
+        slug: "categories",
+        title: "Categories",
       },
       {
         assetTypes: ["image"],
