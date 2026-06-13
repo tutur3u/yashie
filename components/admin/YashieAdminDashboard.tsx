@@ -191,9 +191,9 @@ function StorageMetric({
   value: string;
 }) {
   return (
-    <div className="parchment-card p-6">
+    <div className="parchment-card min-w-0 p-5 sm:p-6">
       <p className="text-sm font-bold text-[var(--clay)]">{label}</p>
-      <strong className="mt-3 block font-display text-4xl leading-none text-[var(--navy)]">
+      <strong className="mt-3 block break-words font-display text-3xl leading-none text-[var(--navy)] sm:text-4xl">
         {value}
       </strong>
       {detail ? (
@@ -213,7 +213,7 @@ function StorageFileHighlight({
   label: string;
 }) {
   return (
-    <div className="parchment-card p-6">
+    <div className="parchment-card min-w-0 p-5 sm:p-6">
       <p className="text-sm font-bold text-[var(--clay)]">{label}</p>
       {file ? (
         <div className="mt-3">
@@ -320,7 +320,7 @@ function StorageFileRow({
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {item.kind === "file" && !isRenaming && !isConfirmingDelete ? (
           <button
             className="button-secondary min-h-10 px-4 text-xs"
@@ -607,9 +607,9 @@ function StoragePanel({
     filesState.status === "unavailable"
   ) {
     return (
-      <section className="parchment-card p-6">
+      <section className="parchment-card min-w-0 p-5 sm:p-6">
         <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
-        <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+        <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
           {YASHIE_ADMIN_COPY.storage.unavailableTitle}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
@@ -627,20 +627,20 @@ function StoragePanel({
   const pathLabel = currentPath || YASHIE_ADMIN_COPY.storage.root;
 
   return (
-    <section className="grid gap-4 lg:grid-cols-3">
+    <section className="grid min-w-0 gap-4 lg:grid-cols-3">
       {data ? (
-        <div className="parchment-card p-6 lg:col-span-3">
+        <div className="parchment-card min-w-0 p-5 sm:p-6 lg:col-span-3">
           <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
-          <div className="mt-2 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+          <div className="mt-2 grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="min-w-0">
+              <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
                 {YASHIE_ADMIN_COPY.storage.heading}
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
                 {YASHIE_ADMIN_COPY.storage.description}
               </p>
             </div>
-            <strong className="font-display text-5xl leading-none text-[var(--clay)]">
+            <strong className="font-display text-4xl leading-none text-[var(--clay)] sm:text-5xl">
               {usagePercentage.toFixed(usagePercentage % 1 === 0 ? 0 : 1)}%
             </strong>
           </div>
@@ -681,18 +681,18 @@ function StoragePanel({
         </>
       ) : null}
 
-      <div className="parchment-card grid gap-5 p-6 lg:col-span-3">
+      <div className="parchment-card grid min-w-0 gap-5 p-5 sm:p-6 lg:col-span-3">
         <p className="script-label">{YASHIE_ADMIN_COPY.storage.title}</p>
-        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+        <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="min-w-0">
-            <h3 className="font-display text-4xl leading-none text-[var(--navy)]">
+            <h3 className="break-words font-display text-3xl leading-none text-[var(--navy)] sm:text-4xl">
               {pathLabel}
             </h3>
             <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
               {YASHIE_ADMIN_COPY.storage.uploadHelp}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
             {currentPath ? (
               <button
                 className="button-secondary min-h-10 px-4 text-xs"
@@ -724,15 +724,15 @@ function StoragePanel({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <form
-            className="grid gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
+            className="grid min-w-0 gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
             onSubmit={uploadSelectedFile}
           >
-            <label className="grid gap-2">
+            <label className="grid min-w-0 gap-2">
               <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
                 {YASHIE_ADMIN_COPY.storage.chooseFile}
               </span>
               <input
-                className="min-h-11 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
+                className="min-h-11 w-full min-w-0 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
                 onChange={(event) =>
                   setUploadFile(event.currentTarget.files?.[0] ?? null)
                 }
@@ -740,7 +740,7 @@ function StoragePanel({
               />
             </label>
             <button
-              className="button-primary"
+              className="button-primary w-full"
               disabled={busy || !uploadFile}
               type="submit"
             >
@@ -749,21 +749,21 @@ function StoragePanel({
           </form>
 
           <form
-            className="grid gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
+            className="grid min-w-0 gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
             onSubmit={createFolder}
           >
-            <label className="grid gap-2">
+            <label className="grid min-w-0 gap-2">
               <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
                 {YASHIE_ADMIN_COPY.storage.folderName}
               </span>
               <input
-                className="min-h-11 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--gold)]"
+                className="min-h-11 w-full min-w-0 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 text-sm text-[var(--ink)] outline-none focus:border-[var(--gold)]"
                 onChange={(event) => setFolderName(event.currentTarget.value)}
                 value={folderName}
               />
             </label>
             <button
-              className="button-secondary"
+              className="button-secondary w-full"
               disabled={busy || !folderName.trim()}
               type="submit"
             >
@@ -846,12 +846,12 @@ function TextField<TName extends keyof Draft>({
   value: string;
 }) {
   return (
-    <label className="grid gap-2">
+    <label className="grid min-w-0 gap-2">
       <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
         {label}
       </span>
       <input
-        className={`min-h-11 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+        className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
           error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
         }`}
         name={name}
@@ -881,12 +881,12 @@ function TextAreaField<TName extends keyof Draft>({
   value: string;
 }) {
   return (
-    <label className="grid gap-2">
+    <label className="grid min-w-0 gap-2">
       <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
         {label}
       </span>
       <textarea
-        className="min-h-28 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
+        className="min-h-28 w-full min-w-0 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
         name={name}
         onChange={(event) => onChange(name, event.currentTarget.value)}
         placeholder={placeholder}
@@ -940,12 +940,12 @@ function SettingsTextField({
   value: string;
 }) {
   return (
-    <label className="grid gap-2">
+    <label className="grid min-w-0 gap-2">
       <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
         {label}
       </span>
       <input
-        className={`min-h-11 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+        className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
           error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
         }`}
         onChange={(event) => onChange(event.currentTarget.value)}
@@ -1035,11 +1035,11 @@ function SiteSettingsPanel({
   };
 
   return (
-    <form className="grid gap-6" onSubmit={submit}>
+    <form className="grid min-w-0 gap-6" onSubmit={submit}>
       <div className="flex flex-col gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="script-label">{YASHIE_ADMIN_COPY.profile.title}</p>
-          <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+          <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
             {YASHIE_ADMIN_COPY.profile.heading}
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
@@ -1047,7 +1047,7 @@ function SiteSettingsPanel({
           </p>
         </div>
         <button
-          className="button-primary min-w-28 disabled:cursor-not-allowed disabled:opacity-50"
+          className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           disabled={submitting}
           type="submit"
         >
@@ -1117,7 +1117,7 @@ function SiteSettingsPanel({
             Intro line
           </span>
           <textarea
-            className="min-h-28 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
+            className="min-h-28 w-full min-w-0 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
             onChange={(event) => updateProfile("summary", event.currentTarget.value)}
             value={draft.profile.summary}
           />
@@ -1131,11 +1131,11 @@ function SiteSettingsPanel({
         <div className="grid gap-4 lg:grid-cols-2">
           {draft.socials.map((social, index) => (
             <div
-              className="grid gap-4 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
+              className="grid min-w-0 gap-4 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
               key={social.platform}
             >
-              <div>
-                <p className="font-display text-3xl leading-none text-[var(--navy)]">
+              <div className="min-w-0">
+                <p className="break-words font-display text-3xl leading-none text-[var(--navy)]">
                   {social.label}
                 </p>
                 <p className="mt-1 text-sm capitalize text-[var(--ink-soft)]">
@@ -1184,16 +1184,16 @@ function ContentList({
   const copy = sectionCopy[collectionKey];
 
   return (
-    <aside className="grid content-start gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+    <aside className="grid min-w-0 content-start gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <p className="script-label">{copy.listTitle}</p>
-          <h2 className="font-display text-4xl leading-none text-[var(--navy)]">
+          <h2 className="font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
             Choose one
           </h2>
         </div>
         <button
-          className={`min-h-11 border px-4 text-sm font-bold transition ${
+          className={`min-h-11 w-full border px-4 text-sm font-bold transition sm:w-auto ${
             selectedId === null
               ? "border-[var(--gold)] bg-[var(--navy)] text-[var(--parchment)]"
               : "border-[rgba(184,112,81,0.48)] bg-white/72 text-[var(--copper-dark)] hover:border-[var(--gold)]"
@@ -1209,7 +1209,7 @@ function ContentList({
         <div className="grid gap-2">
           {items.map((item) => (
             <button
-              className={`grid gap-3 border p-4 text-left transition ${
+              className={`grid min-w-0 gap-3 border p-4 text-left transition ${
                 selectedId === item.id
                   ? "border-[var(--gold)] bg-white shadow-[0_18px_46px_rgba(82,40,37,0.12)]"
                   : "border-[rgba(184,112,81,0.38)] bg-white/70 hover:border-[var(--copper)]"
@@ -1232,11 +1232,11 @@ function ContentList({
                   </span>
                 ) : null}
               </div>
-              <div>
-                <strong className="block text-base text-[var(--ink)]">
+              <div className="min-w-0">
+                <strong className="block break-words text-base text-[var(--ink)]">
                   {item.title}
                 </strong>
-                <span className="mt-1 block text-sm text-[var(--ink-soft)]">
+                <span className="mt-1 block break-words text-sm text-[var(--ink-soft)]">
                   {collectionKey === "blog"
                     ? item.category || "Post"
                     : collectionKey === "gallery"
@@ -1393,18 +1393,18 @@ function ContentForm({
   };
 
   return (
-    <form className="grid gap-6" onSubmit={submit}>
+    <form className="grid min-w-0 gap-6" onSubmit={submit}>
       <div className="flex flex-col gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="script-label">
             {item ? `Edit ${copy.singular}` : copy.newLabel}
           </p>
-          <h2 className="font-display text-5xl leading-none text-[var(--navy)]">
+          <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
             {draft.title || `Untitled ${copy.singular}`}
           </h2>
         </div>
         <button
-          className="button-primary min-w-28 disabled:cursor-not-allowed disabled:opacity-50"
+          className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           disabled={submitting || deleting}
           type="submit"
         >
@@ -1439,7 +1439,7 @@ function ContentForm({
                 {YASHIE_ADMIN_COPY.editor.visibility}
               </span>
               <select
-                className={`min-h-11 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+                className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
                   fieldErrors.status
                     ? "border-red-400"
                     : "border-[rgba(184,112,81,0.42)]"
@@ -1549,7 +1549,7 @@ function ContentForm({
             {YASHIE_ADMIN_COPY.editor.imageHelp}
           </p>
         </div>
-        <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
           <div className="relative min-h-48 overflow-hidden border border-[rgba(184,112,81,0.42)] bg-white/58">
             {item?.imageUrl && !draft.removeImage ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -1565,7 +1565,7 @@ function ContentForm({
               </div>
             )}
           </div>
-          <div className="grid content-start gap-4">
+          <div className="grid min-w-0 content-start gap-4">
             <TextField
               label="Image description"
               name="imageAlt"
@@ -1578,7 +1578,7 @@ function ContentForm({
               </span>
               <input
                 accept="image/*"
-                className="min-h-11 border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
+                className="min-h-11 w-full min-w-0 max-w-full border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-2 text-sm text-[var(--ink)]"
                 name="imageFile"
                 onChange={updateImageFile}
                 type="file"
@@ -1734,7 +1734,7 @@ export function YashieAdminDashboard({
       : null;
 
     return (
-      <section className="grid gap-6 lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)]">
+      <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
         <ContentList
           collectionKey={collectionKey}
           items={items}
@@ -1752,7 +1752,7 @@ export function YashieAdminDashboard({
           }
           selectedId={selectedId}
         />
-        <div className="parchment-card p-5">
+        <div className="parchment-card min-w-0 p-4 sm:p-5">
           <ContentForm
             collectionKey={collectionKey}
             item={selectedItem}
@@ -1778,27 +1778,27 @@ export function YashieAdminDashboard({
   };
 
   return (
-    <main className="section-band min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-6">
-        <header className="parchment-card overflow-hidden p-6">
-          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
+    <main className="section-band min-h-screen px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto grid min-w-0 max-w-7xl gap-6">
+        <header className="parchment-card overflow-hidden p-5 sm:p-6">
+          <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="min-w-0">
               <p className="script-label">
                 {YASHIE_ADMIN_COPY.dashboard.eyebrow}
               </p>
-              <h1 className="font-display text-5xl leading-none text-[var(--navy)] sm:text-6xl">
+              <h1 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-6xl">
                 {YASHIE_ADMIN_COPY.dashboard.title}
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
                 {YASHIE_ADMIN_COPY.dashboard.subtitle}
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link className="button-secondary" href="/">
+            <div className="grid gap-3 sm:flex sm:flex-wrap">
+              <Link className="button-secondary w-full sm:w-auto" href="/">
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
-              <form action="/api/auth/logout" method="post">
-                <button className="button-primary" type="submit">
+              <form action="/api/auth/logout" className="min-w-0" method="post">
+                <button className="button-primary w-full sm:w-auto" type="submit">
                   {YASHIE_ADMIN_COPY.account.signOut}
                 </button>
               </form>
@@ -1808,14 +1808,14 @@ export function YashieAdminDashboard({
 
         <nav
           aria-label="Dashboard areas"
-          className="flex flex-wrap gap-2 border-b border-[rgba(184,112,81,0.34)]"
+          className="grid grid-cols-2 gap-2 border-b border-[rgba(184,112,81,0.34)] pb-3 sm:flex sm:flex-wrap"
         >
           {tabLabels.map((tab) => (
             <button
-              className={`min-h-12 border-b-2 px-4 text-sm font-black transition ${
+              className={`min-h-11 border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
                 activeTab === tab.id
-                  ? "border-[var(--clay)] text-[var(--clay)]"
-                  : "border-transparent text-[var(--ink-soft)] hover:text-[var(--navy)]"
+                  ? "border-[var(--clay)] bg-[rgba(164,78,67,0.08)] text-[var(--clay)]"
+                  : "border-[rgba(184,112,81,0.28)] bg-white/35 text-[var(--ink-soft)] hover:text-[var(--navy)] sm:border-transparent sm:bg-transparent"
               }`}
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -1833,7 +1833,7 @@ export function YashieAdminDashboard({
         {activeTab === "publish" ? <YashieAdminSyncPanel /> : null}
 
         {activeTab === "profile" ? (
-          <section className="parchment-card p-5">
+          <section className="parchment-card min-w-0 p-4 sm:p-5">
             <SiteSettingsPanel
               onSaved={setSiteSettings}
               settings={siteSettings}
@@ -1850,8 +1850,8 @@ export function YashieAdminDashboard({
         ) : null}
 
         {activeTab === "account" ? (
-          <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-            <div className="parchment-card p-6">
+          <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+            <div className="parchment-card min-w-0 p-5 sm:p-6">
               <p className="script-label">
                 {YASHIE_ADMIN_COPY.account.signedIn}
               </p>
@@ -1869,8 +1869,8 @@ export function YashieAdminDashboard({
                 </div>
               </div>
             </div>
-            <div className="parchment-card grid content-start gap-3 p-6">
-              <Link className="button-primary" href="/">
+            <div className="parchment-card grid min-w-0 content-start gap-3 p-5 sm:p-6">
+              <Link className="button-primary w-full" href="/">
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
               <form action="/api/auth/logout" method="post">

@@ -90,20 +90,20 @@ export function YashieAdminSyncPanel() {
   };
 
   return (
-    <section className="parchment-card grid gap-5 p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
+    <section className="parchment-card grid min-w-0 gap-5 p-4 sm:p-5">
+      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
           <p className="script-label">{YASHIE_ADMIN_COPY.publish.title}</p>
-          <h2 className="font-display text-4xl leading-none text-[var(--navy)]">
+          <h2 className="break-words font-display text-3xl leading-none text-[var(--navy)] sm:text-4xl">
             Share the latest website
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-soft)]">
             {YASHIE_ADMIN_COPY.publish.description}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid gap-3 sm:flex sm:flex-wrap">
           <button
-            className="button-secondary min-w-32 disabled:cursor-not-allowed disabled:opacity-45"
+            className="button-secondary min-w-32 w-full disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
             disabled={pendingAction !== null}
             onClick={runDiff}
             type="button"
@@ -111,7 +111,7 @@ export function YashieAdminSyncPanel() {
             {pendingAction === "diff" ? "Checking..." : YASHIE_ADMIN_COPY.publish.check}
           </button>
           <button
-            className="button-primary min-w-32 disabled:cursor-not-allowed disabled:opacity-45"
+            className="button-primary min-w-32 w-full disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
             disabled={pendingAction !== null}
             onClick={() => void runApply(false)}
             type="button"
