@@ -27,6 +27,13 @@ import {
   adminFetch,
   scheduleYashieAdminSessionRefresh,
 } from "./yashie-admin-session-client";
+import {
+  readContentSaveResponse,
+  SaveProgressPanel,
+  type MutationResponse,
+  type SaveFlowError,
+  type SaveProgressState,
+} from "./yashie-admin-save-progress";
 
 type AdminTab =
   | YashieAdminCollectionKey
@@ -62,13 +69,6 @@ type Draft = {
   type: string;
 };
 
-type MutationResponse = {
-  error?: string;
-  errors?: Record<string, string>;
-  item?: YashieAdminContentItem | null;
-  items?: YashieAdminContentItem[];
-};
-
 type SiteSettingsMutationResponse = {
   error?: string;
   errors?: Record<string, string>;
@@ -79,6 +79,11 @@ type MembersResponse = {
   context?: YashieAdminMembersContext;
   error?: string;
   members?: YashieAdminMember[];
+};
+
+type EditorTarget = {
+  collectionKey: YashieAdminCollectionKey;
+  itemId: string | null;
 };
 
 const contentTabs: YashieAdminCollectionKey[] = [
@@ -1445,7 +1450,7 @@ function ContentList({
   const copy = sectionCopy[collectionKey];
 
   return (
-    <aside className="grid min-w-0 content-start gap-4">
+    <section className="grid min-w-0 content-start gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="script-label">{copy.listTitle}</p>
@@ -1467,7 +1472,7 @@ function ContentList({
       </div>
 
       {items.length > 0 ? (
-        <div className="grid gap-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <button
               className={`grid min-w-0 gap-3 border p-4 text-left transition ${
@@ -1522,7 +1527,7 @@ function ContentList({
           </p>
         </div>
       )}
-    </aside>
+    </section>
   );
 }
 
@@ -1530,12 +1535,14 @@ function ContentForm({
   categories,
   collectionKey,
   item,
+  onClose,
   onDeleted,
   onSaved,
 }: {
   categories: YashieAdminContentItem[];
   collectionKey: YashieAdminCollectionKey;
   item: YashieAdminContentItem | null;
+  onClose: () => void;
   onDeleted: (items: YashieAdminContentItem[]) => void;
   onSaved: (
     items: YashieAdminContentItem[],
@@ -1543,12 +1550,21 @@ function ContentForm({
   ) => void;
 }) {
   const copy = sectionCopy[collectionKey];
+  const [savedItem, setSavedItem] = useState<YashieAdminContentItem | null>(
+    null,
+  );
+  const effectiveItem = savedItem ?? item;
   const [draft, setDraft] = useState(() => draftFromItem(item));
   const [slugTouched, setSlugTouched] = useState(Boolean(item));
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageFileLabel, setImageFileLabel] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
+  const [saveProgress, setSaveProgress] = useState<SaveProgressState>({
+    label: "",
+    percent: 0,
+    status: "idle",
+  });
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -1561,7 +1577,7 @@ function ContentForm({
         name === "title" &&
         typeof value === "string" &&
         !slugTouched &&
-        !item
+        !effectiveItem
       ) {
         next.slug = slugifyYashieContent(value);
       }
@@ -1587,6 +1603,12 @@ function ContentForm({
     setSubmitting(true);
     setFieldErrors({});
     setMessage(null);
+    setSaveProgress({
+      label: "Checking content",
+      percent: 2,
+      status: "running",
+      step: "validate",
+    });
 
     const body = new FormData();
     for (const [key, value] of Object.entries(draft)) {
@@ -1599,45 +1621,63 @@ function ContentForm({
 
     try {
       const response = await adminFetch(
-        item
-          ? `/api/admin/content/${collectionKey}/${encodeURIComponent(item.id)}`
+        effectiveItem
+          ? `/api/admin/content/${collectionKey}/${encodeURIComponent(effectiveItem.id)}`
           : `/api/admin/content/${collectionKey}`,
         {
           body,
-          method: item ? "PATCH" : "POST",
+          method: effectiveItem ? "PATCH" : "POST",
         },
       );
-      const payload = (await response
-        .json()
-        .catch(() => ({}))) as MutationResponse;
-
-      if (!response.ok) {
-        setFieldErrors(payload.errors ?? {});
-        setMessage(readFriendlyError(payload, YASHIE_ADMIN_COPY.errors.save));
-        return;
-      }
+      const payload = await readContentSaveResponse({
+        response,
+        setSaveProgress,
+      });
 
       onSaved(payload.items ?? [], payload.item ?? null);
-      setMessage("Saved.");
+      setSavedItem(payload.item ?? effectiveItem ?? null);
       setImageFile(null);
       setImageFileLabel("");
-      setDraft((current) => ({ ...current, removeImage: false }));
-    } catch {
-      setMessage(YASHIE_ADMIN_COPY.errors.save);
+      setConfirmDelete(false);
+
+      if (payload.item) {
+        setDraft(draftFromItem(payload.item));
+        setSlugTouched(true);
+      } else {
+        setDraft((current) => ({ ...current, removeImage: false }));
+      }
+    } catch (error) {
+      const saveError = error as SaveFlowError;
+      const fallback =
+        saveError instanceof Error
+          ? saveError.message
+          : YASHIE_ADMIN_COPY.errors.save;
+      setFieldErrors(saveError.errors ?? {});
+      setSaveProgress((current) => ({
+        error: readFriendlyError(
+          { error: fallback, errors: saveError.errors },
+          YASHIE_ADMIN_COPY.errors.save,
+        ),
+        label: saveError.label ?? current.label ?? "Save failed",
+        percent: Math.max(current.percent, 1),
+        status: "error",
+        statusCode: saveError.statusCode,
+        step: saveError.step ?? current.step,
+      }));
     } finally {
       setSubmitting(false);
     }
   };
 
   const deleteItem = async () => {
-    if (!item) return;
+    if (!effectiveItem) return;
 
     setDeleting(true);
     setMessage(null);
 
     try {
       const response = await adminFetch(
-        `/api/admin/content/${collectionKey}/${encodeURIComponent(item.id)}`,
+        `/api/admin/content/${collectionKey}/${encodeURIComponent(effectiveItem.id)}`,
         {
           method: "DELETE",
         },
@@ -1652,6 +1692,7 @@ function ContentForm({
       }
 
       onDeleted(payload.items ?? []);
+      onClose();
     } catch {
       setMessage(YASHIE_ADMIN_COPY.errors.delete);
     } finally {
@@ -1664,22 +1705,34 @@ function ContentForm({
       <div className="flex flex-col gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="script-label">
-            {item ? `Edit ${copy.singular}` : copy.newLabel}
+            {effectiveItem ? `Edit ${copy.singular}` : copy.newLabel}
           </p>
           <h2 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
             {draft.title || `Untitled ${copy.singular}`}
           </h2>
         </div>
-        <button
-          className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-          disabled={submitting || deleting}
-          type="submit"
-        >
-          {submitting
-            ? YASHIE_ADMIN_COPY.actions.saving
-            : YASHIE_ADMIN_COPY.actions.save}
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <button
+            className="button-secondary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={submitting || deleting}
+            onClick={onClose}
+            type="button"
+          >
+            Close
+          </button>
+          <button
+            className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={submitting || deleting}
+            type="submit"
+          >
+            {submitting
+              ? YASHIE_ADMIN_COPY.actions.saving
+              : YASHIE_ADMIN_COPY.actions.save}
+          </button>
+        </div>
       </div>
+
+      <SaveProgressPanel state={saveProgress} />
 
       {message ? (
         <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
@@ -1836,13 +1889,15 @@ function ContentForm({
           </div>
           <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
             <div className="relative min-h-48 overflow-hidden border border-[rgba(184,112,81,0.42)] bg-white/58">
-              {item?.imageUrl && !draft.removeImage ? (
+              {effectiveItem?.imageUrl && !draft.removeImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  alt={item.imageAlt}
+                  alt={effectiveItem.imageAlt}
                   className="h-full min-h-48 w-full object-cover"
-                  src={item.imageUrl}
-                  style={{ objectPosition: item.imagePosition || "center" }}
+                  src={effectiveItem.imageUrl}
+                  style={{
+                    objectPosition: effectiveItem.imagePosition || "center",
+                  }}
                 />
               ) : (
                 <div className="grid min-h-48 place-items-center px-4 text-center text-sm text-[var(--ink-soft)]">
@@ -1879,7 +1934,7 @@ function ContentForm({
                   </span>
                 ) : null}
               </label>
-              {item?.imageAssetId ? (
+              {effectiveItem?.imageAssetId ? (
                 <label className="flex items-center gap-3 border border-[rgba(184,112,81,0.32)] bg-white/58 px-3 py-3 text-sm text-[var(--ink)]">
                   <input
                     checked={draft.removeImage}
@@ -1897,12 +1952,12 @@ function ContentForm({
         </section>
       )}
 
-      {item ? (
+      {effectiveItem ? (
         <section className="border-t border-[rgba(184,112,81,0.28)] pt-5">
           {confirmDelete ? (
             <div className="grid gap-3 border border-red-300 bg-red-500/10 p-4">
               <p className="text-sm text-red-800">
-                Delete &ldquo;{item.title}&rdquo; from this website area?
+                Delete &ldquo;{effectiveItem.title}&rdquo; from this website area?
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -1962,6 +2017,7 @@ export function YashieAdminDashboard({
 }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("blog");
   const [content, setContent] = useState(initialContent);
+  const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
   const [siteSettings, setSiteSettings] = useState(initialSiteSettings);
   const [selectedIds, setSelectedIds] = useState<
     Record<YashieAdminCollectionKey, string | null>
@@ -2021,54 +2077,40 @@ export function YashieAdminDashboard({
   const renderContentTab = (collectionKey: YashieAdminCollectionKey) => {
     const items = content[collectionKey];
     const selectedId = selectedIds[collectionKey];
-    const selectedItem = selectedId
-      ? (items.find((item) => item.id === selectedId) ?? null)
-      : null;
 
     return (
-      <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+      <section className="grid min-w-0 gap-6">
         <ContentList
           collectionKey={collectionKey}
           items={items}
-          onNew={() =>
+          onNew={() => {
             setSelectedIds((current) => ({
               ...current,
               [collectionKey]: null,
-            }))
-          }
-          onSelect={(id) =>
+            }));
+            setEditorTarget({ collectionKey, itemId: null });
+          }}
+          onSelect={(id) => {
             setSelectedIds((current) => ({
               ...current,
               [collectionKey]: id,
-            }))
-          }
+            }));
+            setEditorTarget({ collectionKey, itemId: id });
+          }}
           selectedId={selectedId}
         />
-        <div className="parchment-card min-w-0 p-4 sm:p-5">
-          <ContentForm
-            categories={content.categories}
-            collectionKey={collectionKey}
-            item={selectedItem}
-            key={selectedItem?.id ?? `new-${collectionKey}`}
-            onDeleted={(items) => {
-              setContent((current) => ({ ...current, [collectionKey]: items }));
-              setSelectedIds((current) => ({
-                ...current,
-                [collectionKey]: items[0]?.id ?? null,
-              }));
-            }}
-            onSaved={(items, savedItem) => {
-              setContent((current) => ({ ...current, [collectionKey]: items }));
-              setSelectedIds((current) => ({
-                ...current,
-                [collectionKey]: savedItem?.id ?? items[0]?.id ?? null,
-              }));
-            }}
-          />
-        </div>
       </section>
     );
   };
+
+  const editorItems = editorTarget
+    ? content[editorTarget.collectionKey]
+    : [];
+  const editorItem =
+    editorTarget?.itemId && editorItems.length > 0
+      ? (editorItems.find((item) => item.id === editorTarget.itemId) ?? null)
+      : null;
+  const closeEditor = () => setEditorTarget(null);
 
   return (
     <main className="section-band min-h-screen px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -2122,6 +2164,49 @@ export function YashieAdminDashboard({
         {contentTabs.includes(activeTab as YashieAdminCollectionKey)
           ? renderContentTab(activeTab as YashieAdminCollectionKey)
           : null}
+
+        {editorTarget ? (
+          <div
+            className="fixed inset-0 z-50 grid bg-[rgba(12,31,52,0.58)] px-3 py-4 backdrop-blur-sm sm:px-6"
+            role="presentation"
+          >
+            <section
+              aria-label={`${editorTarget.itemId ? "Edit" : "Create"} ${sectionCopy[editorTarget.collectionKey].singular}`}
+              aria-modal="true"
+              className="parchment-card mx-auto grid max-h-[calc(100vh-2rem)] w-full max-w-5xl min-w-0 self-center overflow-y-auto p-4 shadow-[0_28px_90px_rgba(12,31,52,0.38)] sm:p-5"
+              role="dialog"
+            >
+              <ContentForm
+                categories={content.categories}
+                collectionKey={editorTarget.collectionKey}
+                item={editorItem}
+                key={`${editorTarget.collectionKey}-${editorTarget.itemId ?? "new"}`}
+                onClose={closeEditor}
+                onDeleted={(items) => {
+                  setContent((current) => ({
+                    ...current,
+                    [editorTarget.collectionKey]: items,
+                  }));
+                  setSelectedIds((current) => ({
+                    ...current,
+                    [editorTarget.collectionKey]: items[0]?.id ?? null,
+                  }));
+                }}
+                onSaved={(items, savedItem) => {
+                  setContent((current) => ({
+                    ...current,
+                    [editorTarget.collectionKey]: items,
+                  }));
+                  setSelectedIds((current) => ({
+                    ...current,
+                    [editorTarget.collectionKey]:
+                      savedItem?.id ?? items[0]?.id ?? null,
+                  }));
+                }}
+              />
+            </section>
+          </div>
+        ) : null}
 
         {activeTab === "publish" ? <YashieAdminSyncPanel /> : null}
 

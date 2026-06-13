@@ -1,9 +1,9 @@
 import {
   createYashieExternalProjectsClient,
-  setupYashieAdminStudio,
   getYashieAdminSession,
 } from "@/lib/yashie-admin-api";
 import { deleteYashieContentItem, updateYashieContentItem } from "@/lib/yashie-admin-content";
+import { createYashieContentMutationStream } from "@/lib/yashie-admin-content-stream";
 import {
   parseYashieContentFormData,
   resolveYashieAdminCollectionKey,
@@ -43,22 +43,22 @@ export async function PATCH(
   }
 
   try {
-    await setupYashieAdminStudio(session.accessToken);
     const { errors, input } = parseYashieContentFormData(collectionKey, await request.formData());
 
     if (!input) {
       return NextResponse.json({ errors }, { status: 400 });
     }
 
-    return NextResponse.json(
-      await updateYashieContentItem(
-        createYashieExternalProjectsClient(session.accessToken),
-        getYashieWorkspaceId(),
-        collectionKey,
-        entryId,
-        input,
-      ),
-    );
+    const client = createYashieExternalProjectsClient(session.accessToken);
+    const workspaceId = getYashieWorkspaceId();
+
+    return createYashieContentMutationStream({
+      fallback: "Content request failed",
+      run: (onProgress) =>
+        updateYashieContentItem(client, workspaceId, collectionKey, entryId, input, {
+          onProgress,
+        }),
+    });
   } catch (error) {
     return NextResponse.json({ error: readErrorMessage(error) }, { status: 500 });
   }
@@ -81,8 +81,6 @@ export async function DELETE(
   }
 
   try {
-    await setupYashieAdminStudio(session.accessToken);
-
     return NextResponse.json(
       await deleteYashieContentItem(
         createYashieExternalProjectsClient(session.accessToken),

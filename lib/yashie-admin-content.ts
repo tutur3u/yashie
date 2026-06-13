@@ -36,6 +36,23 @@ type MutationResult = {
   items: YashieAdminContentItem[];
 };
 
+export type YashieContentMutationProgress = {
+  label: string;
+  percent: number;
+  step: string;
+};
+
+type MutationOptions = {
+  onProgress?: (progress: YashieContentMutationProgress) => Promise<void> | void;
+};
+
+async function reportProgress(
+  options: MutationOptions | undefined,
+  progress: YashieContentMutationProgress,
+) {
+  await options?.onProgress?.(progress);
+}
+
 function readRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -336,16 +353,27 @@ export async function createYashieContentItem(
   workspaceId: string,
   collectionKey: YashieAdminCollectionKey,
   input: YashieContentMutationInput,
+  options?: MutationOptions,
 ): Promise<MutationResult> {
+  await reportProgress(options, {
+    label: "Preparing section",
+    percent: 8,
+    step: "prepare-section",
+  });
   const { collection } = await ensureContentCollection(client, workspaceId, collectionKey);
+  await reportProgress(options, {
+    label: "Saving details",
+    percent: 24,
+    step: "save-details",
+  });
   const created = await client.createEntry(
     workspaceId,
     buildEntryPayload(String(collection.id), input),
   );
   let entryId = readCreatedEntryId(created);
-  let studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
 
   if (!entryId) {
+    const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
     entryId = findItemBySlug(studio, collectionKey, input.slug)?.id ?? null;
   }
 
@@ -353,12 +381,35 @@ export async function createYashieContentItem(
     throw new Error("The item was saved, but it could not be opened.");
   }
 
-  const item = findItemById(studio, collectionKey, entryId);
+  await reportProgress(options, {
+    label: input.imageFile ? "Uploading image" : "Checking image",
+    percent: 52,
+    step: "save-image",
+  });
+  const item = null;
   await saveImageAsset({ client, entryId, input, item, workspaceId });
+  await reportProgress(options, {
+    label:
+      collectionKey === "blog" || collectionKey === "worlds"
+        ? "Saving words"
+        : "Saving page details",
+    percent: 68,
+    step: "save-copy",
+  });
   await saveBodyBlock({ client, entryId, input, item, workspaceId });
+  await reportProgress(options, {
+    label: "Saving visibility",
+    percent: 84,
+    step: "save-visibility",
+  });
   await publishForStatus(client, workspaceId, entryId, input.status);
 
-  studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+  await reportProgress(options, {
+    label: "Refreshing dashboard",
+    percent: 94,
+    step: "refresh-dashboard",
+  });
+  const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
   return {
     item: findItemById(studio, collectionKey, entryId),
     items: readYashieAdminContent(studio, collectionKey),
@@ -371,7 +422,13 @@ export async function updateYashieContentItem(
   collectionKey: YashieAdminCollectionKey,
   entryId: string,
   input: YashieContentMutationInput,
+  options?: MutationOptions,
 ): Promise<MutationResult> {
+  await reportProgress(options, {
+    label: "Preparing section",
+    percent: 8,
+    step: "prepare-section",
+  });
   const { collection, studio } = await ensureContentCollection(client, workspaceId, collectionKey);
   const current = findItemById(studio, collectionKey, entryId);
 
@@ -379,11 +436,39 @@ export async function updateYashieContentItem(
     throw new Error("Item not found.");
   }
 
+  await reportProgress(options, {
+    label: "Saving details",
+    percent: 24,
+    step: "save-details",
+  });
   await client.updateEntry(workspaceId, entryId, buildEntryPayload(String(collection.id), input));
+  await reportProgress(options, {
+    label: input.imageFile ? "Uploading image" : "Checking image",
+    percent: 52,
+    step: "save-image",
+  });
   await saveImageAsset({ client, entryId, input, item: current, workspaceId });
+  await reportProgress(options, {
+    label:
+      collectionKey === "blog" || collectionKey === "worlds"
+        ? "Saving words"
+        : "Saving page details",
+    percent: 68,
+    step: "save-copy",
+  });
   await saveBodyBlock({ client, entryId, input, item: current, workspaceId });
+  await reportProgress(options, {
+    label: "Saving visibility",
+    percent: 84,
+    step: "save-visibility",
+  });
   await publishForStatus(client, workspaceId, entryId, input.status, current.status);
 
+  await reportProgress(options, {
+    label: "Refreshing dashboard",
+    percent: 94,
+    step: "refresh-dashboard",
+  });
   return finalizeMutation(client, workspaceId, collectionKey, entryId);
 }
 

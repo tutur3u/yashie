@@ -85,6 +85,7 @@ class FakeCrudClient implements CrudClient {
     createBlock: [] as unknown[],
     createEntry: [] as unknown[],
     deleteEntry: [] as unknown[],
+    getStudio: [] as unknown[],
     publishEntry: [] as unknown[],
     updateBlock: [] as unknown[],
     updateEntry: [] as unknown[],
@@ -144,6 +145,7 @@ class FakeCrudClient implements CrudClient {
   }
 
   async getStudio() {
+    this.calls.getStudio.push("getStudio");
     return this.studio;
   }
 
@@ -276,5 +278,57 @@ describe("Yashie admin content mutations", () => {
       expect(deleted.items).toEqual([]);
       expect(client.calls.deleteEntry).toContain(entryId);
     }
+  });
+
+  test("reports digestible save progress and avoids an extra create refresh", async () => {
+    const client = new FakeCrudClient();
+    const createSteps: string[] = [];
+
+    await createYashieContentItem(
+      client,
+      "workspace-1",
+      "blog",
+      createInput("blog"),
+      {
+        onProgress: (progress) => {
+          createSteps.push(progress.step);
+        },
+      },
+    );
+
+    expect(createSteps).toEqual([
+      "prepare-section",
+      "save-details",
+      "save-image",
+      "save-copy",
+      "save-visibility",
+      "refresh-dashboard",
+    ]);
+    expect(client.calls.getStudio).toHaveLength(2);
+
+    const entryId = client.studio.entries[0]?.id;
+    const updateSteps: string[] = [];
+
+    await updateYashieContentItem(
+      client,
+      "workspace-1",
+      "blog",
+      String(entryId),
+      createInput("blog", { title: "Updated" }),
+      {
+        onProgress: (progress) => {
+          updateSteps.push(progress.step);
+        },
+      },
+    );
+
+    expect(updateSteps).toEqual([
+      "prepare-section",
+      "save-details",
+      "save-image",
+      "save-copy",
+      "save-visibility",
+      "refresh-dashboard",
+    ]);
   });
 });

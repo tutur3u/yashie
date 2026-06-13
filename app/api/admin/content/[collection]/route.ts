@@ -1,9 +1,10 @@
 import {
   createYashieExternalProjectsClient,
-  setupYashieAdminStudio,
   getYashieAdminSession,
+  setupYashieAdminStudio,
 } from "@/lib/yashie-admin-api";
 import { createYashieContentItem, refreshYashieAdminContent } from "@/lib/yashie-admin-content";
+import { createYashieContentMutationStream } from "@/lib/yashie-admin-content-stream";
 import {
   parseYashieContentFormData,
   resolveYashieAdminCollectionKey,
@@ -65,21 +66,22 @@ export async function POST(
   }
 
   try {
-    await setupYashieAdminStudio(session.accessToken);
     const { errors, input } = parseYashieContentFormData(collectionKey, await request.formData());
 
     if (!input) {
       return NextResponse.json({ errors }, { status: 400 });
     }
 
-    const result = await createYashieContentItem(
-      createYashieExternalProjectsClient(session.accessToken),
-      getYashieWorkspaceId(),
-      collectionKey,
-      input,
-    );
+    const client = createYashieExternalProjectsClient(session.accessToken);
+    const workspaceId = getYashieWorkspaceId();
 
-    return NextResponse.json(result);
+    return createYashieContentMutationStream({
+      fallback: "Content request failed",
+      run: (onProgress) =>
+        createYashieContentItem(client, workspaceId, collectionKey, input, {
+          onProgress,
+        }),
+    });
   } catch (error) {
     return NextResponse.json({ error: readErrorMessage(error) }, { status: 500 });
   }
