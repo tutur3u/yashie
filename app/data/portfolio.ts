@@ -1,6 +1,21 @@
+export type NavTabKey =
+	| "home"
+	| "gallery"
+	| "about"
+	| "contact"
+	| "shop"
+	| "blog"
+	| "login";
+
 export type NavItem = {
+	key: NavTabKey;
 	label: string;
 	href: string;
+};
+
+export type NavigationTab = NavItem & {
+	sortOrder: number;
+	visible: boolean;
 };
 
 export type WritingWorld = {
@@ -61,14 +76,20 @@ export type SocialLink = {
 };
 
 export const navItems: NavItem[] = [
-	{ label: "Home", href: "/" },
-	{ label: "Gallery", href: "/gallery" },
-	{ label: "About", href: "/#about" },
-	{ label: "Contact", href: "/contact" },
-	{ label: "Shop", href: "/shop" },
-	{ label: "Blog", href: "/blog" },
-	{ label: "Login", href: "/admin" },
+	{ key: "home", label: "Home", href: "/" },
+	{ key: "gallery", label: "Gallery", href: "/gallery" },
+	{ key: "about", label: "About", href: "/#about" },
+	{ key: "contact", label: "Contact", href: "/contact" },
+	{ key: "shop", label: "Shop", href: "/shop" },
+	{ key: "blog", label: "Blog", href: "/blog" },
+	{ key: "login", label: "Login", href: "/admin" },
 ];
+
+export const navigationTabs: NavigationTab[] = navItems.map((item, index) => ({
+	...item,
+	sortOrder: index,
+	visible: true,
+}));
 
 export const author = {
 	name: "Yashoda U. Itwaru",

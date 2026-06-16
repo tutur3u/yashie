@@ -103,6 +103,50 @@ describe("Yashie public content", () => {
             ],
           },
           {
+            collection_type: "navigation-tabs",
+            config: null,
+            description: null,
+            id: "collection-navigation",
+            slug: "navigation-tabs",
+            title: "Navigation",
+            entries: [
+              {
+                assets: [],
+                blocks: [],
+                id: "navigation-gallery",
+                metadata: {},
+                profile_data: {
+                  key: "gallery",
+                  sortOrder: 1,
+                  visible: false,
+                },
+                published_at: null,
+                slug: "gallery",
+                status: "published",
+                subtitle: "/gallery",
+                summary: "Hidden from the site",
+                title: "Artwork",
+              },
+              {
+                assets: [],
+                blocks: [],
+                id: "navigation-blog",
+                metadata: {},
+                profile_data: {
+                  key: "blog",
+                  sortOrder: 5,
+                  visible: true,
+                },
+                published_at: null,
+                slug: "blog",
+                status: "published",
+                subtitle: "/blog",
+                summary: "Visible on the site",
+                title: "Letters",
+              },
+            ],
+          },
+          {
             collection_type: "blog-posts",
             config: null,
             description: null,
@@ -308,6 +352,37 @@ describe("Yashie public content", () => {
         platform: "instagram",
       }),
     );
+    expect(content.navigationTabs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "gallery",
+          label: "Artwork",
+          visible: false,
+        }),
+        expect.objectContaining({
+          href: "/blog",
+          key: "blog",
+          label: "Letters",
+          visible: true,
+        }),
+      ]),
+    );
+    expect(content.navItems).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "gallery",
+        }),
+      ]),
+    );
+    expect(content.navItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          href: "/blog",
+          key: "blog",
+          label: "Letters",
+        }),
+      ]),
+    );
   });
 
   test("falls back to static content when delivery is unavailable", () => {
@@ -316,6 +391,13 @@ describe("Yashie public content", () => {
     );
     expect(DEFAULT_YASHIE_CONTENT.blogPosts).toBe(blogPosts);
     expect(DEFAULT_YASHIE_CONTENT.galleryItems).toBe(galleryItems);
+    expect(DEFAULT_YASHIE_CONTENT.navItems[0]).toEqual(
+      expect.objectContaining({
+        href: "/",
+        key: "home",
+        label: "Home",
+      }),
+    );
     expect(DEFAULT_YASHIE_CONTENT.products).toBe(products);
     expect(DEFAULT_YASHIE_CONTENT.worlds).toBe(worlds);
   });

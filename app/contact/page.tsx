@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import { ContactForm } from "@/app/components/MockForms";
 import { PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
 import { SocialIcon } from "@/app/components/SocialIcon";
 import { getYashieContent } from "@/lib/yashie-delivery";
+import { canAccessYashieNavTab } from "@/lib/yashie-navigation-access";
 
 export const metadata: Metadata = {
 	title: "Contact | Yashoda U. Itwaru",
@@ -11,8 +13,15 @@ export const metadata: Metadata = {
 		"Mock contact page for Yashoda U. Itwaru, also known as InkedByYashie.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ContactPage() {
-	const { author, socials } = await getYashieContent();
+	const content = await getYashieContent();
+	const { author, socials } = content;
+
+	if (!(await canAccessYashieNavTab(content, "contact"))) {
+		notFound();
+	}
 
 	return (
 		<main>

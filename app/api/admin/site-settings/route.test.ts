@@ -11,6 +11,13 @@ let sessionValue: unknown = {
   accessToken: "admin-token",
 };
 const validInput = {
+  navigation: [
+    {
+      key: "blog",
+      label: "Letters",
+      visible: true,
+    },
+  ],
   profile: {
     alias: "@inkedbyyashie",
     brand: "InkedByYashie",
@@ -30,6 +37,16 @@ let parseResult: {
   input: validInput,
 };
 const settingsValue = {
+  navigation: [
+    {
+      entryId: "navigation-blog",
+      href: "/blog",
+      key: "blog",
+      label: "Letters",
+      sortOrder: 5,
+      visible: true,
+    },
+  ],
   profile: {
     alias: "@inkedbyyashie",
     brand: "InkedByYashie",

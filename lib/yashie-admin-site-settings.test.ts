@@ -10,6 +10,12 @@ const studio = {
   blocks: [],
   collections: [
     {
+      collection_type: "navigation-tabs",
+      id: "collection-navigation",
+      slug: "navigation-tabs",
+      title: "Navigation",
+    },
+    {
       collection_type: "profile",
       id: "collection-profile",
       slug: "profile",
@@ -40,6 +46,20 @@ const studio = {
       title: "Published Name",
     },
     {
+      collection_id: "collection-navigation",
+      id: "navigation-gallery",
+      profile_data: {
+        key: "gallery",
+        sortOrder: 1,
+        visible: false,
+      },
+      slug: "gallery",
+      status: "published",
+      subtitle: "/gallery",
+      summary: "Hidden from the site",
+      title: "Artwork",
+    },
+    {
       collection_id: "collection-socials",
       id: "social-instagram",
       profile_data: {
@@ -60,6 +80,14 @@ describe("Yashie admin site settings", () => {
   test("reads profile and social links for the editor", () => {
     expect(readYashieAdminSiteSettings(studio)).toEqual(
       expect.objectContaining({
+        navigation: expect.arrayContaining([
+          expect.objectContaining({
+            entryId: "navigation-gallery",
+            key: "gallery",
+            label: "Artwork",
+            visible: false,
+          }),
+        ]),
         profile: expect.objectContaining({
           alias: "@published",
           brand: "Published Brand",
@@ -92,6 +120,14 @@ describe("Yashie admin site settings", () => {
 
     expect(settings.profile.alias).toBe("@inkedbyyashie");
     expect(settings.profile.email).toBe("yashodauitwaru.pa@gmail.com");
+    expect(settings.navigation[0]).toEqual(
+      expect.objectContaining({
+        href: "/",
+        key: "home",
+        label: "Home",
+        visible: true,
+      }),
+    );
     expect(settings.socials[0]).toEqual(
       expect.objectContaining({
         handle: "@inkedbyyashie",
@@ -112,6 +148,13 @@ describe("Yashie admin site settings", () => {
         status: "published",
         title: "Published Writer",
       },
+      navigation: [
+        {
+          key: "gallery",
+          label: "Artwork",
+          visible: false,
+        },
+      ],
       socials: [
         {
           handle: "@published",
@@ -130,6 +173,13 @@ describe("Yashie admin site settings", () => {
           alias: "@published",
           email: "published@example.com",
         }),
+        navigation: expect.arrayContaining([
+          expect.objectContaining({
+            key: "gallery",
+            label: "Artwork",
+            visible: false,
+          }),
+        ]),
       }),
     );
   });
@@ -144,6 +194,13 @@ describe("Yashie admin site settings", () => {
         shortName: "Published",
         title: "Published Writer",
       },
+      navigation: [
+        {
+          key: "gallery",
+          label: "",
+          visible: true,
+        },
+      ],
       socials: [
         {
           handle: "@published",
@@ -159,6 +216,7 @@ describe("Yashie admin site settings", () => {
     expect(result.errors).toEqual({
       "profile.alias": "Add a public handle.",
       "profile.email": "Use a valid email address.",
+      "navigation.1.label": "Add a tab name.",
       "socials.0.href": "Use a full http or https link.",
     });
   });

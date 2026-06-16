@@ -81,9 +81,15 @@ export async function getYashieAdminStudio(accessToken: string) {
 
 export function revalidateYashieContent() {
   revalidatePath("/", "layout");
+  revalidatePath("/admin");
+  revalidatePath("/admin/login");
   revalidatePath("/blog");
+  revalidatePath("/blog/[slug]", "page");
   revalidatePath("/contact");
   revalidatePath("/gallery");
+  revalidatePath("/gallery/[slug]", "page");
+  revalidatePath("/login");
   revalidatePath("/shop");
+  revalidatePath("/shop/[slug]", "page");
   revalidatePath("/worlds/[slug]", "page");
 }

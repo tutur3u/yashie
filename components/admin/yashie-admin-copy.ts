@@ -76,7 +76,11 @@ export const YASHIE_ADMIN_COPY = {
     description: "Update the name, public handle, email, and links visitors see.",
     heading: "Profile and links",
     links: "Links",
+    menu: "Website menu",
+    menuDescription:
+      "Rename tabs or hide areas visitors should not open right now.",
     saved: "Saved.",
+    showTab: "Show this tab",
     title: "Public profile",
   },
   members: {

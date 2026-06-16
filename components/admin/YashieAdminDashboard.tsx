@@ -1183,6 +1183,11 @@ function siteSettingsDraftFromSettings(
   settings: YashieAdminSiteSettings,
 ): YashieAdminSiteSettingsInput {
   return {
+    navigation: settings.navigation.map((item) => ({
+      key: item.key,
+      label: item.label,
+      visible: item.visible,
+    })),
     profile: {
       alias: settings.profile.alias,
       brand: settings.profile.brand,
@@ -1281,6 +1286,18 @@ function SiteSettingsPanel({
       ...current,
       socials: current.socials.map((social, socialIndex) =>
         socialIndex === index ? { ...social, [name]: value } : social,
+      ),
+    }));
+  };
+
+  const updateNavigation = (
+    index: number,
+    changes: Partial<YashieAdminSiteSettingsInput["navigation"][number]>,
+  ) => {
+    setDraft((current) => ({
+      ...current,
+      navigation: current.navigation.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...changes } : item,
       ),
     }));
   };
@@ -1404,6 +1421,46 @@ function SiteSettingsPanel({
             value={draft.profile.summary}
           />
         </label>
+      </section>
+
+      <section className="grid gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+            {YASHIE_ADMIN_COPY.profile.menu}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+            {YASHIE_ADMIN_COPY.profile.menuDescription}
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {draft.navigation.map((item, index) => (
+            <div
+              className="grid min-w-0 gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
+              key={item.key}
+            >
+              <SettingsTextField
+                error={fieldErrors[`navigation.${index}.label`]}
+                label="Tab name"
+                onChange={(value) => updateNavigation(index, { label: value })}
+                required
+                value={item.label}
+              />
+              <label className="flex min-w-0 items-center gap-3 text-sm font-bold text-[var(--ink-soft)]">
+                <input
+                  checked={item.visible}
+                  className="size-4 accent-[var(--clay)]"
+                  onChange={(event) =>
+                    updateNavigation(index, {
+                      visible: event.currentTarget.checked,
+                    })
+                  }
+                  type="checkbox"
+                />
+                <span>{YASHIE_ADMIN_COPY.profile.showTab}</span>
+              </label>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="grid gap-4">

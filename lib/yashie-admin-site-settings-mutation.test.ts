@@ -22,6 +22,13 @@ let calls: {
 };
 
 const input: YashieAdminSiteSettingsInput = {
+  navigation: [
+    {
+      key: "gallery",
+      label: "Artwork",
+      visible: false,
+    },
+  ],
   profile: {
     alias: "@inkedbyyashie",
     brand: "InkedByYashie",
@@ -77,6 +84,12 @@ function createStudio(): YashieAdminStudioPayload {
     blocks: [],
     collections: [
       {
+        collection_type: "navigation-tabs",
+        id: "collection-navigation",
+        slug: "navigation-tabs",
+        title: "Navigation",
+      },
+      {
         collection_type: "profile",
         id: "collection-profile",
         slug: "profile",
@@ -97,6 +110,16 @@ function createStudio(): YashieAdminStudioPayload {
         slug: "profile",
         status: "published",
         title: "Old profile",
+      },
+      {
+        collection_id: "collection-navigation",
+        id: "navigation-gallery",
+        profile_data: {
+          key: "gallery",
+        },
+        slug: "gallery",
+        status: "published",
+        title: "Gallery",
       },
       {
         collection_id: "collection-socials",
@@ -135,7 +158,16 @@ describe("Yashie admin site settings mutations", () => {
     const settings = await updateYashieAdminSiteSettings("admin-token", input);
 
     expect(settings.profile.name).toBe("Yashoda U. Itwaru");
-    expect(calls.updateEntry).toHaveLength(2);
+    expect(settings.navigation).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "gallery",
+          label: "Artwork",
+          visible: false,
+        }),
+      ]),
+    );
+    expect(calls.updateEntry).toHaveLength(3);
     expect(calls.publishEntry).toEqual([]);
   });
 });

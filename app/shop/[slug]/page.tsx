@@ -12,10 +12,13 @@ import {
 	slugify,
 } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
+import { canAccessYashieNavTab } from "@/lib/yashie-navigation-access";
 
 type DetailParams = {
 	params: Promise<{ slug: string }>;
 };
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
 	return products.map((product) => ({
@@ -46,6 +49,11 @@ export async function generateMetadata({
 export default async function ProductDetailPage({ params }: DetailParams) {
 	const { slug } = await params;
 	const content = await getYashieContent();
+
+	if (!(await canAccessYashieNavTab(content, "shop"))) {
+		notFound();
+	}
+
 	const product = findProductBySlug(slug, content.products);
 
 	if (!product) {

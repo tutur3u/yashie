@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
 	GalleryCard,
 	PageIntro,
@@ -8,6 +9,7 @@ import {
 } from "@/app/components/PortfolioSections";
 import { getWorldHref } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
+import { canAccessYashieNavTab } from "@/lib/yashie-navigation-access";
 
 export const metadata: Metadata = {
 	title: "Gallery | Yashoda U. Itwaru",
@@ -15,8 +17,14 @@ export const metadata: Metadata = {
 		"Gallery of book worlds, journals, poetry collections, and personal writing from InkedByYashie.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function GalleryPage() {
 	const content = await getYashieContent();
+
+	if (!(await canAccessYashieNavTab(content, "gallery"))) {
+		notFound();
+	}
 
 	return (
 		<main>

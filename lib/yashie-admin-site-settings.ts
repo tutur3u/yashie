@@ -1,7 +1,10 @@
 import type { ExternalProjectsClient } from "tuturuuu/external-projects";
 import {
   author,
+  navigationTabs,
   socials,
+  type NavTabKey,
+  type NavigationTab,
   type SocialLink,
   type SocialPlatform,
 } from "@/app/data/portfolio";
@@ -18,6 +21,7 @@ import { getYashieManifestCollectionSchema } from "./yashie-external-project-man
 
 const PROFILE_COLLECTION_SLUG = "profile";
 const PROFILE_ENTRY_SLUG = "profile";
+const NAVIGATION_COLLECTION_SLUG = "navigation-tabs";
 const SOCIAL_LINKS_COLLECTION_SLUG = "social-links";
 const VALID_SOCIAL_PLATFORMS = new Set<SocialPlatform>([
   "instagram",
@@ -60,12 +64,18 @@ export type YashieAdminSocialSettings = SocialLink & {
   status: YashieContentStatus;
 };
 
+export type YashieAdminNavigationSettings = NavigationTab & {
+  entryId: string | null;
+};
+
 export type YashieAdminSiteSettings = {
+  navigation: YashieAdminNavigationSettings[];
   profile: YashieAdminProfileSettings;
   socials: YashieAdminSocialSettings[];
 };
 
 export type YashieAdminSiteSettingsInput = {
+  navigation: Array<Pick<NavigationTab, "key" | "label" | "visible">>;
   profile: Omit<YashieAdminProfileSettings, "entryId">;
   socials: Array<Omit<YashieAdminSocialSettings, "id">>;
 };
@@ -84,6 +94,16 @@ function readRecord(value: unknown) {
 function readString(record: StudioRecord, key: string) {
   const value = record[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readBoolean(record: StudioRecord, key: string) {
+  const value = record[key];
+  return typeof value === "boolean" ? value : null;
+}
+
+function readNumber(record: StudioRecord, key: string) {
+  const value = record[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function normalizeStatus(value: unknown): YashieContentStatus {
@@ -159,6 +179,41 @@ function socialSort(left: YashieAdminSocialSettings, right: YashieAdminSocialSet
   return (leftIndex === -1 ? 99 : leftIndex) - (rightIndex === -1 ? 99 : rightIndex);
 }
 
+function isNavigationTabKey(value: string | null): value is NavTabKey {
+  return Boolean(value && navigationTabs.some((tab) => tab.key === value));
+}
+
+function readNavigationSettings(
+  studio: YashieAdminStudioPayload,
+): YashieAdminNavigationSettings[] {
+  const deliveredByKey = new Map(
+    findEntriesByCollection(studio, NAVIGATION_COLLECTION_SLUG)
+      .map((entry) => {
+        const profileData = readRecord(entry.profile_data ?? entry.profileData);
+        const key = readString(profileData, "key") ?? readString(entry, "slug");
+        return isNavigationTabKey(key) ? ([key, entry] as const) : null;
+      })
+      .filter(
+        (item): item is readonly [NavTabKey, StudioRecord] => Boolean(item),
+      ),
+  );
+
+  return navigationTabs
+    .map<YashieAdminNavigationSettings>((tab) => {
+      const entry = deliveredByKey.get(tab.key);
+      const profileData = readRecord(entry?.profile_data ?? entry?.profileData);
+
+      return {
+        ...tab,
+        entryId: entry ? String(entry.id) : null,
+        label: readString(entry ?? {}, "title") ?? tab.label,
+        sortOrder: readNumber(profileData, "sortOrder") ?? tab.sortOrder,
+        visible: readBoolean(profileData, "visible") ?? tab.visible,
+      };
+    })
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+}
+
 export function readYashieAdminSiteSettings(
   studio: YashieAdminStudioPayload,
 ): YashieAdminSiteSettings {
@@ -193,6 +248,7 @@ export function readYashieAdminSiteSettings(
     .sort(socialSort);
 
   return {
+    navigation: readNavigationSettings(studio),
     profile: {
       alias: readString(profileData, "alias") ?? author.alias,
       brand: readString(profileData, "brand") ?? author.brand,
@@ -259,6 +315,7 @@ export function parseYashieSiteSettingsPayload(
   const errors: Record<string, string> = {};
   const record = readRecord(payload);
   const profile = readRecord(record.profile);
+  const navigationValues = Array.isArray(record.navigation) ? record.navigation : [];
   const socialValues = Array.isArray(record.socials) ? record.socials : [];
 
   const parsedProfile: YashieAdminSiteSettingsInput["profile"] = {
@@ -330,11 +387,40 @@ export function parseYashieSiteSettingsPayload(
     appendError(errors, "socials", "Add at least one social link.");
   }
 
+  const submittedNavigation = new Map(
+    navigationValues
+      .map((item) => {
+        const navigationItem = readRecord(item);
+        const key = readString(navigationItem, "key");
+        return isNavigationTabKey(key) ? ([key, navigationItem] as const) : null;
+      })
+      .filter(
+        (item): item is readonly [NavTabKey, StudioRecord] => Boolean(item),
+      ),
+  );
+  const parsedNavigation = navigationTabs.map<
+    YashieAdminSiteSettingsInput["navigation"][number]
+  >((tab, index) => {
+    const submitted = submittedNavigation.get(tab.key) ?? {};
+
+    return {
+      key: tab.key,
+      label: readRequiredString(
+        submitted.label ?? tab.label,
+        errors,
+        `navigation.${index}.label`,
+        "Add a tab name.",
+      ),
+      visible: readBoolean(submitted, "visible") ?? tab.visible,
+    };
+  });
+
   return Object.keys(errors).length > 0
     ? { errors, input: null }
     : {
         errors,
         input: {
+          navigation: parsedNavigation,
           profile: parsedProfile,
           socials: parsedSocials,
         },
@@ -462,6 +548,62 @@ async function saveSocialSettings({
   }
 }
 
+async function saveNavigationSettings({
+  client,
+  input,
+  studio,
+  workspaceId,
+}: {
+  client: SettingsClient;
+  input: YashieAdminSiteSettingsInput["navigation"];
+  studio: YashieAdminStudioPayload;
+  workspaceId: string;
+}) {
+  const collection = await ensureCollection(
+    client,
+    workspaceId,
+    studio,
+    NAVIGATION_COLLECTION_SLUG,
+  );
+  const existingEntries = findEntriesByCollection(studio, NAVIGATION_COLLECTION_SLUG);
+
+  for (const navigationItem of input) {
+    const tab = navigationTabs.find((item) => item.key === navigationItem.key);
+    if (!tab) continue;
+
+    const current =
+      existingEntries.find((entry) => {
+        const profileData = readRecord(entry.profile_data ?? entry.profileData);
+        return (
+          readString(profileData, "key") === navigationItem.key ||
+          readString(entry, "slug") === navigationItem.key
+        );
+      }) ?? null;
+    const payload = {
+      collection_id: String(collection.id),
+      metadata: {},
+      profile_data: {
+        href: tab.href,
+        key: navigationItem.key,
+        sortOrder: tab.sortOrder,
+        visible: navigationItem.visible,
+      },
+      slug: navigationItem.key,
+      status: "published" as const,
+      subtitle: tab.href,
+      summary: navigationItem.visible ? "Visible on the site" : "Hidden from the site",
+      title: navigationItem.label,
+    };
+
+    if (current) {
+      await client.updateEntry(workspaceId, String(current.id), payload);
+      continue;
+    }
+
+    await client.createEntry(workspaceId, payload);
+  }
+}
+
 export async function updateYashieAdminSiteSettings(
   accessToken: string,
   input: YashieAdminSiteSettingsInput,
@@ -476,6 +618,14 @@ export async function updateYashieAdminSiteSettings(
     client,
     input: input.socials,
     studio: nextStudio,
+    workspaceId,
+  });
+
+  const navigationStudio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+  await saveNavigationSettings({
+    client,
+    input: input.navigation,
+    studio: navigationStudio,
     workspaceId,
   });
 

@@ -11,10 +11,13 @@ import {
 	slugify,
 } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
+import { canAccessYashieNavTab } from "@/lib/yashie-navigation-access";
 
 type DetailParams = {
 	params: Promise<{ slug: string }>;
 };
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
 	return galleryItems.map((item) => ({
@@ -45,6 +48,11 @@ export async function generateMetadata({
 export default async function GalleryDetailPage({ params }: DetailParams) {
 	const { slug } = await params;
 	const content = await getYashieContent();
+
+	if (!(await canAccessYashieNavTab(content, "gallery"))) {
+		notFound();
+	}
+
 	const item = findGalleryItemBySlug(slug, content.galleryItems);
 
 	if (!item) {

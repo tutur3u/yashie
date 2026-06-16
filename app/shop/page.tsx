@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import { PageIntro, ProductCard, SectionHeader } from "@/app/components/PortfolioSections";
 import { getYashieContent } from "@/lib/yashie-delivery";
+import { canAccessYashieNavTab } from "@/lib/yashie-navigation-access";
 
 export const metadata: Metadata = {
 	title: "Shop | Yashoda U. Itwaru",
@@ -9,8 +11,14 @@ export const metadata: Metadata = {
 		"Shop for signed books, stationery, bookmarks, art prints, and author merch from InkedByYashie.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ShopPage() {
 	const content = await getYashieContent();
+
+	if (!(await canAccessYashieNavTab(content, "shop"))) {
+		notFound();
+	}
 
 	return (
 		<main>

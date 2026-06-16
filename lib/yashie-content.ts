@@ -2,6 +2,7 @@ import {
   author,
   blogPosts,
   galleryItems,
+  navigationTabs,
   navItems,
   products,
   profileFacts,
@@ -9,6 +10,7 @@ import {
   worlds,
   type BlogPost,
   type GalleryItem,
+  type NavigationTab,
   type Product,
   type SocialLink,
   type SocialPlatform,
@@ -77,6 +79,7 @@ export type YashieContent = {
   author: typeof author;
   blogPosts: BlogPost[];
   galleryItems: GalleryItem[];
+  navigationTabs: NavigationTab[];
   navItems: typeof navItems;
   products: Product[];
   profileFacts: typeof profileFacts;
@@ -88,6 +91,7 @@ export const DEFAULT_YASHIE_CONTENT: YashieContent = {
   author,
   blogPosts,
   galleryItems,
+  navigationTabs,
   navItems,
   products,
   profileFacts,
@@ -103,6 +107,14 @@ function asRecord(value: unknown): JsonObject {
 
 function asString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asBoolean(value: unknown) {
+  return typeof value === "boolean" ? value : null;
+}
+
+function asNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function absolutizeUrl(baseUrl: string, value: string | null | undefined) {
@@ -249,6 +261,38 @@ function buildSocials(delivery: YashieDeliveryPayload) {
   });
 }
 
+function buildNavigationTabs(delivery: YashieDeliveryPayload) {
+  const entriesByKey = new Map(
+    (getCollection(delivery, "navigation-tabs")?.entries ?? [])
+      .map((entry) => {
+        const profileData = asRecord(entry.profile_data);
+        const key = asString(profileData.key) ?? entry.slug;
+        return key ? ([key, entry] as const) : null;
+      })
+      .filter((item): item is readonly [string, DeliveryEntry] => Boolean(item)),
+  );
+
+  return navigationTabs
+    .map<NavigationTab>((tab) => {
+      const entry = entriesByKey.get(tab.key);
+      const profileData = asRecord(entry?.profile_data);
+
+      return {
+        ...tab,
+        label: asString(entry?.title) ?? tab.label,
+        sortOrder: asNumber(profileData.sortOrder) ?? tab.sortOrder,
+        visible: asBoolean(profileData.visible) ?? tab.visible,
+      };
+    })
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+}
+
+function buildNavItems(tabs: NavigationTab[]) {
+  return tabs
+    .filter((tab) => tab.visible)
+    .map(({ href, key, label }) => ({ href, key, label }));
+}
+
 function buildBlogPosts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
   const mapped = getPublishedEntries(delivery, "blog-posts").map<BlogPost>((entry, index) => {
     const profileData = asRecord(entry.profile_data);
@@ -349,11 +393,15 @@ export function buildYashieContent(
     return DEFAULT_YASHIE_CONTENT;
   }
 
+  const effectiveNavigationTabs = buildNavigationTabs(delivery);
+
   return {
     ...DEFAULT_YASHIE_CONTENT,
     author: buildAuthor(delivery),
     blogPosts: buildBlogPosts(delivery, apiBaseUrl),
     galleryItems: buildGalleryItems(delivery, apiBaseUrl),
+    navigationTabs: effectiveNavigationTabs,
+    navItems: buildNavItems(effectiveNavigationTabs),
     products: buildProducts(delivery, apiBaseUrl),
     profileFacts: buildProfileFacts(delivery),
     socials: buildSocials(delivery),

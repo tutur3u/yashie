@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { YashieAdminDashboard } from "@/components/admin/YashieAdminDashboard";
 import { YashieAdminLoadingPanel } from "@/components/admin/YashieAdminLoadingPanel";
@@ -19,6 +20,8 @@ import {
   getYashieAdminSessionReadState,
   getYashieAdminStudio,
 } from "@/lib/yashie-admin-api";
+import { getYashieContent } from "@/lib/yashie-delivery";
+import { isYashieNavTabVisible } from "@/lib/yashie-navigation-access";
 import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
 import { getYashieStorageFiles } from "@/lib/yashie-storage-files";
 
@@ -52,8 +55,18 @@ export default async function AdminPage({
   const activeTarget = resolveYashieAdminTargetKey(
     resolvedSearchParams?.target,
   );
-  const loginHref = await getYashieCentralizedLoginHref(activeTarget);
-  const sessionState = await getYashieAdminSessionReadState();
+  const [content, loginHref, sessionState] = await Promise.all([
+    getYashieContent(),
+    getYashieCentralizedLoginHref(activeTarget),
+    getYashieAdminSessionReadState(),
+  ]);
+
+  if (
+    !isYashieNavTabVisible(content, "login") &&
+    sessionState.status === "unauthenticated"
+  ) {
+    notFound();
+  }
 
   if (sessionState.status === "unauthenticated") {
     return <YashieAdminLoginPanel loginHref={loginHref} />;

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { YashieAdminLoginPanel } from "@/components/admin/YashieAdminLoginPanel";
 import { getYashieCentralizedLoginHref } from "../login-link";
+import { getYashieAdminSessionReadState } from "@/lib/yashie-admin-api";
 import { resolveYashieAdminTargetKey } from "@/lib/yashie-config";
+import { getYashieContent } from "@/lib/yashie-delivery";
+import { isYashieNavTabVisible } from "@/lib/yashie-navigation-access";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +21,22 @@ export default async function AdminLoginPage({
 }) {
 	const params = await searchParams;
 	const targetKey = resolveYashieAdminTargetKey(params?.next);
+	const [content, loginHref, sessionState] = await Promise.all([
+		getYashieContent(),
+		getYashieCentralizedLoginHref(targetKey),
+		getYashieAdminSessionReadState(),
+	]);
+
+	if (
+		!isYashieNavTabVisible(content, "login") &&
+		sessionState.status === "unauthenticated"
+	) {
+		notFound();
+	}
 
 	return (
 		<YashieAdminLoginPanel
-			loginHref={await getYashieCentralizedLoginHref(targetKey)}
+			loginHref={loginHref}
 		/>
 	);
 }

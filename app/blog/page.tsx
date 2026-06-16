@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { BlogCard, PageIntro, SectionHeader } from "@/app/components/PortfolioSections";
 import { getWorldHref } from "@/app/data/portfolio";
 import { getYashieContent } from "@/lib/yashie-delivery";
+import { canAccessYashieNavTab } from "@/lib/yashie-navigation-access";
 
 export const metadata: Metadata = {
 	title: "Blog | Yashoda U. Itwaru",
@@ -11,8 +13,14 @@ export const metadata: Metadata = {
 		"Essays, reflections, poetry notes, and bookish posts from InkedByYashie.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogPage() {
 	const content = await getYashieContent();
+
+	if (!(await canAccessYashieNavTab(content, "blog"))) {
+		notFound();
+	}
 
 	return (
 		<main>
