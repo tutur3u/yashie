@@ -412,7 +412,7 @@ button {
 }
 
 .landing-byline-sparkle {
-  color: var(--gold);
+  color: currentColor;
   font-size: 0.72em;
   line-height: 1;
 }
