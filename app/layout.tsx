@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 		default: siteTitle,
 		template: "%s | InkedByYashie",
 	},
-	metadataBase: new URL("https://inkedbyyashie.com"),
+	metadataBase: new URL("https://yashodauitwaru.com"),
 	description: siteDescription,
 	applicationName: "InkedByYashie",
 	authors: [{ name: "Yashoda U. Itwaru" }],
