@@ -153,7 +153,7 @@ export default async function Home() {
 		<main className="landing-page">
 			<section className="landing-hero" aria-labelledby="landing-title">
 				<SmartImage
-					src="/images/portfolio/hero-still-life.png"
+					src="/images/portfolio/background.png"
 					alt="Parchment writing desk with peacock notebook, ink, flowers, and brass objects."
 					fill
 					priority
