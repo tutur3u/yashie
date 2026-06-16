@@ -17,19 +17,55 @@ const geistMono = Geist_Mono({
 	subsets: ["latin"],
 });
 
+const siteTitle = "Yashoda U. Itwaru | InkedByYashie";
+const siteDescription =
+	"Writer, author, and storyteller sharing essays, poetry, personal reflections, books, dark fantasy, and cultural memory.";
+const ogImage = {
+	url: "/images/portfolio/background-og.jpg",
+	width: 1200,
+	height: 630,
+	alt: "InkedByYashie writing desk with a book, ink, peacock feather, and manuscript textures.",
+};
+
 export const metadata: Metadata = {
 	title: {
-		default: "Yashoda U. Itwaru | InkedByYashie",
+		default: siteTitle,
 		template: "%s | InkedByYashie",
 	},
-	description:
-		"Personal portfolio for Yashoda U. Itwaru, also known as Yashie, an adult dark fantasy and dark urban fantasy author.",
 	metadataBase: new URL("https://inkedbyyashie.com"),
+	description: siteDescription,
+	applicationName: "InkedByYashie",
+	authors: [{ name: "Yashoda U. Itwaru" }],
+	creator: "Yashoda U. Itwaru",
+	publisher: "InkedByYashie",
+	keywords: [
+		"Yashoda U. Itwaru",
+		"InkedByYashie",
+		"Yashie",
+		"writer",
+		"author",
+		"storyteller",
+		"dark fantasy",
+		"poetry",
+		"essays",
+	],
+	alternates: {
+		canonical: "/",
+	},
 	openGraph: {
-		title: "Yashoda U. Itwaru | InkedByYashie",
-		description:
-			"Adult dark fantasy, dark urban fantasy, essays, poetry, and cultural reflections.",
-		images: ["/images/artworks/firelit-water-embrace.png"],
+		type: "website",
+		locale: "en_US",
+		url: "/",
+		siteName: "InkedByYashie",
+		title: siteTitle,
+		description: siteDescription,
+		images: [ogImage],
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: siteTitle,
+		description: siteDescription,
+		images: [ogImage],
 	},
 };
 

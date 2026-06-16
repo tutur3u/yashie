@@ -61,7 +61,7 @@ export type SocialLink = {
 };
 
 export const navItems: NavItem[] = [
-	{ label: "Landing Page", href: "/" },
+	{ label: "Home", href: "/" },
 	{ label: "Gallery", href: "/gallery" },
 	{ label: "About", href: "/#about" },
 	{ label: "Contact", href: "/contact" },
