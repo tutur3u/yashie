@@ -341,9 +341,15 @@ export default async function Home() {
 					</div>
 
 					<div className="brand-seal">
-						<span className="brand-quill" aria-hidden="true" />
-						<p>Author Brand</p>
-						<h3>{author.brand}</h3>
+						<div className="brand-seal-image">
+							<SmartImage
+								src="/images/artworks/yashie-author-signature.png"
+								alt="Maroon Yashoda Itwaru signature mark with a peacock form."
+								fill
+								sizes="(min-width: 1024px) 18rem, 70vw"
+								className="object-contain"
+							/>
+						</div>
 					</div>
 				</div>
 			</section>
