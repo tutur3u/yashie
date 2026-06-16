@@ -17,6 +17,8 @@ mock.module("tuturuuu/external-projects", () => ({
 
 let studio: YashieAdminStudioPayload;
 let calls: {
+  createCollection: unknown[];
+  createEntry: unknown[];
   publishEntry: unknown[];
   updateEntry: unknown[];
 };
@@ -52,11 +54,21 @@ const input: YashieAdminSiteSettingsInput = {
 };
 
 const client = {
-  async createCollection() {
-    throw new Error("Collection should already exist.");
+  async createCollection(_workspaceId: string, payload: Record<string, unknown>) {
+    calls.createCollection.push(payload);
+    studio.collections.push({
+      ...payload,
+      id: `collection-${String(payload.slug)}`,
+    });
+    return {};
   },
-  async createEntry() {
-    throw new Error("Entry should already exist.");
+  async createEntry(_workspaceId: string, payload: Record<string, unknown>) {
+    calls.createEntry.push(payload);
+    studio.entries.push({
+      ...payload,
+      id: `entry-${String(payload.slug)}`,
+    });
+    return {};
   },
   async getStudio() {
     return studio;
@@ -78,17 +90,25 @@ const { updateYashieAdminSiteSettings } = await import(
   "./yashie-admin-site-settings"
 );
 
-function createStudio(): YashieAdminStudioPayload {
+function createStudio({
+  includeNavigation = true,
+}: {
+  includeNavigation?: boolean;
+} = {}): YashieAdminStudioPayload {
   return {
     assets: [],
     blocks: [],
     collections: [
-      {
-        collection_type: "navigation-tabs",
-        id: "collection-navigation",
-        slug: "navigation-tabs",
-        title: "Navigation",
-      },
+      ...(includeNavigation
+        ? [
+            {
+              collection_type: "navigation-tabs",
+              id: "collection-navigation",
+              slug: "navigation-tabs",
+              title: "Navigation",
+            },
+          ]
+        : []),
       {
         collection_type: "profile",
         id: "collection-profile",
@@ -111,16 +131,20 @@ function createStudio(): YashieAdminStudioPayload {
         status: "published",
         title: "Old profile",
       },
-      {
-        collection_id: "collection-navigation",
-        id: "navigation-gallery",
-        profile_data: {
-          key: "gallery",
-        },
-        slug: "gallery",
-        status: "published",
-        title: "Gallery",
-      },
+      ...(includeNavigation
+        ? [
+            {
+              collection_id: "collection-navigation",
+              id: "navigation-gallery",
+              profile_data: {
+                key: "gallery",
+              },
+              slug: "gallery",
+              status: "published",
+              title: "Gallery",
+            },
+          ]
+        : []),
       {
         collection_id: "collection-socials",
         id: "social-instagram",
@@ -140,6 +164,8 @@ describe("Yashie admin site settings mutations", () => {
     process.env.TUTURUUU_YASHIE_WORKSPACE_ID = "workspace-1";
     studio = createStudio();
     calls = {
+      createCollection: [],
+      createEntry: [],
       publishEntry: [],
       updateEntry: [],
     };
@@ -169,5 +195,38 @@ describe("Yashie admin site settings mutations", () => {
     );
     expect(calls.updateEntry).toHaveLength(3);
     expect(calls.publishEntry).toEqual([]);
+  });
+
+  test("creates the navigation collection from the manifest before saving tabs", async () => {
+    studio = createStudio({ includeNavigation: false });
+
+    const settings = await updateYashieAdminSiteSettings("admin-token", input);
+
+    expect(calls.createCollection).toEqual([
+      expect.objectContaining({
+        collection_type: "navigation-tabs",
+        slug: "navigation-tabs",
+        title: "Navigation Tabs",
+      }),
+    ]);
+    expect(calls.createEntry).toEqual([
+      expect.objectContaining({
+        profile_data: expect.objectContaining({
+          key: "gallery",
+          visible: false,
+        }),
+        slug: "gallery",
+        title: "Artwork",
+      }),
+    ]);
+    expect(settings.navigation).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "gallery",
+          label: "Artwork",
+          visible: false,
+        }),
+      ]),
+    );
   });
 });

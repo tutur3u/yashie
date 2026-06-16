@@ -56,6 +56,16 @@ describe("Yashie external project manifest", () => {
           collection_type: "categories",
           slug: "categories",
         }),
+        expect.objectContaining({
+          collection_type: "navigation-tabs",
+          profileFields: expect.arrayContaining([
+            expect.objectContaining({
+              key: "visible",
+              type: "boolean",
+            }),
+          ]),
+          slug: "navigation-tabs",
+        }),
       ]),
     );
   });

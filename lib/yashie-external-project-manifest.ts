@@ -130,6 +130,13 @@ const socialFields = [
   },
 ] satisfies YashieSyncField[];
 
+const navigationFields = [
+  { key: "href", label: "Link", type: "string" },
+  { key: "key", label: "Tab key", required: true, type: "string" },
+  { key: "sortOrder", label: "Order", type: "number" },
+  { key: "visible", label: "Visible", type: "boolean" },
+] satisfies YashieSyncField[];
+
 function imageAsset({
   altText,
   collectionSlug,
@@ -479,6 +486,13 @@ export const yashieExternalProjectManifest = {
         profileFields: socialFields,
         slug: "social-links",
         title: "Social Links",
+      },
+      {
+        collection_type: "navigation-tabs",
+        description: "Public website tabs and visitor visibility.",
+        profileFields: navigationFields,
+        slug: "navigation-tabs",
+        title: "Navigation Tabs",
       },
     ],
     profileFields: [
