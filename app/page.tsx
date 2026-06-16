@@ -164,7 +164,20 @@ export default async function Home() {
 					<div className="landing-hero-copy">
 						<p className="script-label">Namaste, I&apos;m Yashie</p>
 						<h1 id="landing-title">{author.name}</h1>
-						<p className="landing-byline">Writer * Author * Storyteller</p>
+						<p
+							className="landing-byline"
+							aria-label="Writer, Author, Storyteller"
+						>
+							<span>Writer</span>
+							<span className="landing-byline-sparkle" aria-hidden="true">
+								&#10022;
+							</span>
+							<span>Author</span>
+							<span className="landing-byline-sparkle" aria-hidden="true">
+								&#10022;
+							</span>
+							<span>Storyteller</span>
+						</p>
 						<div className="landing-rule" />
 						<p className="landing-intro">
 							I write a lot: essays, reflections, books, stories, poetry,
