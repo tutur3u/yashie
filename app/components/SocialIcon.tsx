@@ -58,5 +58,48 @@ export function SocialIcon({ platform, ...props }: SocialIconProps) {
 					/>
 				</svg>
 			);
+		case "website":
+			return (
+				<svg {...sharedProps}>
+					<circle cx="12" cy="12" r="8" strokeWidth="2" />
+					<path d="M4 12h16" strokeWidth="2" />
+					<path d="M12 4c2.1 2.2 3.2 4.8 3.2 8s-1.1 5.8-3.2 8" strokeWidth="2" />
+					<path d="M12 4c-2.1 2.2-3.2 4.8-3.2 8s1.1 5.8 3.2 8" strokeWidth="2" />
+				</svg>
+			);
+		case "newsletter":
+			return (
+				<svg {...sharedProps}>
+					<rect x="4" y="6" width="16" height="12" rx="1.8" strokeWidth="2" />
+					<path d="m5 7 7 6 7-6" strokeWidth="2" />
+					<path d="m5.4 17 4.2-4" strokeWidth="2" />
+					<path d="m18.6 17-4.2-4" strokeWidth="2" />
+				</svg>
+			);
+		case "shop":
+			return (
+				<svg {...sharedProps}>
+					<path d="M6.4 9.5 7.5 4.8h9l1.1 4.7" strokeWidth="2" />
+					<path d="M5.8 9.5h12.4l-1 9.7H6.8l-1-9.7Z" strokeWidth="2" />
+					<path d="M9.2 11.8c.4 1.3 1.4 2.2 2.8 2.2s2.4-.9 2.8-2.2" strokeWidth="2" />
+				</svg>
+			);
+		case "blog":
+			return (
+				<svg {...sharedProps}>
+					<path d="M6 4.8h9.4L18 7.4v11.8H6V4.8Z" strokeWidth="2" />
+					<path d="M15 5v3h3" strokeWidth="2" />
+					<path d="M8.5 11h7" strokeWidth="2" />
+					<path d="M8.5 14h7" strokeWidth="2" />
+					<path d="M8.5 17h4" strokeWidth="2" />
+				</svg>
+			);
+		case "other":
+			return (
+				<svg {...sharedProps}>
+					<path d="M10 13.8a4 4 0 0 0 5.7 0l2-2a4 4 0 0 0-5.7-5.7l-.8.8" strokeWidth="2" />
+					<path d="M14 10.2a4 4 0 0 0-5.7 0l-2 2A4 4 0 0 0 12 17.9l.8-.8" strokeWidth="2" />
+				</svg>
+			);
 	}
 }

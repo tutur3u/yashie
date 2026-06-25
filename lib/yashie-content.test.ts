@@ -401,4 +401,31 @@ describe("Yashie public content", () => {
     expect(DEFAULT_YASHIE_CONTENT.products).toBe(products);
     expect(DEFAULT_YASHIE_CONTENT.worlds).toBe(worlds);
   });
+
+  test("keeps published social links empty when the delivery collection is empty", () => {
+    const content = buildYashieContent(
+      {
+        adapter: "yashie",
+        canonicalProjectId: "yashie",
+        collections: [
+          {
+            collection_type: "social-links",
+            config: null,
+            description: null,
+            entries: [],
+            id: "collection-socials",
+            slug: "social-links",
+            title: "Social Links",
+          },
+        ],
+        generatedAt: new Date("2026-06-25").toISOString(),
+        loadingData: null,
+        profileData: {},
+        workspaceId: "workspace-1",
+      },
+      { apiBaseUrl: "https://platform.example.com/api/v1" },
+    );
+
+    expect(content.socials).toEqual([]);
+  });
 });

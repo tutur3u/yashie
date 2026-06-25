@@ -19,6 +19,7 @@ let studio: YashieAdminStudioPayload;
 let calls: {
   createCollection: unknown[];
   createEntry: unknown[];
+  deleteEntry: unknown[];
   publishEntry: unknown[];
   updateEntry: unknown[];
 };
@@ -48,6 +49,7 @@ const input: YashieAdminSiteSettingsInput = {
       href: "https://www.instagram.com/inkedbyyashie",
       label: "Instagram",
       platform: "instagram",
+      sortOrder: 0,
       status: "published",
     },
   ],
@@ -68,6 +70,11 @@ const client = {
       ...payload,
       id: `entry-${String(payload.slug)}`,
     });
+    return {};
+  },
+  async deleteEntry(_workspaceId: string, entryId: string) {
+    calls.deleteEntry.push(entryId);
+    studio.entries = studio.entries.filter((entry) => String(entry.id) !== entryId);
     return {};
   },
   async getStudio() {
@@ -166,6 +173,7 @@ describe("Yashie admin site settings mutations", () => {
     calls = {
       createCollection: [],
       createEntry: [],
+      deleteEntry: [],
       publishEntry: [],
       updateEntry: [],
     };
@@ -227,6 +235,54 @@ describe("Yashie admin site settings mutations", () => {
           visible: false,
         }),
       ]),
+    );
+  });
+
+  test("creates added links and deletes removed links", async () => {
+    const settings = await updateYashieAdminSiteSettings("admin-token", {
+      ...input,
+      socials: [
+        input.socials[0]!,
+        {
+          handle: "",
+          href: "https://example.com",
+          label: "Website",
+          platform: "website",
+          sortOrder: 1,
+          status: "published",
+        },
+      ],
+    });
+
+    expect(calls.createEntry).toEqual([
+      expect.objectContaining({
+        profile_data: expect.objectContaining({
+          href: "https://example.com",
+          platform: "website",
+          sortOrder: 1,
+        }),
+        slug: "website",
+        title: "Website",
+      }),
+    ]);
+    expect(calls.deleteEntry).toEqual([]);
+    expect(settings.socials).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          href: "https://example.com",
+          platform: "website",
+        }),
+      ]),
+    );
+
+    calls.deleteEntry = [];
+    await updateYashieAdminSiteSettings("admin-token", {
+      ...input,
+      socials: [],
+    });
+
+    expect(calls.deleteEntry).toEqual(
+      expect.arrayContaining(["social-instagram", "entry-website"]),
     );
   });
 });

@@ -66,6 +66,7 @@ const studio = {
         handle: "@published",
         href: "https://example.com/instagram",
         platform: "instagram",
+        sortOrder: 4,
       },
       slug: "instagram",
       status: "published",
@@ -104,6 +105,7 @@ describe("Yashie admin site settings", () => {
             href: "https://example.com/instagram",
             id: "social-instagram",
             platform: "instagram",
+            sortOrder: 4,
           }),
         ],
       }),
@@ -161,6 +163,7 @@ describe("Yashie admin site settings", () => {
           href: "https://example.com/instagram",
           label: "Instagram",
           platform: "instagram",
+          sortOrder: 0,
           status: "published",
         },
       ],
@@ -180,6 +183,45 @@ describe("Yashie admin site settings", () => {
             visible: false,
           }),
         ]),
+      }),
+    );
+  });
+
+  test("accepts arbitrary visitor links with optional handles", () => {
+    const result = parseYashieSiteSettingsPayload({
+      profile: {
+        alias: "@published",
+        brand: "Published Brand",
+        email: "published@example.com",
+        name: "Published Name",
+        shortName: "Published",
+        status: "published",
+        title: "Published Writer",
+      },
+      navigation: [],
+      socials: [
+        {
+          handle: "",
+          href: "https://example.com",
+          id: "social-website",
+          label: "Website",
+          platform: "website",
+          sortOrder: 2,
+          status: "archived",
+        },
+      ],
+    });
+
+    expect(result.errors).toEqual({});
+    expect(result.input?.socials[0]).toEqual(
+      expect.objectContaining({
+        handle: "",
+        href: "https://example.com",
+        id: "social-website",
+        label: "Website",
+        platform: "website",
+        sortOrder: 2,
+        status: "archived",
       }),
     );
   });
@@ -206,8 +248,8 @@ describe("Yashie admin site settings", () => {
           handle: "@published",
           href: "example.com/instagram",
           label: "Instagram",
-          platform: "instagram",
-          status: "published",
+          platform: "invalid",
+          status: "hidden",
         },
       ],
     });
@@ -218,6 +260,8 @@ describe("Yashie admin site settings", () => {
       "profile.email": "Use a valid email address.",
       "navigation.1.label": "Add a tab name.",
       "socials.0.href": "Use a full http or https link.",
+      "socials.0.platform": "Choose a valid platform.",
+      "socials.0.status": "Choose a valid visibility option.",
     });
   });
 });

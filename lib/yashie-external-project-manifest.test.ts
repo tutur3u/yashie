@@ -27,6 +27,7 @@ describe("Yashie external project manifest", () => {
             handle: "@inkedbyyashie",
             href: "https://www.instagram.com/inkedbyyashie",
             platform: "instagram",
+            sortOrder: 0,
           }),
         }),
         expect.objectContaining({
@@ -65,6 +66,20 @@ describe("Yashie external project manifest", () => {
             }),
           ]),
           slug: "navigation-tabs",
+        }),
+        expect.objectContaining({
+          collection_type: "social-links",
+          profileFields: expect.arrayContaining([
+            expect.objectContaining({
+              key: "platform",
+              options: expect.arrayContaining(["website", "newsletter", "other"]),
+            }),
+            expect.objectContaining({
+              key: "sortOrder",
+              type: "number",
+            }),
+          ]),
+          slug: "social-links",
         }),
       ]),
     );

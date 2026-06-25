@@ -3,6 +3,7 @@ import {
   author,
   navigationTabs,
   socials,
+  socialPlatformOptions,
   type NavTabKey,
   type NavigationTab,
   type SocialLink,
@@ -23,12 +24,9 @@ const PROFILE_COLLECTION_SLUG = "profile";
 const PROFILE_ENTRY_SLUG = "profile";
 const NAVIGATION_COLLECTION_SLUG = "navigation-tabs";
 const SOCIAL_LINKS_COLLECTION_SLUG = "social-links";
-const VALID_SOCIAL_PLATFORMS = new Set<SocialPlatform>([
-  "instagram",
-  "threads",
-  "bluesky",
-  "goodreads",
-]);
+const VALID_SOCIAL_PLATFORMS = new Set<SocialPlatform>(
+  socialPlatformOptions.map((option) => option.value),
+);
 const VALID_STATUSES = new Set<YashieContentStatus>([
   "archived",
   "draft",
@@ -40,6 +38,7 @@ type SettingsClient = Pick<
   ExternalProjectsClient,
   | "createCollection"
   | "createEntry"
+  | "deleteEntry"
   | "getStudio"
   | "updateEntry"
 >;
@@ -77,7 +76,7 @@ export type YashieAdminSiteSettings = {
 export type YashieAdminSiteSettingsInput = {
   navigation: Array<Pick<NavigationTab, "key" | "label" | "visible">>;
   profile: Omit<YashieAdminProfileSettings, "entryId">;
-  socials: Array<Omit<YashieAdminSocialSettings, "id">>;
+  socials: Array<Omit<YashieAdminSocialSettings, "id"> & { id?: string | null }>;
 };
 
 export type YashieAdminSiteSettingsParseResult = {
@@ -106,10 +105,48 @@ function readNumber(record: StudioRecord, key: string) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function normalizeSocialPlatform(value: string | null): SocialPlatform {
+  return value && VALID_SOCIAL_PLATFORMS.has(value as SocialPlatform)
+    ? (value as SocialPlatform)
+    : "other";
+}
+
+function readOptionalId(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function slugifySocialLink(value: string, fallback: string) {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+  return normalized || fallback;
+}
+
 function normalizeStatus(value: unknown): YashieContentStatus {
   return typeof value === "string" && VALID_STATUSES.has(value as YashieContentStatus)
     ? (value as YashieContentStatus)
     : "published";
+}
+
+function parseStatus(
+  value: unknown,
+  errors: Record<string, string>,
+  key: string,
+) {
+  if (
+    typeof value === "string" &&
+    value.trim() &&
+    !VALID_STATUSES.has(value as YashieContentStatus)
+  ) {
+    appendError(errors, key, "Choose a valid visibility option.");
+  }
+
+  return normalizeStatus(value);
 }
 
 function findCollection(studio: YashieAdminStudioPayload, slug: string) {
@@ -174,9 +211,11 @@ function socialFallback(platform: string | null, index: number) {
 }
 
 function socialSort(left: YashieAdminSocialSettings, right: YashieAdminSocialSettings) {
-  const leftIndex = socials.findIndex((item) => item.platform === left.platform);
-  const rightIndex = socials.findIndex((item) => item.platform === right.platform);
-  return (leftIndex === -1 ? 99 : leftIndex) - (rightIndex === -1 ? 99 : rightIndex);
+  if (left.sortOrder !== right.sortOrder) {
+    return left.sortOrder - right.sortOrder;
+  }
+
+  return left.label.localeCompare(right.label);
 }
 
 function isNavigationTabKey(value: string | null): value is NavTabKey {
@@ -227,20 +266,17 @@ export function readYashieAdminSiteSettings(
   const deliveredSocials = findEntriesByCollection(studio, SOCIAL_LINKS_COLLECTION_SLUG)
     .map<YashieAdminSocialSettings | null>((entry, index) => {
       const entryProfileData = readRecord(entry.profile_data ?? entry.profileData);
-      const platform = readString(entryProfileData, "platform");
-
-      if (!platform || !VALID_SOCIAL_PLATFORMS.has(platform as SocialPlatform)) {
-        return null;
-      }
+      const platform = normalizeSocialPlatform(readString(entryProfileData, "platform"));
 
       const fallback = socialFallback(platform, index);
 
       return {
-        handle: readString(entryProfileData, "handle") ?? fallback.handle,
+        handle: readString(entryProfileData, "handle") ?? "",
         href: readString(entryProfileData, "href") ?? fallback.href,
         id: String(entry.id),
         label: readString(entry, "title") ?? fallback.label,
-        platform: platform as SocialPlatform,
+        platform,
+        sortOrder: readNumber(entryProfileData, "sortOrder") ?? index,
         status: normalizeStatus(entry.status),
       };
     })
@@ -326,7 +362,7 @@ export function parseYashieSiteSettingsPayload(
     name: readRequiredString(profile.name, errors, "profile.name", "Add the author name."),
     shortName:
       readRequiredString(profile.shortName, errors, "profile.shortName", "Add a short name."),
-    status: normalizeStatus(profile.status),
+    status: parseStatus(profile.status, errors, "profile.status"),
     summary:
       readOptionalString(profile.summary) || author.tagline,
     title: readRequiredString(profile.title, errors, "profile.title", "Add the public title."),
@@ -340,15 +376,8 @@ export function parseYashieSiteSettingsPayload(
     (item, index) => {
       const social = readRecord(item);
       const fallback = socials[index % socials.length] ?? socials[0]!;
-      const platformValue = readRequiredString(
-        social.platform,
-        errors,
-        `socials.${index}.platform`,
-        "Choose a social platform.",
-      );
-      const platform = VALID_SOCIAL_PLATFORMS.has(platformValue as SocialPlatform)
-        ? (platformValue as SocialPlatform)
-        : fallback.platform;
+      const platformValue = readString(social, "platform") ?? fallback.platform;
+      const platform = normalizeSocialPlatform(platformValue);
 
       if (platformValue && !VALID_SOCIAL_PLATFORMS.has(platformValue as SocialPlatform)) {
         appendError(errors, `socials.${index}.platform`, "Choose a valid platform.");
@@ -366,26 +395,24 @@ export function parseYashieSiteSettingsPayload(
       }
 
       return {
-        handle: readRequiredString(
-          social.handle,
-          errors,
-          `socials.${index}.handle`,
-          "Add a handle.",
-        ),
+        handle: readOptionalString(social.handle),
         href,
+        id: readOptionalId(social.id),
         label:
-          readOptionalString(social.label) ||
-          socials.find((entry) => entry.platform === platform)?.label ||
+          readRequiredString(
+            social.label,
+            errors,
+            `socials.${index}.label`,
+            "Add a link name.",
+          ) ||
+          socialPlatformOptions.find((entry) => entry.value === platform)?.label ||
           fallback.label,
         platform,
-        status: normalizeStatus(social.status),
+        sortOrder: readNumber(social, "sortOrder") ?? index,
+        status: parseStatus(social.status, errors, `socials.${index}.status`),
       };
     },
   );
-
-  if (parsedSocials.length === 0) {
-    appendError(errors, "socials", "Add at least one social link.");
-  }
 
   const submittedNavigation = new Map(
     navigationValues
@@ -517,13 +544,17 @@ async function saveSocialSettings({
     SOCIAL_LINKS_COLLECTION_SLUG,
   );
   const existingEntries = findEntriesByCollection(studio, SOCIAL_LINKS_COLLECTION_SLUG);
+  const retainedEntryIds = new Set<string>();
 
-  for (const social of input) {
+  for (const [index, social] of input.entries()) {
+    const slug = slugifySocialLink(social.label, `${social.platform}-${index}`);
     const current =
-      existingEntries.find((entry) => {
-        const profileData = readRecord(entry.profile_data ?? entry.profileData);
-        return readString(profileData, "platform") === social.platform;
-      }) ?? null;
+      (social.id
+        ? existingEntries.find((entry) => String(entry.id) === social.id)
+        : null) ??
+      existingEntries.find((entry) => readString(entry, "slug") === slug) ??
+      null;
+    const sortOrder = social.sortOrder ?? index;
     const payload = {
       collection_id: String(collection.id),
       metadata: {},
@@ -531,20 +562,39 @@ async function saveSocialSettings({
         handle: social.handle,
         href: social.href,
         platform: social.platform,
+        sortOrder,
       },
-      slug: social.platform,
+      slug,
       status: social.status,
       subtitle: social.platform,
-      summary: social.handle,
+      summary: social.handle || social.href,
       title: social.label,
     };
 
     if (current) {
-      await client.updateEntry(workspaceId, String(current.id), payload);
+      const entryId = String(current.id);
+      retainedEntryIds.add(entryId);
+      await client.updateEntry(workspaceId, entryId, payload);
       continue;
     }
 
-    await client.createEntry(workspaceId, payload);
+    const created = await client.createEntry(workspaceId, payload);
+    const createdRecord = readRecord(created);
+    const createdId =
+      readString(createdRecord, "id") ??
+      readString(readRecord(createdRecord.entry), "id");
+
+    if (createdId) {
+      retainedEntryIds.add(createdId);
+    }
+  }
+
+  for (const entry of existingEntries) {
+    const entryId = String(entry.id);
+
+    if (!retainedEntryIds.has(entryId)) {
+      await client.deleteEntry(workspaceId, entryId);
+    }
   }
 }
 

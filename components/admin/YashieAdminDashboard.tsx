@@ -3,6 +3,8 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { SocialIcon } from "@/app/components/SocialIcon";
+import { socialPlatformOptions, type SocialPlatform } from "@/app/data/portfolio";
 import type {
   YashieAdminCollectionKey,
   YashieAdminContentItem,
@@ -1202,10 +1204,35 @@ function siteSettingsDraftFromSettings(
     socials: settings.socials.map((social) => ({
       handle: social.handle,
       href: social.href,
+      id: social.id,
       label: social.label,
       platform: social.platform,
+      sortOrder: social.sortOrder,
       status: social.status,
     })),
+  };
+}
+
+function normalizeSocialDraftOrder(
+  socials: YashieAdminSiteSettingsInput["socials"],
+) {
+  return socials.map((social, index) => ({
+    ...social,
+    sortOrder: index,
+  }));
+}
+
+function createEmptySocialDraft(
+  sortOrder: number,
+): YashieAdminSiteSettingsInput["socials"][number] {
+  return {
+    handle: "",
+    href: "",
+    id: null,
+    label: "New link",
+    platform: "other",
+    sortOrder,
+    status: "published",
   };
 }
 
@@ -1243,6 +1270,38 @@ function SettingsTextField({
       />
       {error ? <span className="text-xs text-red-700">{error}</span> : null}
     </label>
+  );
+}
+
+function ImportSeedContentPanel({
+  importing,
+  onImport,
+}: {
+  importing: boolean;
+  onImport: () => void;
+}) {
+  return (
+    <section className="grid min-w-0 gap-4 border border-[rgba(184,112,81,0.38)] bg-white/62 p-4 sm:p-5">
+      <div className="min-w-0">
+        <p className="script-label">{YASHIE_ADMIN_COPY.publish.title}</p>
+        <h2 className="break-words font-display text-3xl leading-none text-[var(--navy)] sm:text-4xl">
+          {YASHIE_ADMIN_COPY.importSeed.title}
+        </h2>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-soft)]">
+          {YASHIE_ADMIN_COPY.importSeed.description}
+        </p>
+      </div>
+      <button
+        className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
+        disabled={importing}
+        onClick={onImport}
+        type="button"
+      >
+        {importing
+          ? YASHIE_ADMIN_COPY.importSeed.pending
+          : YASHIE_ADMIN_COPY.importSeed.action}
+      </button>
+    </section>
   );
 }
 
@@ -1288,6 +1347,49 @@ function SiteSettingsPanel({
         socialIndex === index ? { ...social, [name]: value } : social,
       ),
     }));
+  };
+
+  const addSocial = () => {
+    setDraft((current) => ({
+      ...current,
+      socials: [
+        ...current.socials,
+        createEmptySocialDraft(current.socials.length),
+      ],
+    }));
+  };
+
+  const removeSocial = (index: number) => {
+    setDraft((current) => ({
+      ...current,
+      socials: normalizeSocialDraftOrder(
+        current.socials.filter((_, socialIndex) => socialIndex !== index),
+      ),
+    }));
+  };
+
+  const moveSocial = (index: number, direction: -1 | 1) => {
+    setDraft((current) => {
+      const nextIndex = index + direction;
+
+      if (nextIndex < 0 || nextIndex >= current.socials.length) {
+        return current;
+      }
+
+      const nextSocials = [...current.socials];
+      const [moved] = nextSocials.splice(index, 1);
+
+      if (!moved) {
+        return current;
+      }
+
+      nextSocials.splice(nextIndex, 0, moved);
+
+      return {
+        ...current,
+        socials: normalizeSocialDraftOrder(nextSocials),
+      };
+    });
   };
 
   const updateNavigation = (
@@ -1464,38 +1566,141 @@ function SiteSettingsPanel({
       </section>
 
       <section className="grid gap-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-          {YASHIE_ADMIN_COPY.profile.links}
-        </p>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+            {YASHIE_ADMIN_COPY.profile.links}
+          </p>
+          <button
+            className="button-secondary min-w-28 w-full sm:w-auto"
+            onClick={addSocial}
+            type="button"
+          >
+            Add link
+          </button>
+        </div>
+        <div className="grid gap-4">
           {draft.socials.map((social, index) => (
             <div
               className="grid min-w-0 gap-4 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
-              key={social.platform}
+              key={social.id ?? `social-${index}`}
             >
-              <div className="min-w-0">
-                <p className="break-words font-display text-3xl leading-none text-[var(--navy)]">
-                  {social.label}
-                </p>
-                <p className="mt-1 text-sm capitalize text-[var(--ink-soft)]">
-                  {social.platform}
-                </p>
+              <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-start">
+                <span className="inline-flex size-11 items-center justify-center border border-[rgba(184,112,81,0.38)] text-[var(--clay)]">
+                  <SocialIcon platform={social.platform as SocialPlatform} />
+                </span>
+                <div className="min-w-0">
+                  <p className="break-words font-display text-3xl leading-none text-[var(--navy)]">
+                    {social.label || "Untitled link"}
+                  </p>
+                  <p className="mt-1 break-words text-sm text-[var(--ink-soft)]">
+                    {social.href || "No link set"}
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 sm:flex">
+                  <button
+                    className="border border-[rgba(184,112,81,0.34)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--ink-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={index === 0}
+                    onClick={() => moveSocial(index, -1)}
+                    type="button"
+                  >
+                    Up
+                  </button>
+                  <button
+                    className="border border-[rgba(184,112,81,0.34)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--ink-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={index === draft.socials.length - 1}
+                    onClick={() => moveSocial(index, 1)}
+                    type="button"
+                  >
+                    Down
+                  </button>
+                  <button
+                    className="border border-red-300 bg-red-500/10 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-800"
+                    onClick={() => removeSocial(index)}
+                    type="button"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
-              <SettingsTextField
-                error={fieldErrors[`socials.${index}.handle`]}
-                label="Handle"
-                onChange={(value) => updateSocial(index, "handle", value)}
-                required
-                value={social.handle}
-              />
-              <SettingsTextField
-                error={fieldErrors[`socials.${index}.href`]}
-                label="Link"
-                onChange={(value) => updateSocial(index, "href", value)}
-                required
-                type="url"
-                value={social.href}
-              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <SettingsTextField
+                  error={fieldErrors[`socials.${index}.label`]}
+                  label="Name"
+                  onChange={(value) => updateSocial(index, "label", value)}
+                  required
+                  value={social.label}
+                />
+                <label className="grid min-w-0 gap-2">
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+                    Icon
+                  </span>
+                  <select
+                    className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+                      fieldErrors[`socials.${index}.platform`]
+                        ? "border-red-400"
+                        : "border-[rgba(184,112,81,0.42)]"
+                    }`}
+                    onChange={(event) =>
+                      updateSocial(index, "platform", event.currentTarget.value)
+                    }
+                    value={social.platform}
+                  >
+                    {socialPlatformOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors[`socials.${index}.platform`] ? (
+                    <span className="text-xs text-red-700">
+                      {fieldErrors[`socials.${index}.platform`]}
+                    </span>
+                  ) : null}
+                </label>
+                <SettingsTextField
+                  error={fieldErrors[`socials.${index}.handle`]}
+                  label="Handle"
+                  onChange={(value) => updateSocial(index, "handle", value)}
+                  value={social.handle}
+                />
+                <label className="grid min-w-0 gap-2">
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+                    Visibility
+                  </span>
+                  <select
+                    className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+                      fieldErrors[`socials.${index}.status`]
+                        ? "border-red-400"
+                        : "border-[rgba(184,112,81,0.42)]"
+                    }`}
+                    onChange={(event) =>
+                      updateSocial(index, "status", event.currentTarget.value)
+                    }
+                    value={social.status}
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors[`socials.${index}.status`] ? (
+                    <span className="text-xs text-red-700">
+                      {fieldErrors[`socials.${index}.status`]}
+                    </span>
+                  ) : null}
+                </label>
+                <div className="md:col-span-2">
+                  <SettingsTextField
+                    error={fieldErrors[`socials.${index}.href`]}
+                    label="Link"
+                    onChange={(value) => updateSocial(index, "href", value)}
+                    required
+                    type="url"
+                    value={social.href}
+                  />
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -2352,6 +2557,7 @@ function ContentForm({
 export function YashieAdminDashboard({
   driveHref,
   initialContent,
+  initialNeedsImport = false,
   initialSiteSettings,
   membersHref,
   sessionExpiresAt,
@@ -2362,6 +2568,7 @@ export function YashieAdminDashboard({
 }: {
   driveHref: string;
   initialContent: DashboardContent;
+  initialNeedsImport?: boolean;
   initialSiteSettings: YashieAdminSiteSettings;
   membersHref: string;
   sessionExpiresAt: string;
@@ -2376,6 +2583,8 @@ export function YashieAdminDashboard({
   const [editorBusy, setEditorBusy] = useState(false);
   const [editorDirty, setEditorDirty] = useState(false);
   const [confirmEditorClose, setConfirmEditorClose] = useState(false);
+  const [importingSeed, setImportingSeed] = useState(false);
+  const [needsImport, setNeedsImport] = useState(initialNeedsImport);
   const [siteSettings, setSiteSettings] = useState(initialSiteSettings);
   const [selectedIds, setSelectedIds] = useState<
     Record<YashieAdminCollectionKey, string | null>
@@ -2447,6 +2656,47 @@ export function YashieAdminDashboard({
     });
   };
 
+  const refreshSiteSettings = async () => {
+    const response = await adminFetch("/api/admin/site-settings", {
+      cache: "no-store",
+    });
+    const payload = (await response
+      .json()
+      .catch(() => ({}))) as SiteSettingsMutationResponse;
+
+    if (response.ok && payload.settings) {
+      setSiteSettings(payload.settings);
+    }
+  };
+
+  const importSeedContent = async () => {
+    setImportingSeed(true);
+
+    try {
+      const response = await adminFetch("/api/admin/sync/apply", {
+        body: JSON.stringify({ force: false }),
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Import failed");
+      }
+
+      await Promise.all([refreshContent(), refreshSiteSettings()]);
+      setNeedsImport(false);
+      toast.success(YASHIE_ADMIN_COPY.importSeed.success);
+    } catch {
+      toast.error(YASHIE_ADMIN_COPY.errors.importSeed);
+    } finally {
+      setImportingSeed(false);
+    }
+  };
+
   const openEditor = (target: EditorTarget) => {
     setConfirmEditorClose(false);
     setEditorBusy(false);
@@ -2483,6 +2733,12 @@ export function YashieAdminDashboard({
 
     return (
       <section className="grid min-w-0 gap-6">
+        {needsImport && items.length === 0 ? (
+          <ImportSeedContentPanel
+            importing={importingSeed}
+            onImport={() => void importSeedContent()}
+          />
+        ) : null}
         <ContentList
           collectionKey={collectionKey}
           items={items}

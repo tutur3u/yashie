@@ -62,17 +62,26 @@ export type Product = {
 	slug?: string;
 };
 
-export type SocialPlatform =
-	| "instagram"
-	| "threads"
-	| "bluesky"
-	| "goodreads";
+export const socialPlatformOptions = [
+	{ label: "Instagram", value: "instagram" },
+	{ label: "Threads", value: "threads" },
+	{ label: "Bluesky", value: "bluesky" },
+	{ label: "Goodreads", value: "goodreads" },
+	{ label: "Website", value: "website" },
+	{ label: "Newsletter", value: "newsletter" },
+	{ label: "Shop", value: "shop" },
+	{ label: "Blog", value: "blog" },
+	{ label: "Other", value: "other" },
+] as const;
+
+export type SocialPlatform = (typeof socialPlatformOptions)[number]["value"];
 
 export type SocialLink = {
 	label: string;
 	handle: string;
 	href: string;
 	platform: SocialPlatform;
+	sortOrder: number;
 };
 
 export const navItems: NavItem[] = [
@@ -316,24 +325,28 @@ export const socials: SocialLink[] = [
 		handle: "@inkedbyyashie",
 		href: "https://www.instagram.com/inkedbyyashie",
 		platform: "instagram",
+		sortOrder: 0,
 	},
 	{
 		label: "Threads",
 		handle: "@inkedbyyashie",
 		href: "https://www.threads.com/@inkedbyyashie",
 		platform: "threads",
+		sortOrder: 1,
 	},
 	{
 		label: "Bluesky",
 		handle: "@inkedbyyashie.bsky.social",
 		href: "https://bsky.app/profile/inkedbyyashie.bsky.social",
 		platform: "bluesky",
+		sortOrder: 2,
 	},
 	{
 		label: "Goodreads",
 		handle: "@inkedbyyashie",
 		href: "https://www.goodreads.com",
 		platform: "goodreads",
+		sortOrder: 3,
 	},
 ];
 

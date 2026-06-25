@@ -6,6 +6,7 @@ import {
   navItems,
   products,
   profileFacts,
+  socialPlatformOptions,
   socials,
   worlds,
   type BlogPost,
@@ -221,19 +222,31 @@ function buildProfileFacts(delivery: YashieDeliveryPayload) {
 
 function isSocialPlatform(value: string | null): value is SocialPlatform {
   return Boolean(
-    value &&
-      ["instagram", "threads", "bluesky", "goodreads"].includes(value),
+    value && socialPlatformOptions.some((option) => option.value === value),
   );
 }
 
 function buildSocials(delivery: YashieDeliveryPayload) {
-  const mapped = getPublishedEntries(delivery, "social-links")
+  const collection = getCollection(delivery, "social-links");
+
+  if (!collection) {
+    return socials;
+  }
+
+  const mapped = collection.entries
+    .filter((entry) => entry.status === "published")
     .map<SocialLink | null>((entry, index) => {
       const profileData = asRecord(entry.profile_data);
       const platform = asString(profileData.platform);
 
       if (!isSocialPlatform(platform)) {
-        return null;
+        return {
+          handle: asString(profileData.handle) ?? entry.summary ?? "",
+          href: asString(profileData.href) ?? "",
+          label: entry.title || "Link",
+          platform: "other",
+          sortOrder: asNumber(profileData.sortOrder) ?? index,
+        };
       }
 
       const fallback =
@@ -246,18 +259,17 @@ function buildSocials(delivery: YashieDeliveryPayload) {
         href: asString(profileData.href) ?? fallback.href,
         label: entry.title || fallback.label,
         platform,
+        sortOrder: asNumber(profileData.sortOrder) ?? index,
       };
     })
-    .filter((social): social is SocialLink => Boolean(social));
-
-  if (mapped.length === 0) {
-    return socials;
-  }
+    .filter((social): social is SocialLink => Boolean(social && social.href));
 
   return mapped.sort((left, right) => {
-    const leftIndex = socials.findIndex((social) => social.platform === left.platform);
-    const rightIndex = socials.findIndex((social) => social.platform === right.platform);
-    return (leftIndex === -1 ? 99 : leftIndex) - (rightIndex === -1 ? 99 : rightIndex);
+    if (left.sortOrder !== right.sortOrder) {
+      return left.sortOrder - right.sortOrder;
+    }
+
+    return left.label.localeCompare(right.label);
   });
 }
 

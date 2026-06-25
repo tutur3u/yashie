@@ -95,16 +95,18 @@ async function AuthenticatedAdminDashboard({
     getYashieStorageAnalytics(session.accessToken),
     getYashieStorageFiles(session.accessToken),
   ]);
+  const initialContent = {
+    worlds: readYashieAdminContent(studio, "worlds"),
+    categories: readYashieAdminContent(studio, "categories"),
+    blog: readYashieAdminContent(studio, "blog"),
+    gallery: readYashieAdminContent(studio, "gallery"),
+    shop: readYashieAdminContent(studio, "shop"),
+  };
 
   return (
     <YashieAdminDashboard
-      initialContent={{
-        worlds: readYashieAdminContent(studio, "worlds"),
-        categories: readYashieAdminContent(studio, "categories"),
-        blog: readYashieAdminContent(studio, "blog"),
-        gallery: readYashieAdminContent(studio, "gallery"),
-        shop: readYashieAdminContent(studio, "shop"),
-      }}
+      initialContent={initialContent}
+      initialNeedsImport={studio.entries.length === 0}
       initialSiteSettings={readYashieAdminSiteSettings(studio)}
       driveHref={buildYashieDriveUrl()}
       membersHref={buildYashieWorkspaceUrl({ targetKey: "members" })}

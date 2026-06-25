@@ -4,6 +4,7 @@ import {
   galleryItems,
   products,
   profileFacts,
+  socialPlatformOptions,
   slugify,
   socials,
   worlds,
@@ -125,9 +126,10 @@ const socialFields = [
   {
     key: "platform",
     label: "Platform",
-    options: ["instagram", "threads", "bluesky", "goodreads"],
+    options: socialPlatformOptions.map((option) => option.value),
     type: "string",
   },
+  { key: "sortOrder", label: "Order", type: "number" },
 ] satisfies YashieSyncField[];
 
 const navigationFields = [
@@ -333,6 +335,7 @@ function socialEntry(social: SocialLink) {
       handle: social.handle,
       href: social.href,
       platform: social.platform,
+      sortOrder: social.sortOrder,
     },
     slug,
     stableSourceId: `yashie:social-links:${slug}`,
