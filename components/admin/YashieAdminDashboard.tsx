@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SocialIcon } from "@/app/components/SocialIcon";
-import { socialPlatformOptions, type SocialPlatform } from "@/app/data/portfolio";
+import {
+  socialPlatformOptions,
+  type SocialPlatform,
+} from "@/app/data/portfolio";
 import type {
   YashieAdminCollectionKey,
   YashieAdminContentItem,
@@ -472,12 +481,10 @@ function StoragePanel({
   const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(
     null,
   );
-  const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const refreshStorage = async (path = currentPath) => {
     setBusy(true);
-    setMessage(null);
     setCurrentPath(path);
 
     try {
@@ -526,7 +533,6 @@ function StoragePanel({
     refreshPath = currentPath,
   ) => {
     setBusy(true);
-    setMessage(null);
 
     try {
       const response = await request;
@@ -536,7 +542,7 @@ function StoragePanel({
       } | null;
 
       if (!response.ok) {
-        setMessage(payload?.error ?? "Storage request failed.");
+        toast.error(payload?.error ?? "Storage request failed.");
         return;
       }
 
@@ -550,10 +556,10 @@ function StoragePanel({
       setConfirmDeletePath(null);
       setRenamingPath(null);
       await refreshStorage(refreshPath);
-      setMessage(successText);
+      toast.success(successText);
       await onResourcesChanged();
     } catch {
-      setMessage("Storage request failed.");
+      toast.error("Storage request failed.");
     } finally {
       setBusy(false);
     }
@@ -562,7 +568,7 @@ function StoragePanel({
   const uploadSelectedFile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!uploadFile) {
-      setMessage(YASHIE_ADMIN_COPY.storage.chooseFile);
+      toast.error(YASHIE_ADMIN_COPY.storage.chooseFile);
       return;
     }
 
@@ -627,7 +633,6 @@ function StoragePanel({
 
   const openFile = async (item: YashieStorageFileItem) => {
     setBusy(true);
-    setMessage(null);
 
     try {
       const url = new URL("/api/admin/storage", window.location.origin);
@@ -639,13 +644,13 @@ function StoragePanel({
       } | null;
 
       if (!response.ok || !payload?.data?.signedUrl) {
-        setMessage(payload?.error ?? "File could not be opened.");
+        toast.error(payload?.error ?? "File could not be opened.");
         return;
       }
 
       window.open(payload.data.signedUrl, "_blank", "noopener,noreferrer");
     } catch {
-      setMessage("File could not be opened.");
+      toast.error("File could not be opened.");
     } finally {
       setBusy(false);
     }
@@ -785,12 +790,6 @@ function StoragePanel({
             </button>
           </div>
         </div>
-
-        {message ? (
-          <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
-            {message}
-          </div>
-        ) : null}
 
         <div className="grid gap-4 lg:grid-cols-2">
           <form
@@ -1092,7 +1091,10 @@ function DateField<TName extends keyof Draft>({
         disabled={disabled}
         name={name}
         onChange={(event) =>
-          onChange(name, getYashieDisplayDateFromInput(event.currentTarget.value))
+          onChange(
+            name,
+            getYashieDisplayDateFromInput(event.currentTarget.value),
+          )
         }
         title={value}
         type="date"
@@ -1237,6 +1239,7 @@ function createEmptySocialDraft(
 }
 
 function SettingsTextField({
+  disabled,
   error,
   label,
   onChange,
@@ -1245,6 +1248,7 @@ function SettingsTextField({
   type = "text",
   value,
 }: {
+  disabled?: boolean;
   error?: string;
   label: string;
   onChange: (value: string) => void;
@@ -1261,7 +1265,8 @@ function SettingsTextField({
       <input
         className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
           error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
-        }`}
+        } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+        disabled={disabled}
         onChange={(event) => onChange(event.currentTarget.value)}
         placeholder={placeholder}
         required={required}
@@ -1270,6 +1275,550 @@ function SettingsTextField({
       />
       {error ? <span className="text-xs text-red-700">{error}</span> : null}
     </label>
+  );
+}
+
+type ProfileFieldName = keyof YashieAdminSiteSettingsInput["profile"];
+type NavigationDraft = YashieAdminSiteSettingsInput["navigation"][number];
+type SocialDraft = YashieAdminSiteSettingsInput["socials"][number];
+
+type ProfileFieldConfig = {
+  inputType?: string;
+  label: string;
+  multiline?: boolean;
+  name: ProfileFieldName;
+  options?: Array<{ label: string; value: string }>;
+  required?: boolean;
+};
+
+type SettingsDialogTarget =
+  | { field: ProfileFieldName; kind: "profile" }
+  | { index: number; kind: "navigation" }
+  | { index: number; kind: "social" }
+  | { kind: "new-social" };
+
+const profileFieldConfigs: ProfileFieldConfig[] = [
+  { label: "Author name", name: "name", required: true },
+  { label: "Public title", name: "title", required: true },
+  { label: "Public handle", name: "alias", required: true },
+  { inputType: "email", label: "Email", name: "email", required: true },
+  { label: "Brand", name: "brand", required: true },
+  { label: "Short name", name: "shortName", required: true },
+  { label: "Location", name: "location" },
+  {
+    label: YASHIE_ADMIN_COPY.editor.visibility,
+    name: "status",
+    options: statusOptions,
+    required: true,
+  },
+  { label: "Intro line", multiline: true, name: "summary" },
+];
+
+function settingsSnapshot(value: unknown) {
+  return JSON.stringify(value);
+}
+
+function settingsEqual(left: unknown, right: unknown) {
+  return settingsSnapshot(left) === settingsSnapshot(right);
+}
+
+function profileFieldConfigFor(field: ProfileFieldName) {
+  return (
+    profileFieldConfigs.find((config) => config.name === field) ??
+    profileFieldConfigs[0]!
+  );
+}
+
+function profileFieldPreview(
+  field: ProfileFieldName,
+  value: YashieAdminSiteSettingsInput["profile"][ProfileFieldName],
+) {
+  if (field === "status") {
+    return statusLabel(value as YashieContentStatus);
+  }
+
+  return String(value || "No value set");
+}
+
+function clearFieldErrorEntries(
+  errors: Record<string, string>,
+  prefixes: string[],
+) {
+  return Object.fromEntries(
+    Object.entries(errors).filter(
+      ([key]) =>
+        !prefixes.some(
+          (prefix) => key === prefix || key.startsWith(`${prefix}.`),
+        ),
+    ),
+  );
+}
+
+function SettingsDialogFrame({
+  children,
+  description,
+  footer,
+  onClose,
+  title,
+}: {
+  children: ReactNode;
+  description?: string;
+  footer: ReactNode;
+  onClose: () => void;
+  title: string;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 grid min-h-dvh overflow-y-auto bg-[rgba(12,31,52,0.58)] px-4 py-6"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        aria-modal="true"
+        className="parchment-card mx-auto grid w-full max-w-2xl min-w-0 self-center p-5 shadow-[0_28px_90px_rgba(12,31,52,0.38)] sm:p-6"
+        role="dialog"
+      >
+        <div className="flex min-w-0 items-start justify-between gap-4 border-b border-[rgba(184,112,81,0.28)] pb-4">
+          <div className="min-w-0">
+            <p className="script-label">{YASHIE_ADMIN_COPY.profile.heading}</p>
+            <h3 className="break-words font-display text-3xl leading-none text-[var(--navy)] sm:text-4xl">
+              {title}
+            </h3>
+            {description ? (
+              <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <button
+            aria-label="Close"
+            className="grid size-10 shrink-0 place-items-center border border-[rgba(184,112,81,0.42)] text-lg font-bold text-[var(--ink-soft)] transition hover:border-[var(--copper)] hover:text-[var(--navy)]"
+            onClick={onClose}
+            type="button"
+          >
+            x
+          </button>
+        </div>
+        <div className="grid min-w-0 gap-4 py-5">{children}</div>
+        <div className="flex flex-col gap-3 border-t border-[rgba(184,112,81,0.28)] pt-4 sm:flex-row sm:justify-end">
+          {footer}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SectionSaveButton({
+  dirty,
+  onSave,
+  submitting,
+}: {
+  dirty: boolean;
+  onSave: () => void;
+  submitting: boolean;
+}) {
+  return (
+    <button
+      className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+      disabled={submitting || !dirty}
+      onClick={onSave}
+      type="button"
+    >
+      {submitting
+        ? YASHIE_ADMIN_COPY.actions.saving
+        : YASHIE_ADMIN_COPY.actions.save}
+    </button>
+  );
+}
+
+function SettingsSectionHeader({
+  description,
+  dirty,
+  onSave,
+  submitting,
+  title,
+}: {
+  description?: string;
+  dirty: boolean;
+  onSave: () => void;
+  submitting: boolean;
+  title: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+          {title}
+        </p>
+        {description ? (
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
+            {description}
+          </p>
+        ) : null}
+      </div>
+      <SectionSaveButton
+        dirty={dirty}
+        onSave={onSave}
+        submitting={submitting}
+      />
+    </div>
+  );
+}
+
+function SettingSummaryCard({
+  actionLabel = "Edit",
+  detail,
+  error,
+  label,
+  onEdit,
+  value,
+}: {
+  actionLabel?: string;
+  detail?: ReactNode;
+  error?: string;
+  label: string;
+  onEdit: () => void;
+  value: ReactNode;
+}) {
+  return (
+    <article className="grid min-w-0 gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--clay)]">
+            {label}
+          </p>
+          <div className="mt-2 break-words text-sm leading-6 text-[var(--ink)]">
+            {value}
+          </div>
+          {detail ? (
+            <div className="mt-1 break-words text-xs leading-5 text-[var(--ink-soft)]">
+              {detail}
+            </div>
+          ) : null}
+        </div>
+        <button
+          className="button-secondary min-h-10 shrink-0 px-4 text-xs"
+          onClick={onEdit}
+          type="button"
+        >
+          {actionLabel}
+        </button>
+      </div>
+      {error ? <p className="text-xs text-red-700">{error}</p> : null}
+    </article>
+  );
+}
+
+function ProfileFieldDialog({
+  config,
+  currentValue,
+  error,
+  onApply,
+  onClose,
+  submitting,
+}: {
+  config: ProfileFieldConfig;
+  currentValue: string;
+  error?: string;
+  onApply: (value: string) => void;
+  onClose: () => void;
+  submitting: boolean;
+}) {
+  const [value, setValue] = useState(currentValue);
+  const isDirty = value !== currentValue;
+  const isInvalid = Boolean(config.required && !value.trim());
+
+  return (
+    <SettingsDialogFrame
+      footer={
+        <>
+          <button
+            className="button-secondary w-full sm:w-auto"
+            disabled={submitting}
+            onClick={onClose}
+            type="button"
+          >
+            {YASHIE_ADMIN_COPY.actions.cancel}
+          </button>
+          <button
+            className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={submitting || !isDirty || isInvalid}
+            onClick={() => onApply(value)}
+            type="button"
+          >
+            Apply
+          </button>
+        </>
+      }
+      onClose={onClose}
+      title={config.label}
+    >
+      {config.options ? (
+        <label className="grid min-w-0 gap-2">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+            {config.label}
+          </span>
+          <select
+            className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+              error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
+            } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+            disabled={submitting}
+            onChange={(event) => setValue(event.currentTarget.value)}
+            value={value}
+          >
+            {config.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {error ? <span className="text-xs text-red-700">{error}</span> : null}
+        </label>
+      ) : config.multiline ? (
+        <label className="grid min-w-0 gap-2">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+            {config.label}
+          </span>
+          <textarea
+            className={`min-h-36 w-full min-w-0 resize-y border bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+              error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
+            } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+            disabled={submitting}
+            onChange={(event) => setValue(event.currentTarget.value)}
+            value={value}
+          />
+          {error ? <span className="text-xs text-red-700">{error}</span> : null}
+        </label>
+      ) : (
+        <SettingsTextField
+          disabled={submitting}
+          error={error}
+          label={config.label}
+          onChange={setValue}
+          required={config.required}
+          type={config.inputType}
+          value={value}
+        />
+      )}
+    </SettingsDialogFrame>
+  );
+}
+
+function NavigationItemDialog({
+  currentItem,
+  error,
+  onApply,
+  onClose,
+  submitting,
+}: {
+  currentItem: NavigationDraft;
+  error?: string;
+  onApply: (item: NavigationDraft) => void;
+  onClose: () => void;
+  submitting: boolean;
+}) {
+  const [item, setItem] = useState(currentItem);
+  const isDirty = !settingsEqual(item, currentItem);
+  const isInvalid = !item.label.trim();
+
+  return (
+    <SettingsDialogFrame
+      footer={
+        <>
+          <button
+            className="button-secondary w-full sm:w-auto"
+            disabled={submitting}
+            onClick={onClose}
+            type="button"
+          >
+            {YASHIE_ADMIN_COPY.actions.cancel}
+          </button>
+          <button
+            className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={submitting || !isDirty || isInvalid}
+            onClick={() => onApply(item)}
+            type="button"
+          >
+            Apply
+          </button>
+        </>
+      }
+      onClose={onClose}
+      title={item.label || "Website tab"}
+    >
+      <SettingsTextField
+        disabled={submitting}
+        error={error}
+        label="Tab name"
+        onChange={(value) =>
+          setItem((current) => ({ ...current, label: value }))
+        }
+        required
+        value={item.label}
+      />
+      <label className="flex min-w-0 items-center gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 px-3 py-3 text-sm font-bold text-[var(--ink-soft)]">
+        <input
+          checked={item.visible}
+          className="size-4 accent-[var(--clay)]"
+          disabled={submitting}
+          onChange={(event) =>
+            setItem((current) => ({
+              ...current,
+              visible: event.currentTarget.checked,
+            }))
+          }
+          type="checkbox"
+        />
+        <span>{YASHIE_ADMIN_COPY.profile.showTab}</span>
+      </label>
+    </SettingsDialogFrame>
+  );
+}
+
+function SocialLinkDialog({
+  currentSocial,
+  errorPrefix,
+  errors,
+  onApply,
+  onClose,
+  submitting,
+  title,
+}: {
+  currentSocial: SocialDraft;
+  errorPrefix: string;
+  errors: Record<string, string>;
+  onApply: (social: SocialDraft) => void;
+  onClose: () => void;
+  submitting: boolean;
+  title: string;
+}) {
+  const [social, setSocial] = useState(currentSocial);
+  const isDirty = !settingsEqual(social, currentSocial);
+  const isInvalid = !social.label.trim() || !social.href.trim();
+  const updateSocial = <TName extends keyof SocialDraft>(
+    name: TName,
+    value: SocialDraft[TName],
+  ) => {
+    setSocial((current) => ({ ...current, [name]: value }));
+  };
+
+  return (
+    <SettingsDialogFrame
+      footer={
+        <>
+          <button
+            className="button-secondary w-full sm:w-auto"
+            disabled={submitting}
+            onClick={onClose}
+            type="button"
+          >
+            {YASHIE_ADMIN_COPY.actions.cancel}
+          </button>
+          <button
+            className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={submitting || !isDirty || isInvalid}
+            onClick={() => onApply(social)}
+            type="button"
+          >
+            Apply
+          </button>
+        </>
+      }
+      onClose={onClose}
+      title={title}
+    >
+      <div className="grid gap-4 md:grid-cols-2">
+        <SettingsTextField
+          disabled={submitting}
+          error={errors[`${errorPrefix}.label`]}
+          label="Name"
+          onChange={(value) => updateSocial("label", value)}
+          required
+          value={social.label}
+        />
+        <label className="grid min-w-0 gap-2">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+            Icon
+          </span>
+          <select
+            className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+              errors[`${errorPrefix}.platform`]
+                ? "border-red-400"
+                : "border-[rgba(184,112,81,0.42)]"
+            } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+            disabled={submitting}
+            onChange={(event) =>
+              updateSocial(
+                "platform",
+                event.currentTarget.value as SocialPlatform,
+              )
+            }
+            value={social.platform}
+          >
+            {socialPlatformOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors[`${errorPrefix}.platform`] ? (
+            <span className="text-xs text-red-700">
+              {errors[`${errorPrefix}.platform`]}
+            </span>
+          ) : null}
+        </label>
+        <SettingsTextField
+          disabled={submitting}
+          error={errors[`${errorPrefix}.handle`]}
+          label="Handle"
+          onChange={(value) => updateSocial("handle", value)}
+          value={social.handle}
+        />
+        <label className="grid min-w-0 gap-2">
+          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+            {YASHIE_ADMIN_COPY.editor.visibility}
+          </span>
+          <select
+            className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+              errors[`${errorPrefix}.status`]
+                ? "border-red-400"
+                : "border-[rgba(184,112,81,0.42)]"
+            } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+            disabled={submitting}
+            onChange={(event) =>
+              updateSocial(
+                "status",
+                event.currentTarget.value as SocialDraft["status"],
+              )
+            }
+            value={social.status}
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {errors[`${errorPrefix}.status`] ? (
+            <span className="text-xs text-red-700">
+              {errors[`${errorPrefix}.status`]}
+            </span>
+          ) : null}
+        </label>
+        <div className="md:col-span-2">
+          <SettingsTextField
+            disabled={submitting}
+            error={errors[`${errorPrefix}.href`]}
+            label="Link"
+            onChange={(value) => updateSocial("href", value)}
+            required
+            type="url"
+            value={social.href}
+          />
+        </div>
+      </div>
+    </SettingsDialogFrame>
   );
 }
 
@@ -1316,47 +1865,26 @@ function SiteSettingsPanel({
     siteSettingsDraftFromSettings(settings),
   );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState<string | null>(null);
+  const [dialogTarget, setDialogTarget] = useState<SettingsDialogTarget | null>(
+    null,
+  );
   const [submitting, setSubmitting] = useState(false);
+  const savedDraft = siteSettingsDraftFromSettings(settings);
+  const profileDirty = !settingsEqual(draft.profile, savedDraft.profile);
+  const navigationDirty = !settingsEqual(
+    draft.navigation,
+    savedDraft.navigation,
+  );
+  const socialsDirty = !settingsEqual(draft.socials, savedDraft.socials);
+  const hasChanges = profileDirty || navigationDirty || socialsDirty;
 
   useEffect(() => {
     setDraft(siteSettingsDraftFromSettings(settings));
+    setFieldErrors({});
   }, [settings]);
 
-  const updateProfile = (
-    name: keyof YashieAdminSiteSettingsInput["profile"],
-    value: string,
-  ) => {
-    setDraft((current) => ({
-      ...current,
-      profile: {
-        ...current.profile,
-        [name]: value,
-      },
-    }));
-  };
-
-  const updateSocial = (
-    index: number,
-    name: keyof YashieAdminSiteSettingsInput["socials"][number],
-    value: string,
-  ) => {
-    setDraft((current) => ({
-      ...current,
-      socials: current.socials.map((social, socialIndex) =>
-        socialIndex === index ? { ...social, [name]: value } : social,
-      ),
-    }));
-  };
-
-  const addSocial = () => {
-    setDraft((current) => ({
-      ...current,
-      socials: [
-        ...current.socials,
-        createEmptySocialDraft(current.socials.length),
-      ],
-    }));
+  const clearErrors = (prefixes: string[]) => {
+    setFieldErrors((current) => clearFieldErrorEntries(current, prefixes));
   };
 
   const removeSocial = (index: number) => {
@@ -1366,6 +1894,8 @@ function SiteSettingsPanel({
         current.socials.filter((_, socialIndex) => socialIndex !== index),
       ),
     }));
+    clearErrors(["socials"]);
+    toast.success(YASHIE_ADMIN_COPY.profile.linkRemoved);
   };
 
   const moveSocial = (index: number, direction: -1 | 1) => {
@@ -1390,25 +1920,59 @@ function SiteSettingsPanel({
         socials: normalizeSocialDraftOrder(nextSocials),
       };
     });
+    clearErrors(["socials"]);
   };
 
-  const updateNavigation = (
-    index: number,
-    changes: Partial<YashieAdminSiteSettingsInput["navigation"][number]>,
-  ) => {
+  const applyProfileField = (field: ProfileFieldName, value: string) => {
     setDraft((current) => ({
       ...current,
-      navigation: current.navigation.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, ...changes } : item,
-      ),
+      profile: {
+        ...current.profile,
+        [field]: value,
+      } as YashieAdminSiteSettingsInput["profile"],
     }));
+    clearErrors([`profile.${field}`]);
+    setDialogTarget(null);
   };
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const applyNavigationItem = (index: number, item: NavigationDraft) => {
+    setDraft((current) => ({
+      ...current,
+      navigation: current.navigation.map((currentItem, itemIndex) =>
+        itemIndex === index ? item : currentItem,
+      ),
+    }));
+    clearErrors([`navigation.${index}`]);
+    setDialogTarget(null);
+  };
+
+  const applySocial = (index: number, social: SocialDraft) => {
+    setDraft((current) => ({
+      ...current,
+      socials: normalizeSocialDraftOrder(
+        current.socials.map((currentSocial, socialIndex) =>
+          socialIndex === index ? social : currentSocial,
+        ),
+      ),
+    }));
+    clearErrors(["socials"]);
+    setDialogTarget(null);
+  };
+
+  const appendSocial = (social: SocialDraft) => {
+    setDraft((current) => ({
+      ...current,
+      socials: normalizeSocialDraftOrder([...current.socials, social]),
+    }));
+    clearErrors(["socials"]);
+    setDialogTarget(null);
+  };
+
+  const saveSettings = async () => {
+    if (!hasChanges) return false;
+
     setSubmitting(true);
     setFieldErrors({});
-    setMessage(null);
 
     try {
       const response = await adminFetch("/api/admin/site-settings", {
@@ -1422,21 +1986,24 @@ function SiteSettingsPanel({
 
       if (!response.ok || !payload.settings) {
         setFieldErrors(payload.errors ?? {});
-        setMessage(readFriendlyError(payload, YASHIE_ADMIN_COPY.errors.save));
-        return;
+        toast.error(readFriendlyError(payload, YASHIE_ADMIN_COPY.errors.save));
+        return false;
       }
 
+      setDraft(siteSettingsDraftFromSettings(payload.settings));
       onSaved(payload.settings);
-      setMessage(YASHIE_ADMIN_COPY.profile.saved);
+      toast.success(YASHIE_ADMIN_COPY.profile.saved);
+      return true;
     } catch {
-      setMessage(YASHIE_ADMIN_COPY.errors.save);
+      toast.error(YASHIE_ADMIN_COPY.errors.save);
+      return false;
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <form className="grid min-w-0 gap-6" onSubmit={submit}>
+    <div className="grid min-w-0 gap-6">
       <div className="flex flex-col gap-4 border-b border-[rgba(184,112,81,0.28)] pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="script-label">{YASHIE_ADMIN_COPY.profile.title}</p>
@@ -1449,8 +2016,9 @@ function SiteSettingsPanel({
         </div>
         <button
           className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-          disabled={submitting}
-          type="submit"
+          disabled={submitting || !hasChanges}
+          onClick={() => void saveSettings()}
+          type="button"
         >
           {submitting
             ? YASHIE_ADMIN_COPY.actions.saving
@@ -1458,121 +2026,66 @@ function SiteSettingsPanel({
         </button>
       </div>
 
-      {message ? (
-        <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
-          {message}
-        </div>
-      ) : null}
-
       <section className="grid gap-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-          {YASHIE_ADMIN_COPY.profile.title}
-        </p>
+        <SettingsSectionHeader
+          dirty={profileDirty}
+          onSave={() => void saveSettings()}
+          submitting={submitting}
+          title={YASHIE_ADMIN_COPY.profile.title}
+        />
         <div className="grid gap-4 md:grid-cols-2">
-          <SettingsTextField
-            error={fieldErrors["profile.name"]}
-            label="Author name"
-            onChange={(value) => updateProfile("name", value)}
-            required
-            value={draft.profile.name}
-          />
-          <SettingsTextField
-            error={fieldErrors["profile.title"]}
-            label="Public title"
-            onChange={(value) => updateProfile("title", value)}
-            required
-            value={draft.profile.title}
-          />
-          <SettingsTextField
-            error={fieldErrors["profile.alias"]}
-            label="Public handle"
-            onChange={(value) => updateProfile("alias", value)}
-            required
-            value={draft.profile.alias}
-          />
-          <SettingsTextField
-            error={fieldErrors["profile.email"]}
-            label="Email"
-            onChange={(value) => updateProfile("email", value)}
-            required
-            type="email"
-            value={draft.profile.email}
-          />
-          <SettingsTextField
-            error={fieldErrors["profile.brand"]}
-            label="Brand"
-            onChange={(value) => updateProfile("brand", value)}
-            required
-            value={draft.profile.brand}
-          />
-          <SettingsTextField
-            error={fieldErrors["profile.shortName"]}
-            label="Short name"
-            onChange={(value) => updateProfile("shortName", value)}
-            required
-            value={draft.profile.shortName}
-          />
-        </div>
-        <label className="grid gap-2">
-          <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
-            Intro line
-          </span>
-          <textarea
-            className="min-h-28 w-full min-w-0 resize-y border border-[rgba(184,112,81,0.42)] bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)]"
-            onChange={(event) => updateProfile("summary", event.currentTarget.value)}
-            value={draft.profile.summary}
-          />
-        </label>
-      </section>
-
-      <section className="grid gap-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-            {YASHIE_ADMIN_COPY.profile.menu}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-            {YASHIE_ADMIN_COPY.profile.menuDescription}
-          </p>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {draft.navigation.map((item, index) => (
-            <div
-              className="grid min-w-0 gap-3 border border-[rgba(184,112,81,0.34)] bg-white/58 p-4"
-              key={item.key}
-            >
-              <SettingsTextField
-                error={fieldErrors[`navigation.${index}.label`]}
-                label="Tab name"
-                onChange={(value) => updateNavigation(index, { label: value })}
-                required
-                value={item.label}
-              />
-              <label className="flex min-w-0 items-center gap-3 text-sm font-bold text-[var(--ink-soft)]">
-                <input
-                  checked={item.visible}
-                  className="size-4 accent-[var(--clay)]"
-                  onChange={(event) =>
-                    updateNavigation(index, {
-                      visible: event.currentTarget.checked,
-                    })
-                  }
-                  type="checkbox"
-                />
-                <span>{YASHIE_ADMIN_COPY.profile.showTab}</span>
-              </label>
-            </div>
+          {profileFieldConfigs.map((config) => (
+            <SettingSummaryCard
+              error={fieldErrors[`profile.${config.name}`]}
+              key={config.name}
+              label={config.label}
+              onEdit={() =>
+                setDialogTarget({ field: config.name, kind: "profile" })
+              }
+              value={profileFieldPreview(
+                config.name,
+                draft.profile[config.name],
+              )}
+            />
           ))}
         </div>
       </section>
 
       <section className="grid gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-            {YASHIE_ADMIN_COPY.profile.links}
-          </p>
+        <SettingsSectionHeader
+          description={YASHIE_ADMIN_COPY.profile.menuDescription}
+          dirty={navigationDirty}
+          onSave={() => void saveSettings()}
+          submitting={submitting}
+          title={YASHIE_ADMIN_COPY.profile.menu}
+        />
+        <div className="grid gap-3 md:grid-cols-2">
+          {draft.navigation.map((item, index) => (
+            <SettingSummaryCard
+              detail={
+                item.visible ? "Shown to visitors" : "Hidden from visitors"
+              }
+              error={fieldErrors[`navigation.${index}.label`]}
+              key={item.key}
+              label="Tab"
+              onEdit={() => setDialogTarget({ index, kind: "navigation" })}
+              value={item.label}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-4">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+          <SettingsSectionHeader
+            dirty={socialsDirty}
+            onSave={() => void saveSettings()}
+            submitting={submitting}
+            title={YASHIE_ADMIN_COPY.profile.links}
+          />
           <button
             className="button-secondary min-w-28 w-full sm:w-auto"
-            onClick={addSocial}
+            onClick={() => setDialogTarget({ kind: "new-social" })}
             type="button"
           >
             Add link
@@ -1595,8 +2108,19 @@ function SiteSettingsPanel({
                   <p className="mt-1 break-words text-sm text-[var(--ink-soft)]">
                     {social.href || "No link set"}
                   </p>
+                  <p className="mt-1 break-words text-xs uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                    {statusLabel(social.status)}
+                    {social.handle ? ` - ${social.handle}` : ""}
+                  </p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:flex">
+                <div className="grid grid-cols-2 gap-2 sm:flex">
+                  <button
+                    className="border border-[rgba(184,112,81,0.34)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--ink-soft)]"
+                    onClick={() => setDialogTarget({ index, kind: "social" })}
+                    type="button"
+                  >
+                    Edit
+                  </button>
                   <button
                     className="border border-[rgba(184,112,81,0.34)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--ink-soft)] disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={index === 0}
@@ -1622,85 +2146,17 @@ function SiteSettingsPanel({
                   </button>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <SettingsTextField
-                  error={fieldErrors[`socials.${index}.label`]}
-                  label="Name"
-                  onChange={(value) => updateSocial(index, "label", value)}
-                  required
-                  value={social.label}
-                />
-                <label className="grid min-w-0 gap-2">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
-                    Icon
-                  </span>
-                  <select
-                    className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
-                      fieldErrors[`socials.${index}.platform`]
-                        ? "border-red-400"
-                        : "border-[rgba(184,112,81,0.42)]"
-                    }`}
-                    onChange={(event) =>
-                      updateSocial(index, "platform", event.currentTarget.value)
-                    }
-                    value={social.platform}
-                  >
-                    {socialPlatformOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors[`socials.${index}.platform`] ? (
-                    <span className="text-xs text-red-700">
-                      {fieldErrors[`socials.${index}.platform`]}
-                    </span>
-                  ) : null}
-                </label>
-                <SettingsTextField
-                  error={fieldErrors[`socials.${index}.handle`]}
-                  label="Handle"
-                  onChange={(value) => updateSocial(index, "handle", value)}
-                  value={social.handle}
-                />
-                <label className="grid min-w-0 gap-2">
-                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
-                    Visibility
-                  </span>
-                  <select
-                    className={`min-h-11 w-full min-w-0 border bg-white/78 px-3 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
-                      fieldErrors[`socials.${index}.status`]
-                        ? "border-red-400"
-                        : "border-[rgba(184,112,81,0.42)]"
-                    }`}
-                    onChange={(event) =>
-                      updateSocial(index, "status", event.currentTarget.value)
-                    }
-                    value={social.status}
-                  >
-                    {statusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors[`socials.${index}.status`] ? (
-                    <span className="text-xs text-red-700">
-                      {fieldErrors[`socials.${index}.status`]}
-                    </span>
-                  ) : null}
-                </label>
-                <div className="md:col-span-2">
-                  <SettingsTextField
-                    error={fieldErrors[`socials.${index}.href`]}
-                    label="Link"
-                    onChange={(value) => updateSocial(index, "href", value)}
-                    required
-                    type="url"
-                    value={social.href}
-                  />
-                </div>
-              </div>
+              {fieldErrors[`socials.${index}.label`] ||
+              fieldErrors[`socials.${index}.href`] ||
+              fieldErrors[`socials.${index}.platform`] ||
+              fieldErrors[`socials.${index}.status`] ? (
+                <p className="text-xs text-red-700">
+                  {fieldErrors[`socials.${index}.label`] ??
+                    fieldErrors[`socials.${index}.href`] ??
+                    fieldErrors[`socials.${index}.platform`] ??
+                    fieldErrors[`socials.${index}.status`]}
+                </p>
+              ) : null}
             </div>
           ))}
         </div>
@@ -1708,7 +2164,57 @@ function SiteSettingsPanel({
           <span className="text-xs text-red-700">{fieldErrors.socials}</span>
         ) : null}
       </section>
-    </form>
+
+      {dialogTarget?.kind === "profile" ? (
+        <ProfileFieldDialog
+          config={profileFieldConfigFor(dialogTarget.field)}
+          currentValue={String(draft.profile[dialogTarget.field] ?? "")}
+          error={fieldErrors[`profile.${dialogTarget.field}`]}
+          key={`profile-${dialogTarget.field}`}
+          onApply={(value) => applyProfileField(dialogTarget.field, value)}
+          onClose={() => setDialogTarget(null)}
+          submitting={submitting}
+        />
+      ) : null}
+
+      {dialogTarget?.kind === "navigation" &&
+      draft.navigation[dialogTarget.index] ? (
+        <NavigationItemDialog
+          currentItem={draft.navigation[dialogTarget.index]}
+          error={fieldErrors[`navigation.${dialogTarget.index}.label`]}
+          key={`navigation-${dialogTarget.index}`}
+          onApply={(item) => applyNavigationItem(dialogTarget.index, item)}
+          onClose={() => setDialogTarget(null)}
+          submitting={submitting}
+        />
+      ) : null}
+
+      {dialogTarget?.kind === "social" && draft.socials[dialogTarget.index] ? (
+        <SocialLinkDialog
+          currentSocial={draft.socials[dialogTarget.index]}
+          errorPrefix={`socials.${dialogTarget.index}`}
+          errors={fieldErrors}
+          key={`social-${dialogTarget.index}`}
+          onApply={(social) => applySocial(dialogTarget.index, social)}
+          onClose={() => setDialogTarget(null)}
+          submitting={submitting}
+          title={draft.socials[dialogTarget.index].label || "Link"}
+        />
+      ) : null}
+
+      {dialogTarget?.kind === "new-social" ? (
+        <SocialLinkDialog
+          currentSocial={createEmptySocialDraft(draft.socials.length)}
+          errorPrefix={`socials.${draft.socials.length}`}
+          errors={fieldErrors}
+          key={`new-social-${draft.socials.length}`}
+          onApply={appendSocial}
+          onClose={() => setDialogTarget(null)}
+          submitting={submitting}
+          title="New link"
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -1969,7 +2475,6 @@ function ContentForm({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageFileLabel, setImageFileLabel] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState<string | null>(null);
   const [saveProgress, setSaveProgress] = useState<SaveProgressState>({
     label: "",
     percent: 0,
@@ -1988,7 +2493,7 @@ function ContentForm({
   });
   const visibleStep = editorSteps.includes(activeStep)
     ? activeStep
-    : editorSteps[0] ?? "basics";
+    : (editorSteps[0] ?? "basics");
   const visibleStepIndex = Math.max(editorSteps.indexOf(visibleStep), 0);
   const isFirstStep = visibleStepIndex === 0;
   const isLastStep = visibleStepIndex === editorSteps.length - 1;
@@ -2050,7 +2555,6 @@ function ContentForm({
 
     setSubmitting(true);
     setFieldErrors({});
-    setMessage(null);
     setSaveProgress({
       label: "Checking content",
       percent: 2,
@@ -2129,7 +2633,6 @@ function ContentForm({
     if (!effectiveItem) return;
 
     setDeleting(true);
-    setMessage(null);
 
     try {
       const response = await adminFetch(
@@ -2143,14 +2646,15 @@ function ContentForm({
         .catch(() => ({}))) as MutationResponse;
 
       if (!response.ok) {
-        setMessage(YASHIE_ADMIN_COPY.errors.delete);
+        toast.error(YASHIE_ADMIN_COPY.errors.delete);
         return;
       }
 
       onDeleted(payload.items ?? []);
+      toast.success(YASHIE_ADMIN_COPY.editor.removed);
       onClose();
     } catch {
-      setMessage(YASHIE_ADMIN_COPY.errors.delete);
+      toast.error(YASHIE_ADMIN_COPY.errors.delete);
     } finally {
       setDeleting(false);
     }
@@ -2160,6 +2664,20 @@ function ContentForm({
     const nextStep = editorSteps[visibleStepIndex + offset];
     if (nextStep) setActiveStep(nextStep);
   };
+
+  const renderStepSaveButton = () => (
+    <div className="mt-2 flex justify-end border-t border-[rgba(184,112,81,0.24)] pt-4">
+      <button
+        className="button-primary min-w-28 w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        disabled={!canSave}
+        type="submit"
+      >
+        {submitting
+          ? YASHIE_ADMIN_COPY.actions.saving
+          : YASHIE_ADMIN_COPY.actions.save}
+      </button>
+    </div>
+  );
 
   return (
     <form className="grid min-w-0 gap-6" onSubmit={submit}>
@@ -2218,12 +2736,6 @@ function ContentForm({
 
       {saveProgress.status === "running" || saveProgress.status === "error" ? (
         <SaveProgressPanel state={saveProgress} />
-      ) : null}
-
-      {message ? (
-        <div className="border border-[rgba(184,112,81,0.34)] bg-white/68 px-4 py-3 text-sm text-[var(--ink-soft)]">
-          {message}
-        </div>
       ) : null}
 
       <nav
@@ -2312,88 +2824,90 @@ function ContentForm({
               value={draft.slug}
             />
           </div>
+          {renderStepSaveButton()}
         </section>
       ) : null}
 
       {visibleStep === "details" ? (
         <section className={sectionSurfaceClass}>
           <EditorStepHeader step="details" />
-        {collectionKey === "categories" ? (
-          <SelectField
-            disabled={isBusy}
-            label="Section"
-            name="category"
-            onChange={updateDraft}
-            options={categoryGroupOptions}
-            placeholder="Choose a section"
-            value={draft.category}
-          />
-        ) : null}
-        {collectionKey === "blog" ? (
-          <div className="grid gap-4 md:grid-cols-3">
+          {collectionKey === "categories" ? (
+            <SelectField
+              disabled={isBusy}
+              label="Section"
+              name="category"
+              onChange={updateDraft}
+              options={categoryGroupOptions}
+              placeholder="Choose a section"
+              value={draft.category}
+            />
+          ) : null}
+          {collectionKey === "blog" ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              <SelectField
+                disabled={isBusy}
+                label="Category"
+                name="category"
+                onChange={updateDraft}
+                options={categoryOptionsFor(categories, "blog", draft.category)}
+                placeholder="Choose a category"
+                value={draft.category}
+              />
+              <DateField
+                disabled={isBusy}
+                label="Date"
+                name="date"
+                onChange={updateDraft}
+                value={draft.date}
+              />
+              <TextField
+                disabled={isBusy}
+                label="Reading time"
+                name="readTime"
+                onChange={updateDraft}
+                value={draft.readTime}
+              />
+            </div>
+          ) : null}
+          {collectionKey === "gallery" ? (
+            <SelectField
+              disabled={isBusy}
+              label="Category"
+              name="type"
+              onChange={updateDraft}
+              options={categoryOptionsFor(categories, "gallery", draft.type)}
+              placeholder="Choose a category"
+              value={draft.type}
+            />
+          ) : null}
+          {collectionKey === "shop" ? (
+            <TextField
+              disabled={isBusy}
+              label="Price"
+              name="price"
+              onChange={updateDraft}
+              value={draft.price}
+            />
+          ) : null}
+          {collectionKey === "worlds" ? (
             <SelectField
               disabled={isBusy}
               label="Category"
               name="category"
               onChange={updateDraft}
-              options={categoryOptionsFor(categories, "blog", draft.category)}
+              options={categoryOptionsFor(categories, "worlds", draft.category)}
               placeholder="Choose a category"
               value={draft.category}
             />
-            <DateField
-              disabled={isBusy}
-              label="Date"
-              name="date"
-              onChange={updateDraft}
-              value={draft.date}
-            />
-            <TextField
-              disabled={isBusy}
-              label="Reading time"
-              name="readTime"
-              onChange={updateDraft}
-              value={draft.readTime}
-            />
-          </div>
-        ) : null}
-        {collectionKey === "gallery" ? (
-          <SelectField
+          ) : null}
+          <TextAreaField
             disabled={isBusy}
-            label="Category"
-            name="type"
+            label={collectionKey === "blog" ? "Short intro" : "Description"}
+            name="summary"
             onChange={updateDraft}
-            options={categoryOptionsFor(categories, "gallery", draft.type)}
-            placeholder="Choose a category"
-            value={draft.type}
+            value={draft.summary}
           />
-        ) : null}
-        {collectionKey === "shop" ? (
-          <TextField
-            disabled={isBusy}
-            label="Price"
-            name="price"
-            onChange={updateDraft}
-            value={draft.price}
-          />
-        ) : null}
-        {collectionKey === "worlds" ? (
-          <SelectField
-            disabled={isBusy}
-            label="Category"
-            name="category"
-            onChange={updateDraft}
-            options={categoryOptionsFor(categories, "worlds", draft.category)}
-            placeholder="Choose a category"
-            value={draft.category}
-          />
-        ) : null}
-        <TextAreaField
-          disabled={isBusy}
-          label={collectionKey === "blog" ? "Short intro" : "Description"}
-          name="summary"
-          onChange={updateDraft}
-          value={draft.summary}
-        />
+          {renderStepSaveButton()}
         </section>
       ) : null}
 
@@ -2401,15 +2915,16 @@ function ContentForm({
         <section className={sectionSurfaceClass}>
           <EditorStepHeader step="writing" />
           {collectionKey === "blog" || collectionKey === "worlds" ? (
-          <TextAreaField
-            disabled={isBusy}
-            label={collectionKey === "worlds" ? "Detail copy" : "Post body"}
-            name="body"
-            onChange={updateDraft}
-            rows={8}
-            value={draft.body}
-          />
+            <TextAreaField
+              disabled={isBusy}
+              label={collectionKey === "worlds" ? "Detail copy" : "Post body"}
+              name="body"
+              onChange={updateDraft}
+              rows={8}
+              value={draft.body}
+            />
           ) : null}
+          {renderStepSaveButton()}
         </section>
       ) : null}
 
@@ -2486,6 +3001,7 @@ function ContentForm({
               ) : null}
             </div>
           </div>
+          {renderStepSaveButton()}
         </section>
       ) : null}
 
@@ -2495,7 +3011,8 @@ function ContentForm({
           {confirmDelete ? (
             <div className="grid gap-3 border border-red-300 bg-red-500/10 p-4">
               <p className="text-sm text-red-800">
-                Delete &ldquo;{effectiveItem.title}&rdquo; from this website area?
+                Delete &ldquo;{effectiveItem.title}&rdquo; from this website
+                area?
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -2526,6 +3043,7 @@ function ContentForm({
               Delete this {copy.singular}
             </button>
           )}
+          {renderStepSaveButton()}
         </section>
       ) : null}
 
@@ -2625,9 +3143,12 @@ export function YashieAdminDashboard({
 
     await Promise.all(
       contentTabs.map(async (collectionKey) => {
-        const response = await adminFetch(`/api/admin/content/${collectionKey}`, {
-          cache: "no-store",
-        });
+        const response = await adminFetch(
+          `/api/admin/content/${collectionKey}`,
+          {
+            cache: "no-store",
+          },
+        );
         const payload = (await response
           .json()
           .catch(() => ({}))) as MutationResponse;
@@ -2762,9 +3283,7 @@ export function YashieAdminDashboard({
     );
   };
 
-  const editorItems = editorTarget
-    ? content[editorTarget.collectionKey]
-    : [];
+  const editorItems = editorTarget ? content[editorTarget.collectionKey] : [];
   const editorItem =
     editorTarget?.itemId && editorItems.length > 0
       ? (editorItems.find((item) => item.id === editorTarget.itemId) ?? null)
@@ -2791,7 +3310,10 @@ export function YashieAdminDashboard({
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
               <form action="/api/auth/logout" className="min-w-0" method="post">
-                <button className="button-primary w-full sm:w-auto" type="submit">
+                <button
+                  className="button-primary w-full sm:w-auto"
+                  type="submit"
+                >
                   {YASHIE_ADMIN_COPY.account.signOut}
                 </button>
               </form>

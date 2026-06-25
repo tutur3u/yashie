@@ -32,6 +32,7 @@ export const YASHIE_ADMIN_COPY = {
     keepEditing: "Keep editing",
     openPreview: "Open preview",
     publicView: "Visitor view",
+    removed: "Removed.",
     saved: "Saved.",
     steps: {
       basics: {
@@ -63,7 +64,8 @@ export const YASHIE_ADMIN_COPY = {
   },
   empty: {
     blog: "Start the first post from the editor.",
-    categories: "Create labels first, then apply them to worlds, posts, and gallery pieces.",
+    categories:
+      "Create labels first, then apply them to worlds, posts, and gallery pieces.",
     gallery: "Add the first gallery piece from the editor.",
     shop: "Add the first shop item from the editor.",
     worlds: "Add the first writing world from the editor.",
@@ -82,8 +84,10 @@ export const YASHIE_ADMIN_COPY = {
     save: "We could not save this item. Please try again.",
   },
   profile: {
-    description: "Update the name, public handle, email, and links visitors see.",
+    description:
+      "Update the name, public handle, email, and links visitors see.",
     heading: "Profile and links",
+    linkRemoved: "Link removed. Save links to keep it.",
     links: "Links",
     menu: "Website menu",
     menuDescription:
