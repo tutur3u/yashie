@@ -113,7 +113,7 @@ describe("Yashie admin site settings route", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(setupYashieAdminStudio).toHaveBeenCalledWith("admin-token");
+    expect(setupYashieAdminStudio).not.toHaveBeenCalled();
     expect(updateYashieAdminSiteSettings).toHaveBeenCalledWith(
       "admin-token",
       parseResult.input,

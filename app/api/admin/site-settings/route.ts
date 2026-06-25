@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import {
   getYashieAdminSession,
   getYashieAdminStudio,
-  setupYashieAdminStudio,
 } from "@/lib/yashie-admin-api";
 import {
   parseYashieSiteSettingsPayload,
@@ -29,7 +28,10 @@ export async function GET() {
       settings: readYashieAdminSiteSettings(studio),
     });
   } catch (error) {
-    return NextResponse.json({ error: readErrorMessage(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: readErrorMessage(error) },
+      { status: 500 },
+    );
   }
 }
 
@@ -49,11 +51,13 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    await setupYashieAdminStudio(session.accessToken);
     return NextResponse.json({
       settings: await updateYashieAdminSiteSettings(session.accessToken, input),
     });
   } catch (error) {
-    return NextResponse.json({ error: readErrorMessage(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: readErrorMessage(error) },
+      { status: 500 },
+    );
   }
 }

@@ -3,6 +3,7 @@ import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
 import type { YashieAdminSiteSettingsInput } from "./yashie-admin-site-settings";
 
 const originalWorkspaceId = process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
+const originalFetch = globalThis.fetch;
 const revalidatePath = mock(() => undefined);
 
 mock.module("next/cache", () => ({
@@ -17,6 +18,7 @@ mock.module("tuturuuu/external-projects", () => ({
 
 let studio: YashieAdminStudioPayload;
 let calls: {
+  batchEntries: unknown[][];
   createCollection: unknown[];
   createEntry: unknown[];
   deleteEntry: unknown[];
@@ -56,7 +58,10 @@ const input: YashieAdminSiteSettingsInput = {
 };
 
 const client = {
-  async createCollection(_workspaceId: string, payload: Record<string, unknown>) {
+  async createCollection(
+    _workspaceId: string,
+    payload: Record<string, unknown>,
+  ) {
     calls.createCollection.push(payload);
     studio.collections.push({
       ...payload,
@@ -74,7 +79,9 @@ const client = {
   },
   async deleteEntry(_workspaceId: string, entryId: string) {
     calls.deleteEntry.push(entryId);
-    studio.entries = studio.entries.filter((entry) => String(entry.id) !== entryId);
+    studio.entries = studio.entries.filter(
+      (entry) => String(entry.id) !== entryId,
+    );
     return {};
   },
   async getStudio() {
@@ -84,18 +91,101 @@ const client = {
     calls.publishEntry.push(args);
     throw new Error("Failed to publish workspace external project entry");
   },
-  async updateEntry(_workspaceId: string, entryId: string, payload: Record<string, unknown>) {
+  async updateEntry(
+    _workspaceId: string,
+    entryId: string,
+    payload: Record<string, unknown>,
+  ) {
     calls.updateEntry.push({ entryId, payload });
     studio.entries = studio.entries.map((entry) =>
-      String(entry.id) === entryId ? { ...entry, ...payload, id: entryId } : entry,
+      String(entry.id) === entryId
+        ? { ...entry, ...payload, id: entryId }
+        : entry,
     );
     return {};
   },
 };
 
-const { updateYashieAdminSiteSettings } = await import(
-  "./yashie-admin-site-settings"
-);
+const batchFetch = mock(
+  async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body ?? "{}")) as {
+      operations?: Array<
+        | {
+            action: "create";
+            clientOperationId: string;
+            payload: Record<string, unknown>;
+          }
+        | {
+            action: "update";
+            clientOperationId: string;
+            entryId: string;
+            payload: Record<string, unknown>;
+          }
+        | {
+            action: "delete";
+            clientOperationId: string;
+            entryId: string;
+          }
+      >;
+    };
+    const operations = body.operations ?? [];
+    calls.batchEntries.push(operations);
+    const results = operations.map((operation) => {
+      if (operation.action === "delete") {
+        studio.entries = studio.entries.filter(
+          (entry) => String(entry.id) !== operation.entryId,
+        );
+        return {
+          action: operation.action,
+          clientOperationId: operation.clientOperationId,
+          entryId: operation.entryId,
+          ok: true,
+        };
+      }
+
+      if (operation.action === "update") {
+        const entry = {
+          ...(studio.entries.find(
+            (item) => String(item.id) === operation.entryId,
+          ) ?? {}),
+          ...operation.payload,
+          id: operation.entryId,
+        };
+        studio.entries = studio.entries.map((item) =>
+          String(item.id) === operation.entryId ? entry : item,
+        );
+        return {
+          action: operation.action,
+          clientOperationId: operation.clientOperationId,
+          entry,
+          ok: true,
+        };
+      }
+
+      const entry = {
+        ...operation.payload,
+        id: `entry-${String(operation.payload.slug)}`,
+      };
+      studio.entries.push(entry);
+      return {
+        action: operation.action,
+        clientOperationId: operation.clientOperationId,
+        entry,
+        ok: true,
+      };
+    });
+
+    return new Response(JSON.stringify({ results }), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      status: 200,
+    });
+  },
+) as typeof fetch;
+
+const { updateYashieAdminSiteSettings } =
+  await import("./yashie-admin-site-settings");
 
 function createStudio({
   includeNavigation = true,
@@ -169,18 +259,23 @@ function createStudio({
 describe("Yashie admin site settings mutations", () => {
   beforeEach(() => {
     process.env.TUTURUUU_YASHIE_WORKSPACE_ID = "workspace-1";
+    globalThis.fetch = batchFetch;
     studio = createStudio();
     calls = {
+      batchEntries: [],
       createCollection: [],
       createEntry: [],
       deleteEntry: [],
       publishEntry: [],
       updateEntry: [],
     };
+    batchFetch.mockClear();
     revalidatePath.mockClear();
   });
 
   afterEach(() => {
+    globalThis.fetch = originalFetch;
+
     if (originalWorkspaceId === undefined) {
       delete process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
     } else {
@@ -201,7 +296,16 @@ describe("Yashie admin site settings mutations", () => {
         }),
       ]),
     );
-    expect(calls.updateEntry).toHaveLength(3);
+    expect(calls.batchEntries[0] ?? []).toHaveLength(3);
+    expect(calls.batchEntries[0] ?? []).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "update",
+          clientOperationId: "profile",
+        }),
+      ]),
+    );
+    expect(calls.updateEntry).toHaveLength(0);
     expect(calls.publishEntry).toEqual([]);
   });
 
@@ -217,16 +321,22 @@ describe("Yashie admin site settings mutations", () => {
         title: "Navigation Tabs",
       }),
     ]);
-    expect(calls.createEntry).toEqual([
-      expect.objectContaining({
-        profile_data: expect.objectContaining({
-          key: "gallery",
-          visible: false,
+    expect(calls.batchEntries[0] ?? []).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "create",
+          clientOperationId: "navigation:gallery",
+          payload: expect.objectContaining({
+            profile_data: expect.objectContaining({
+              key: "gallery",
+              visible: false,
+            }),
+            slug: "gallery",
+            title: "Artwork",
+          }),
         }),
-        slug: "gallery",
-        title: "Artwork",
-      }),
-    ]);
+      ]),
+    );
     expect(settings.navigation).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -254,17 +364,23 @@ describe("Yashie admin site settings mutations", () => {
       ],
     });
 
-    expect(calls.createEntry).toEqual([
-      expect.objectContaining({
-        profile_data: expect.objectContaining({
-          href: "https://example.com",
-          platform: "website",
-          sortOrder: 1,
+    expect(calls.batchEntries[0] ?? []).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "create",
+          clientOperationId: "social:1:website",
+          payload: expect.objectContaining({
+            profile_data: expect.objectContaining({
+              href: "https://example.com",
+              platform: "website",
+              sortOrder: 1,
+            }),
+            slug: "website",
+            title: "Website",
+          }),
         }),
-        slug: "website",
-        title: "Website",
-      }),
-    ]);
+      ]),
+    );
     expect(calls.deleteEntry).toEqual([]);
     expect(settings.socials).toEqual(
       expect.arrayContaining([
@@ -281,8 +397,17 @@ describe("Yashie admin site settings mutations", () => {
       socials: [],
     });
 
-    expect(calls.deleteEntry).toEqual(
-      expect.arrayContaining(["social-instagram", "entry-website"]),
+    expect(calls.batchEntries[1] ?? []).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: "delete",
+          entryId: "social-instagram",
+        }),
+        expect.objectContaining({
+          action: "delete",
+          entryId: "entry-website",
+        }),
+      ]),
     );
   });
 });

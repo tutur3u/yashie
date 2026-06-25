@@ -1857,9 +1857,11 @@ function ImportSeedContentPanel({
 function SiteSettingsPanel({
   settings,
   onSaved,
+  onRefresh,
 }: {
   settings: YashieAdminSiteSettings;
   onSaved: (settings: YashieAdminSiteSettings) => void;
+  onRefresh?: () => Promise<void>;
 }) {
   const [draft, setDraft] = useState(() =>
     siteSettingsDraftFromSettings(settings),
@@ -1993,6 +1995,7 @@ function SiteSettingsPanel({
       setDraft(siteSettingsDraftFromSettings(payload.settings));
       onSaved(payload.settings);
       toast.success(YASHIE_ADMIN_COPY.profile.saved);
+      void onRefresh?.().catch(() => undefined);
       return true;
     } catch {
       toast.error(YASHIE_ADMIN_COPY.errors.save);
@@ -3440,6 +3443,7 @@ export function YashieAdminDashboard({
           <section className="parchment-card min-w-0 p-4 sm:p-5">
             <SiteSettingsPanel
               onSaved={setSiteSettings}
+              onRefresh={refreshSiteSettings}
               settings={siteSettings}
             />
           </section>
