@@ -8,6 +8,24 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import {
+  BookOpenText,
+  CircleUserRound,
+  ExternalLink,
+  GalleryHorizontalEnd,
+  Globe2,
+  HardDrive,
+  ListTodo,
+  LogOut,
+  Newspaper,
+  Plus,
+  Send,
+  ShoppingBag,
+  Tags,
+  UserRoundCog,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { SocialIcon } from "@/app/components/SocialIcon";
 import {
@@ -106,17 +124,17 @@ const contentTabs: YashieAdminCollectionKey[] = [
   "shop",
 ];
 
-const tabLabels: Array<{ id: AdminTab; label: string }> = [
-  { id: "worlds", label: YASHIE_ADMIN_COPY.tabs.worlds },
-  { id: "categories", label: YASHIE_ADMIN_COPY.tabs.categories },
-  { id: "blog", label: YASHIE_ADMIN_COPY.tabs.blog },
-  { id: "gallery", label: YASHIE_ADMIN_COPY.tabs.gallery },
-  { id: "shop", label: YASHIE_ADMIN_COPY.tabs.shop },
-  { id: "profile", label: YASHIE_ADMIN_COPY.tabs.profile },
-  { id: "publish", label: YASHIE_ADMIN_COPY.tabs.publish },
-  { id: "storage", label: YASHIE_ADMIN_COPY.tabs.storage },
-  { id: "members", label: YASHIE_ADMIN_COPY.tabs.members },
-  { id: "account", label: YASHIE_ADMIN_COPY.tabs.account },
+const tabLabels: Array<{ icon: LucideIcon; id: AdminTab; label: string }> = [
+  { icon: BookOpenText, id: "worlds", label: YASHIE_ADMIN_COPY.tabs.worlds },
+  { icon: Tags, id: "categories", label: YASHIE_ADMIN_COPY.tabs.categories },
+  { icon: Newspaper, id: "blog", label: YASHIE_ADMIN_COPY.tabs.blog },
+  { icon: GalleryHorizontalEnd, id: "gallery", label: YASHIE_ADMIN_COPY.tabs.gallery },
+  { icon: ShoppingBag, id: "shop", label: YASHIE_ADMIN_COPY.tabs.shop },
+  { icon: UserRoundCog, id: "profile", label: YASHIE_ADMIN_COPY.tabs.profile },
+  { icon: Send, id: "publish", label: YASHIE_ADMIN_COPY.tabs.publish },
+  { icon: HardDrive, id: "storage", label: YASHIE_ADMIN_COPY.tabs.storage },
+  { icon: Users, id: "members", label: YASHIE_ADMIN_COPY.tabs.members },
+  { icon: CircleUserRound, id: "account", label: YASHIE_ADMIN_COPY.tabs.account },
 ];
 
 const byteUnits = ["B", "KB", "MB", "GB", "TB"] as const;
@@ -2385,7 +2403,7 @@ function ContentList({
           ) : null}
         </div>
         <button
-          className={`min-h-11 w-full border px-4 text-sm font-bold transition sm:w-auto ${
+          className={`inline-flex min-h-11 w-full items-center justify-center gap-2 border px-4 text-sm font-bold transition sm:w-auto ${
             selectedId === null
               ? "border-[var(--gold)] bg-[var(--navy)] text-[var(--parchment)]"
               : "border-[rgba(184,112,81,0.48)] bg-white/72 text-[var(--copper-dark)] hover:border-[var(--gold)]"
@@ -2393,6 +2411,7 @@ function ContentList({
           onClick={onNew}
           type="button"
         >
+          <Plus aria-hidden="true" className="size-4" />
           {copy.newLabel}
         </button>
       </div>
@@ -3327,22 +3346,25 @@ export function YashieAdminDashboard({
             </div>
             <div className="grid gap-3 sm:flex sm:flex-wrap">
               <Link
-                className="button-secondary w-full sm:w-auto"
+                className="button-secondary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                 href={tasksHref}
                 rel="noreferrer"
                 target="_blank"
               >
+                <ListTodo aria-hidden="true" className="size-4" />
                 {YASHIE_ADMIN_COPY.tabs.tasks}
-                <span aria-hidden="true" className="ml-2">↗</span>
+                <ExternalLink aria-hidden="true" className="size-3.5" />
               </Link>
-              <Link className="button-secondary w-full sm:w-auto" href="/">
+              <Link className="button-secondary inline-flex w-full items-center justify-center gap-2 sm:w-auto" href="/">
+                <Globe2 aria-hidden="true" className="size-4" />
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
               <form action="/api/auth/logout" className="min-w-0" method="post">
                 <button
-                  className="button-primary w-full sm:w-auto"
+                  className="button-primary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                   type="submit"
                 >
+                  <LogOut aria-hidden="true" className="size-4" />
                   {YASHIE_ADMIN_COPY.account.signOut}
                 </button>
               </form>
@@ -3354,9 +3376,12 @@ export function YashieAdminDashboard({
           aria-label="Dashboard areas"
           className="flex gap-2 overflow-x-auto border-b border-[rgba(184,112,81,0.34)] pb-3"
         >
-          {tabLabels.map((tab) => (
-            <button
-              className={`min-h-11 shrink-0 whitespace-nowrap border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
+          {tabLabels.map((tab) => {
+            const Icon = tab.icon;
+
+            return (
+              <button
+              className={`inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
                 activeTab === tab.id
                   ? "border-[var(--clay)] bg-[rgba(164,78,67,0.08)] text-[var(--clay)]"
                   : "border-[rgba(184,112,81,0.28)] bg-white/35 text-[var(--ink-soft)] hover:text-[var(--navy)] sm:border-transparent sm:bg-transparent"
@@ -3365,17 +3390,20 @@ export function YashieAdminDashboard({
               onClick={() => setActiveTab(tab.id)}
               type="button"
             >
+              <Icon aria-hidden="true" className="size-4" />
               {tab.label}
             </button>
-          ))}
+            );
+          })}
           <Link
-            className="flex min-h-11 shrink-0 items-center border border-[rgba(31,107,115,0.34)] bg-[rgba(31,107,115,0.08)] px-4 text-sm font-black text-[var(--teal)] transition hover:border-[var(--teal)] sm:min-h-12"
+            className="flex min-h-11 shrink-0 items-center gap-2 border border-[rgba(31,107,115,0.34)] bg-[rgba(31,107,115,0.08)] px-4 text-sm font-black text-[var(--teal)] transition hover:border-[var(--teal)] sm:min-h-12"
             href={tasksHref}
             rel="noreferrer"
             target="_blank"
           >
+            <ListTodo aria-hidden="true" className="size-4" />
             {YASHIE_ADMIN_COPY.tabs.tasks}
-            <span aria-hidden="true" className="ml-2">↗</span>
+            <ExternalLink aria-hidden="true" className="size-3.5" />
           </Link>
         </nav>
 
@@ -3518,11 +3546,13 @@ export function YashieAdminDashboard({
               </div>
             </div>
             <div className="parchment-card grid min-w-0 content-start gap-3 p-5 sm:p-6">
-              <Link className="button-primary w-full" href="/">
+              <Link className="button-primary inline-flex w-full items-center justify-center gap-2" href="/">
+                <Globe2 aria-hidden="true" className="size-4" />
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
               <form action="/api/auth/logout" method="post">
-                <button className="button-secondary w-full" type="submit">
+                <button className="button-secondary inline-flex w-full items-center justify-center gap-2" type="submit">
+                  <LogOut aria-hidden="true" className="size-4" />
                   {YASHIE_ADMIN_COPY.account.signOut}
                 </button>
               </form>

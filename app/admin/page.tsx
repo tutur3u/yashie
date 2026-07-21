@@ -28,8 +28,6 @@ import { isYashieNavTabVisible } from "@/lib/yashie-navigation-access";
 import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
 import { getYashieStorageFiles } from "@/lib/yashie-storage-files";
 
-export const instant = false;
-
 export const metadata: Metadata = {
   title: "Yashie Dashboard",
   description: "Friendly website dashboard for InkedByYashie.",
@@ -49,7 +47,19 @@ function emptyStudio(): YashieAdminStudioPayload {
   };
 }
 
-export default async function AdminPage({
+export default function AdminPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ target?: string }>;
+}) {
+  return (
+    <Suspense fallback={<YashieAdminLoadingPanel />}>
+      <YashieAdminContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function YashieAdminContent({
   searchParams,
 }: {
   searchParams?: Promise<{ target?: string }>;
@@ -83,11 +93,7 @@ export default async function AdminPage({
 
   const { session } = sessionState;
 
-  return (
-    <Suspense fallback={<YashieAdminLoadingPanel />}>
-      <AuthenticatedAdminDashboard session={session} />
-    </Suspense>
-  );
+  return <AuthenticatedAdminDashboard session={session} />;
 }
 
 async function AuthenticatedAdminDashboard({
