@@ -7,7 +7,7 @@ export type RefreshSessionResponse = {
 };
 
 const FALLBACK_REFRESH_DELAY_MS = 5 * 60 * 1000;
-const MAX_REFRESH_LEAD_SECONDS = 30;
+const DEFAULT_REFRESH_LEAD_SECONDS = 30;
 const MIN_REFRESH_LEAD_SECONDS = 5;
 
 let pendingRefresh: Promise<RefreshSessionResponse | null> | null = null;
@@ -18,12 +18,9 @@ export function getYashieAdminSessionRefreshLeadSeconds(
   const requested =
     typeof refreshEarlySeconds === "number" && Number.isFinite(refreshEarlySeconds)
       ? refreshEarlySeconds
-      : MAX_REFRESH_LEAD_SECONDS;
+      : DEFAULT_REFRESH_LEAD_SECONDS;
 
-  return Math.min(
-    MAX_REFRESH_LEAD_SECONDS,
-    Math.max(MIN_REFRESH_LEAD_SECONDS, requested),
-  );
+  return Math.max(MIN_REFRESH_LEAD_SECONDS, requested);
 }
 
 export function getYashieAdminSessionRefreshDelayMs({
@@ -41,12 +38,15 @@ export function getYashieAdminSessionRefreshDelayMs({
     return FALLBACK_REFRESH_DELAY_MS;
   }
 
-  return Math.max(
-    0,
-    expiresAtMs -
-      now -
-      getYashieAdminSessionRefreshLeadSeconds(refreshEarlySeconds) * 1000,
+  const remainingMs = expiresAtMs - now;
+  const requestedLeadMs =
+    getYashieAdminSessionRefreshLeadSeconds(refreshEarlySeconds) * 1000;
+  const safeLeadMs = Math.min(
+    requestedLeadMs,
+    Math.max(MIN_REFRESH_LEAD_SECONDS * 1000, Math.floor(remainingMs / 2)),
   );
+
+  return Math.max(0, remainingMs - safeLeadMs);
 }
 
 async function requestYashieAdminSessionRefresh() {

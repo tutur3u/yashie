@@ -12,7 +12,7 @@ describe("Yashie admin session client", () => {
     globalThis.fetch = originalFetch;
   });
 
-  test("caps large refresh lead values so short-lived tokens do not loop", () => {
+  test("caps the refresh lead to half the remaining life for short-lived tokens", () => {
     const now = new Date("2026-06-12T00:00:00.000Z").getTime();
     const expiresAt = new Date(now + 60_000).toISOString();
 
@@ -23,6 +23,19 @@ describe("Yashie admin session client", () => {
         refreshEarlySeconds: 900,
       }),
     ).toBe(30_000);
+  });
+
+  test("honors the server refresh margin for long-lived tokens", () => {
+    const now = new Date("2026-06-12T00:00:00.000Z").getTime();
+    const expiresAt = new Date(now + 8 * 60 * 60 * 1000).toISOString();
+
+    expect(
+      getYashieAdminSessionRefreshDelayMs({
+        expiresAt,
+        now,
+        refreshEarlySeconds: 900,
+      }),
+    ).toBe(7 * 60 * 60 * 1000 + 45 * 60 * 1000);
   });
 
   test("uses a fallback delay for invalid expiry timestamps", () => {

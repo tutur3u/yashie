@@ -106,7 +106,7 @@ describe("yashie session validation", () => {
     expect(calls).toHaveLength(0);
   });
 
-  test("refreshes stored sessions through the explicit refresh helper", async () => {
+  test("keeps a rotated session when the token exchange succeeds", async () => {
     const { refreshYashieSessionFromCookies, setYashieSessionCookie } =
       await import("./yashie-session");
     const response = NextResponse.json({});
@@ -139,14 +139,17 @@ describe("yashie session validation", () => {
         });
       }
 
-      return Response.json({ ok: true });
+      return Response.json(
+        { error: "Temporary upstream failure" },
+        { status: 503 },
+      );
     }) as typeof fetch;
 
     const session = await refreshYashieSessionFromCookies();
 
     expect(session?.accessToken).toBe("new-app-token");
     expect(session?.refreshToken).toBe("new-refresh-token");
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(1);
     expect(String(calls[0]?.input)).toBe(
       "https://platform.example.com/api/v1/auth/app-token/exchange",
     );
@@ -156,10 +159,6 @@ describe("yashie session validation", () => {
       refreshToken: "refresh-token",
       requestedScopes: ["external-projects:*"],
       workspaceId: "ws-linked",
-    });
-    expect(calls[1]?.init?.headers).toMatchObject({
-      Accept: "application/json",
-      Authorization: "Bearer new-app-token",
     });
   });
 
@@ -211,7 +210,7 @@ describe("yashie session validation", () => {
     expect(refreshResponse.headers.get("set-cookie")).toContain(
       "yashie_admin_session=",
     );
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(1);
     expect(JSON.parse(calls[0]?.init?.body as string)).toMatchObject({
       refreshToken: "refresh-token",
       workspaceId: "ws-linked",

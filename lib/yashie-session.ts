@@ -242,6 +242,9 @@ async function refreshYashieSession(session: YashieAdminSession) {
     });
 
     if (!response.ok) {
+      console.warn(
+        `[yashie] Session refresh was rejected by Tuturuuu (${response.status}).`,
+      );
       return null;
     }
 
@@ -250,11 +253,13 @@ async function refreshYashieSession(session: YashieAdminSession) {
       | null;
 
     if (!payload) {
+      console.warn("[yashie] Session refresh returned an invalid response.");
       return null;
     }
 
     return createYashieSessionFromExchangePayload(payload, session);
-  } catch {
+  } catch (error) {
+    console.warn("[yashie] Session refresh request failed.", error);
     return null;
   }
 }
@@ -278,13 +283,11 @@ export async function refreshYashieSessionFromCookies() {
     return null;
   }
 
-  const validated = await validateYashieSession(refreshed);
-
-  if (!validated) {
-    return null;
-  }
-
-  return validated;
+  // The exchange endpoint has already authenticated the app, refresh token,
+  // workspace membership, and requested scopes. Persist the rotated token
+  // immediately: an additional validation request here could fail after the
+  // previous refresh token was consumed, permanently stranding the session.
+  return refreshed;
 }
 
 export async function getYashieSessionReadStateFromCookies(): Promise<YashieSessionReadState> {
