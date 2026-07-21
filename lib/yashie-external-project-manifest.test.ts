@@ -84,4 +84,28 @@ describe("Yashie external project manifest", () => {
       ]),
     );
   });
+
+  test("keeps editor-managed image positions in the synchronized schema", () => {
+    const imageCollections = [
+      "blog-posts",
+      "gallery",
+      "shop-products",
+      "writing-worlds",
+    ];
+
+    for (const collectionSlug of imageCollections) {
+      const collection = yashieExternalProjectManifest.schema.collections.find(
+        (candidate) => candidate.slug === collectionSlug,
+      );
+
+      expect(collection?.profileFields).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            key: "imagePosition",
+            type: "string",
+          }),
+        ]),
+      );
+    }
+  });
 });

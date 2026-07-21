@@ -91,22 +91,32 @@ const profileFields = [
   { key: "title", label: "Title", type: "string" },
 ] satisfies YashieSyncField[];
 
+const imagePositionField = {
+  key: "imagePosition",
+  label: "Image position",
+  type: "string",
+} satisfies YashieSyncField;
+
 const worldFields = [
   { key: "detail", label: "Detail", type: "markdown" },
+  imagePositionField,
   { key: "kicker", label: "Kicker", type: "string" },
 ] satisfies YashieSyncField[];
 
 const galleryFields = [
+  imagePositionField,
   { key: "type", label: "Type", type: "string" },
 ] satisfies YashieSyncField[];
 
 const blogFields = [
   { key: "category", label: "Category", type: "string" },
   { key: "date", label: "Date", type: "string" },
+  imagePositionField,
   { key: "readTime", label: "Read time", type: "string" },
 ] satisfies YashieSyncField[];
 
 const productFields = [
+  imagePositionField,
   { key: "price", label: "Price", type: "string" },
 ] satisfies YashieSyncField[];
 
