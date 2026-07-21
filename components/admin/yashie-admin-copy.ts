@@ -20,7 +20,7 @@ export const YASHIE_ADMIN_COPY = {
   dashboard: {
     eyebrow: "InkedByYashie",
     subtitle:
-      "Manage writing worlds, posts, artwork, and shop items in one calm place.",
+      "Edit the public site, organize its media, and move team work forward from one calm studio.",
     title: "Yashie Dashboard",
   },
   editor: {
@@ -163,6 +163,7 @@ export const YASHIE_ADMIN_COPY = {
     profile: "Profile & Links",
     shop: "Shop",
     storage: "Storage",
+    tasks: "Tasks",
     worlds: "Worlds",
   },
   visibility: {

@@ -141,6 +141,14 @@ export function getYashieWebAppUrl() {
   });
 }
 
+export function getYashieTasksAppUrl() {
+  return getConfiguredUrl({
+    envName: "TUTURUUU_TASKS_APP_URL",
+    localUrl: "http://localhost:7809",
+    productionUrl: "https://tasks.tuturuuu.com",
+  });
+}
+
 export function getYashieAppBaseUrl(requestOrigin?: string) {
   const configured =
     process.env.YASHIE_APP_URL ??
@@ -238,6 +246,19 @@ export function buildYashieDriveUrl({
   return new URL(
     `/${encodeURIComponent(workspaceId)}/drive`,
     webAppUrl,
+  ).toString();
+}
+
+export function buildYashieTasksUrl({
+  tasksAppUrl = getYashieTasksAppUrl(),
+  workspaceId = getYashieWorkspaceId(),
+}: {
+  tasksAppUrl?: string;
+  workspaceId?: string;
+} = {}) {
+  return new URL(
+    `/${encodeURIComponent(workspaceId)}/tasks`,
+    tasksAppUrl,
   ).toString();
 }
 

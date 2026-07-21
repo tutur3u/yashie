@@ -1113,7 +1113,7 @@ function SelectField<TName extends keyof Draft>({
   name,
   onChange,
   options,
-  placeholder = "Choose one",
+  placeholder = "Select an option",
   value,
 }: {
   disabled?: boolean;
@@ -2369,8 +2369,20 @@ function ContentList({
         <div className="min-w-0">
           <p className="script-label">{copy.listTitle}</p>
           <h2 className="font-display text-4xl leading-none text-[var(--navy)] sm:text-5xl">
-            Choose one
+            {items.length > 0
+              ? `Manage ${copy.listTitle.toLowerCase()}`
+              : `Create your first ${copy.singular}`}
           </h2>
+          {items.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em]">
+              <span className="border border-[rgba(184,112,81,0.36)] bg-white/68 px-2.5 py-1 text-[var(--ink-soft)]">
+                {items.length} {items.length === 1 ? copy.singular : copy.listTitle.toLowerCase()}
+              </span>
+              <span className="border border-[rgba(31,107,115,0.24)] bg-[rgba(31,107,115,0.08)] px-2.5 py-1 text-[var(--teal)]">
+                {items.filter((item) => item.status === "published").length} live
+              </span>
+            </div>
+          ) : null}
         </div>
         <button
           className={`min-h-11 w-full border px-4 text-sm font-bold transition sm:w-auto ${
@@ -2436,7 +2448,7 @@ function ContentList({
       ) : (
         <div className="border border-dashed border-[rgba(184,112,81,0.5)] bg-white/68 p-6">
           <h3 className="font-display text-3xl leading-none text-[var(--navy)]">
-            Nothing here yet.
+            No {copy.listTitle.toLowerCase()} yet.
           </h3>
           <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
             {copy.empty}
@@ -3088,6 +3100,7 @@ export function YashieAdminDashboard({
   sessionRefreshEarlySeconds,
   storageAnalytics,
   storageFiles,
+  tasksHref,
   userEmail,
 }: {
   driveHref: string;
@@ -3099,6 +3112,7 @@ export function YashieAdminDashboard({
   sessionRefreshEarlySeconds?: number;
   storageAnalytics: YashieStorageAnalyticsState;
   storageFiles: YashieStorageFilesState;
+  tasksHref: string;
   userEmail: string | null;
 }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("blog");
@@ -3312,6 +3326,15 @@ export function YashieAdminDashboard({
               </p>
             </div>
             <div className="grid gap-3 sm:flex sm:flex-wrap">
+              <Link
+                className="button-secondary w-full sm:w-auto"
+                href={tasksHref}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {YASHIE_ADMIN_COPY.tabs.tasks}
+                <span aria-hidden="true" className="ml-2">↗</span>
+              </Link>
               <Link className="button-secondary w-full sm:w-auto" href="/">
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
@@ -3329,11 +3352,11 @@ export function YashieAdminDashboard({
 
         <nav
           aria-label="Dashboard areas"
-          className="grid grid-cols-2 gap-2 border-b border-[rgba(184,112,81,0.34)] pb-3 sm:flex sm:flex-wrap"
+          className="flex gap-2 overflow-x-auto border-b border-[rgba(184,112,81,0.34)] pb-3"
         >
           {tabLabels.map((tab) => (
             <button
-              className={`min-h-11 border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
+              className={`min-h-11 shrink-0 whitespace-nowrap border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
                 activeTab === tab.id
                   ? "border-[var(--clay)] bg-[rgba(164,78,67,0.08)] text-[var(--clay)]"
                   : "border-[rgba(184,112,81,0.28)] bg-white/35 text-[var(--ink-soft)] hover:text-[var(--navy)] sm:border-transparent sm:bg-transparent"
@@ -3345,6 +3368,15 @@ export function YashieAdminDashboard({
               {tab.label}
             </button>
           ))}
+          <Link
+            className="flex min-h-11 shrink-0 items-center border border-[rgba(31,107,115,0.34)] bg-[rgba(31,107,115,0.08)] px-4 text-sm font-black text-[var(--teal)] transition hover:border-[var(--teal)] sm:min-h-12"
+            href={tasksHref}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {YASHIE_ADMIN_COPY.tabs.tasks}
+            <span aria-hidden="true" className="ml-2">↗</span>
+          </Link>
         </nav>
 
         {contentTabs.includes(activeTab as YashieAdminCollectionKey)

@@ -15,6 +15,7 @@ import {
 import { readYashieAdminSiteSettings } from "@/lib/yashie-admin-site-settings";
 import {
   buildYashieDriveUrl,
+  buildYashieTasksUrl,
   buildYashieWorkspaceUrl,
   resolveYashieAdminTargetKey,
 } from "@/lib/yashie-config";
@@ -119,6 +120,7 @@ async function AuthenticatedAdminDashboard({
       sessionRefreshEarlySeconds={session.refreshEarlySeconds}
       storageAnalytics={storageAnalytics}
       storageFiles={storageFiles}
+      tasksHref={buildYashieTasksUrl()}
       userEmail={session.user.email}
     />
   );

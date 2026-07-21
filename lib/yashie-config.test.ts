@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { buildYashieDriveUrl, buildYashieWorkspaceUrl } from "./yashie-config";
+import {
+  buildYashieDriveUrl,
+  buildYashieTasksUrl,
+  buildYashieWorkspaceUrl,
+} from "./yashie-config";
 
 describe("Yashie config links", () => {
   test("opens Tuturuuu Drive through the main Tuturuuu app", () => {
@@ -19,5 +23,14 @@ describe("Yashie config links", () => {
         workspaceId: "ws-linked",
       }),
     ).toBe("https://tuturuuu.com/ws-linked/members");
+  });
+
+  test("opens tasks for the linked Tuturuuu workspace", () => {
+    expect(
+      buildYashieTasksUrl({
+        tasksAppUrl: "https://tasks.tuturuuu.com",
+        workspaceId: "ws-linked",
+      }),
+    ).toBe("https://tasks.tuturuuu.com/ws-linked/tasks");
   });
 });
