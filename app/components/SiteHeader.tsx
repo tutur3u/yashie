@@ -25,6 +25,7 @@ export function SiteHeader({
 	navItems: YashieContent["navItems"];
 }) {
 	const pathname = usePathname();
+	const shouldPrefetchPublicPages = !pathname.startsWith("/admin");
 	const [openAtPath, setOpenAtPath] = useState<string | null>(null);
 	const menuOpen = openAtPath === pathname;
 	const closeMenu = () => setOpenAtPath(null);
@@ -58,6 +59,7 @@ export function SiteHeader({
 			<div className="edge-frame mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-2.5 sm:px-6 sm:py-4 lg:px-8">
 				<Link
 					href="/"
+					prefetch={shouldPrefetchPublicPages}
 					className="group flex min-w-0 items-center gap-2 sm:gap-3"
 					aria-label="Yashoda U. Itwaru home"
 				>
@@ -85,6 +87,7 @@ export function SiteHeader({
 							<Link
 								key={item.href}
 								href={item.href}
+								prefetch={shouldPrefetchPublicPages}
 								aria-current={active ? "page" : undefined}
 								className={`nav-link ${active ? "nav-link-active" : ""}`}
 							>
@@ -130,6 +133,7 @@ export function SiteHeader({
 						<div className="flex items-center justify-between gap-4">
 							<Link
 								href="/"
+								prefetch={shouldPrefetchPublicPages}
 								className="flex min-w-0 items-center gap-3"
 								aria-label="Yashoda U. Itwaru home"
 								onClick={closeMenu}
@@ -173,6 +177,7 @@ export function SiteHeader({
 										<Link
 											key={item.href}
 											href={item.href}
+											prefetch={shouldPrefetchPublicPages}
 											aria-current={active ? "page" : undefined}
 											onClick={closeMenu}
 											className={`mobile-nav-link ${active ? "mobile-nav-link-active" : ""}`}
