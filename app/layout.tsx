@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { SiteFooter } from "@/app/components/SiteFooter";
 import { SiteHeader } from "@/app/components/SiteHeader";
 import { YashieToaster } from "@/app/components/YashieToaster";
@@ -26,6 +27,15 @@ const ogImage = {
 	height: 630,
 	alt: "InkedByYashie writing desk with a book, ink, peacock feather, and manuscript textures.",
 };
+
+function SiteHeaderFallback() {
+	return (
+		<div
+			aria-hidden="true"
+			className="h-16 border-[var(--copper)] border-b bg-[var(--navy)] sm:h-[5.5rem]"
+		/>
+	);
+}
 
 export const metadata: Metadata = {
 	title: {
@@ -82,7 +92,9 @@ export default async function RootLayout({
 			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
 		>
 			<body className="min-h-full">
-				<SiteHeader author={content.author} navItems={content.navItems} />
+				<Suspense fallback={<SiteHeaderFallback />}>
+					<SiteHeader author={content.author} navItems={content.navItems} />
+				</Suspense>
 				{children}
 				<SiteFooter
 					author={content.author}
