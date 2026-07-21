@@ -54,6 +54,10 @@ import type {
   YashieStorageFileItem,
   YashieStorageFilesState,
 } from "@/lib/yashie-storage-files";
+import {
+  getYashieAdminSectionHref,
+  type YashieAdminSection,
+} from "@/lib/yashie-admin-sections";
 import { YashieAdminSyncPanel } from "./YashieAdminSyncPanel";
 import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
 import {
@@ -78,14 +82,6 @@ import {
   type YashieAdminEditorDraft,
   type YashieEditorStepId,
 } from "./yashie-admin-editor-state";
-
-type AdminTab =
-  | YashieAdminCollectionKey
-  | "account"
-  | "members"
-  | "profile"
-  | "publish"
-  | "storage";
 
 type DashboardContent = Record<
   YashieAdminCollectionKey,
@@ -124,7 +120,11 @@ const contentTabs: YashieAdminCollectionKey[] = [
   "shop",
 ];
 
-const tabLabels: Array<{ icon: LucideIcon; id: AdminTab; label: string }> = [
+const tabLabels: Array<{
+  icon: LucideIcon;
+  id: YashieAdminSection;
+  label: string;
+}> = [
   { icon: BookOpenText, id: "worlds", label: YASHIE_ADMIN_COPY.tabs.worlds },
   { icon: Tags, id: "categories", label: YASHIE_ADMIN_COPY.tabs.categories },
   { icon: Newspaper, id: "blog", label: YASHIE_ADMIN_COPY.tabs.blog },
@@ -3110,6 +3110,7 @@ function ContentForm({
 }
 
 export function YashieAdminDashboard({
+  activeSection,
   driveHref,
   initialContent,
   initialNeedsImport = false,
@@ -3122,6 +3123,7 @@ export function YashieAdminDashboard({
   tasksHref,
   userEmail,
 }: {
+  activeSection: YashieAdminSection;
   driveHref: string;
   initialContent: DashboardContent;
   initialNeedsImport?: boolean;
@@ -3134,7 +3136,6 @@ export function YashieAdminDashboard({
   tasksHref: string;
   userEmail: string | null;
 }) {
-  const [activeTab, setActiveTab] = useState<AdminTab>("blog");
   const [content, setContent] = useState(initialContent);
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
   const [editorBusy, setEditorBusy] = useState(false);
@@ -3384,19 +3385,19 @@ export function YashieAdminDashboard({
             const Icon = tab.icon;
 
             return (
-              <button
-              className={`inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
-                activeTab === tab.id
-                  ? "border-[var(--clay)] bg-[rgba(164,78,67,0.08)] text-[var(--clay)]"
-                  : "border-[rgba(184,112,81,0.28)] bg-white/35 text-[var(--ink-soft)] hover:text-[var(--navy)] sm:border-transparent sm:bg-transparent"
-              }`}
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              type="button"
-            >
-              <Icon aria-hidden="true" className="size-4" />
-              {tab.label}
-            </button>
+              <Link
+                aria-current={activeSection === tab.id ? "page" : undefined}
+                className={`inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
+                  activeSection === tab.id
+                    ? "border-[var(--clay)] bg-[rgba(164,78,67,0.08)] text-[var(--clay)]"
+                    : "border-[rgba(184,112,81,0.28)] bg-white/35 text-[var(--ink-soft)] hover:text-[var(--navy)] sm:border-transparent sm:bg-transparent"
+                }`}
+                href={getYashieAdminSectionHref(tab.id)}
+                key={tab.id}
+              >
+                <Icon aria-hidden="true" className="size-4" />
+                {tab.label}
+              </Link>
             );
           })}
           <Link
@@ -3411,8 +3412,8 @@ export function YashieAdminDashboard({
           </Link>
         </nav>
 
-        {contentTabs.includes(activeTab as YashieAdminCollectionKey)
-          ? renderContentTab(activeTab as YashieAdminCollectionKey)
+        {contentTabs.includes(activeSection as YashieAdminCollectionKey)
+          ? renderContentTab(activeSection as YashieAdminCollectionKey)
           : null}
 
         {editorTarget ? (
@@ -3504,9 +3505,9 @@ export function YashieAdminDashboard({
           </div>
         ) : null}
 
-        {activeTab === "publish" ? <YashieAdminSyncPanel /> : null}
+        {activeSection === "publish" ? <YashieAdminSyncPanel /> : null}
 
-        {activeTab === "profile" ? (
+        {activeSection === "profile" ? (
           <section className="parchment-card min-w-0 p-4 sm:p-5">
             <SiteSettingsPanel
               onSaved={setSiteSettings}
@@ -3516,7 +3517,7 @@ export function YashieAdminDashboard({
           </section>
         ) : null}
 
-        {activeTab === "storage" ? (
+        {activeSection === "storage" ? (
           <StoragePanel
             driveHref={driveHref}
             onResourcesChanged={refreshContent}
@@ -3525,11 +3526,11 @@ export function YashieAdminDashboard({
           />
         ) : null}
 
-        {activeTab === "members" ? (
+        {activeSection === "members" ? (
           <MembersPanel membersHref={membersHref} />
         ) : null}
 
-        {activeTab === "account" ? (
+        {activeSection === "account" ? (
           <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div className="parchment-card min-w-0 p-5 sm:p-6">
               <p className="script-label">

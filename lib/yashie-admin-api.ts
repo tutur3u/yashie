@@ -114,19 +114,33 @@ function emptyStudio(): YashieAdminStudioPayload {
   };
 }
 
-export async function getYashieAdminDashboardSnapshot(accessToken: string) {
+export async function getYashieAdminStudioSnapshot(accessToken: string) {
   "use cache";
 
   cacheLife({ expire: 300, revalidate: 30, stale: 30 });
-  cacheTag(YASHIE_ADMIN_SNAPSHOT_CACHE_TAG);
+  cacheTag(
+    YASHIE_ADMIN_SNAPSHOT_CACHE_TAG,
+    `${YASHIE_ADMIN_SNAPSHOT_CACHE_TAG}:studio`,
+  );
 
-  const [studio, storageAnalytics, storageFiles] = await Promise.all([
-    getYashieAdminStudio(accessToken).catch(() => emptyStudio()),
+  return getYashieAdminStudio(accessToken).catch(() => emptyStudio());
+}
+
+export async function getYashieAdminStorageSnapshot(accessToken: string) {
+  "use cache";
+
+  cacheLife({ expire: 300, revalidate: 30, stale: 30 });
+  cacheTag(
+    YASHIE_ADMIN_SNAPSHOT_CACHE_TAG,
+    `${YASHIE_ADMIN_SNAPSHOT_CACHE_TAG}:storage`,
+  );
+
+  const [storageAnalytics, storageFiles] = await Promise.all([
     getYashieStorageAnalytics(accessToken),
     getYashieStorageFiles(accessToken),
   ]);
 
-  return { storageAnalytics, storageFiles, studio };
+  return { storageAnalytics, storageFiles };
 }
 
 export function revalidateYashieContent() {
@@ -134,6 +148,7 @@ export function revalidateYashieContent() {
   revalidateTag(YASHIE_DELIVERY_CACHE_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   revalidatePath("/admin");
+  revalidatePath("/admin/[section]", "page");
   revalidatePath("/admin/login");
   revalidatePath("/blog");
   revalidatePath("/blog/[slug]", "page");

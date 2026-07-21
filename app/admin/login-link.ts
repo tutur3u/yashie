@@ -26,11 +26,12 @@ function getYashieAdminNextUrl(targetKey: YashieAdminTargetKey) {
 
 export async function getYashieCentralizedLoginHref(
 	targetKey: YashieAdminTargetKey,
+	options?: { nextUrl?: string },
 ) {
 	const requestOrigin = getRequestOrigin(await headers());
 
 	return buildYashieCentralizedLoginUrl({
 		...(requestOrigin ? { appBaseUrl: requestOrigin } : {}),
-		nextUrl: getYashieAdminNextUrl(targetKey),
+		nextUrl: options?.nextUrl ?? getYashieAdminNextUrl(targetKey),
 	});
 }
