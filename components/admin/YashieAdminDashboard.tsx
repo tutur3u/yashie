@@ -8,24 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import {
-  BookOpenText,
-  CircleUserRound,
-  ExternalLink,
-  GalleryHorizontalEnd,
-  Globe2,
-  HardDrive,
-  ListTodo,
-  LogOut,
-  Newspaper,
-  Plus,
-  Send,
-  ShoppingBag,
-  Tags,
-  UserRoundCog,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { Globe2, LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { SocialIcon } from "@/app/components/SocialIcon";
 import {
@@ -54,10 +37,7 @@ import type {
   YashieStorageFileItem,
   YashieStorageFilesState,
 } from "@/lib/yashie-storage-files";
-import {
-  getYashieAdminSectionHref,
-  type YashieAdminSection,
-} from "@/lib/yashie-admin-sections";
+import type { YashieAdminSection } from "@/lib/yashie-admin-sections";
 import { YashieAdminSyncPanel } from "./YashieAdminSyncPanel";
 import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
 import {
@@ -118,23 +98,6 @@ const contentTabs: YashieAdminCollectionKey[] = [
   "blog",
   "gallery",
   "shop",
-];
-
-const tabLabels: Array<{
-  icon: LucideIcon;
-  id: YashieAdminSection;
-  label: string;
-}> = [
-  { icon: BookOpenText, id: "worlds", label: YASHIE_ADMIN_COPY.tabs.worlds },
-  { icon: Tags, id: "categories", label: YASHIE_ADMIN_COPY.tabs.categories },
-  { icon: Newspaper, id: "blog", label: YASHIE_ADMIN_COPY.tabs.blog },
-  { icon: GalleryHorizontalEnd, id: "gallery", label: YASHIE_ADMIN_COPY.tabs.gallery },
-  { icon: ShoppingBag, id: "shop", label: YASHIE_ADMIN_COPY.tabs.shop },
-  { icon: UserRoundCog, id: "profile", label: YASHIE_ADMIN_COPY.tabs.profile },
-  { icon: Send, id: "publish", label: YASHIE_ADMIN_COPY.tabs.publish },
-  { icon: HardDrive, id: "storage", label: YASHIE_ADMIN_COPY.tabs.storage },
-  { icon: Users, id: "members", label: YASHIE_ADMIN_COPY.tabs.members },
-  { icon: CircleUserRound, id: "account", label: YASHIE_ADMIN_COPY.tabs.account },
 ];
 
 const byteUnits = ["B", "KB", "MB", "GB", "TB"] as const;
@@ -2394,10 +2357,14 @@ function ContentList({
           {items.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em]">
               <span className="border border-[rgba(184,112,81,0.36)] bg-white/68 px-2.5 py-1 text-[var(--ink-soft)]">
-                {items.length} {items.length === 1 ? copy.singular : copy.listTitle.toLowerCase()}
+                {items.length}{" "}
+                {items.length === 1
+                  ? copy.singular
+                  : copy.listTitle.toLowerCase()}
               </span>
               <span className="border border-[rgba(31,107,115,0.24)] bg-[rgba(31,107,115,0.08)] px-2.5 py-1 text-[var(--teal)]">
-                {items.filter((item) => item.status === "published").length} live
+                {items.filter((item) => item.status === "published").length}{" "}
+                live
               </span>
             </div>
           ) : null}
@@ -3120,7 +3087,6 @@ export function YashieAdminDashboard({
   sessionRefreshEarlySeconds,
   storageAnalytics,
   storageFiles,
-  tasksHref,
   userEmail,
 }: {
   activeSection: YashieAdminSection;
@@ -3133,7 +3099,6 @@ export function YashieAdminDashboard({
   sessionRefreshEarlySeconds?: number;
   storageAnalytics: YashieStorageAnalyticsState;
   storageFiles: YashieStorageFilesState;
-  tasksHref: string;
   userEmail: string | null;
 }) {
   const [content, setContent] = useState(initialContent);
@@ -3330,245 +3295,164 @@ export function YashieAdminDashboard({
       : null;
 
   return (
-    <main className="section-band min-h-screen px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mx-auto grid min-w-0 max-w-7xl gap-6">
-        <header className="parchment-card overflow-hidden p-5 sm:p-6">
-          <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <div className="min-w-0">
-              <p className="script-label">
-                {YASHIE_ADMIN_COPY.dashboard.eyebrow}
-              </p>
-              <h1 className="break-words font-display text-4xl leading-none text-[var(--navy)] sm:text-6xl">
-                {YASHIE_ADMIN_COPY.dashboard.title}
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">
-                {YASHIE_ADMIN_COPY.dashboard.subtitle}
-              </p>
-            </div>
-            <div className="grid gap-3 sm:flex sm:flex-wrap">
-              <Link
-                className="button-secondary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-                href={tasksHref}
-                rel="noreferrer"
-                target="_blank"
-              >
-                <ListTodo aria-hidden="true" className="size-4" />
-                {YASHIE_ADMIN_COPY.tabs.tasks}
-                <ExternalLink aria-hidden="true" className="size-3.5" />
-              </Link>
-              <Link
-                className="button-secondary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-                href="/"
-                prefetch={false}
-              >
-                <Globe2 aria-hidden="true" className="size-4" />
-                {YASHIE_ADMIN_COPY.account.viewSite}
-              </Link>
-              <form action="/api/auth/logout" className="min-w-0" method="post">
-                <button
-                  className="button-primary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-                  type="submit"
-                >
-                  <LogOut aria-hidden="true" className="size-4" />
-                  {YASHIE_ADMIN_COPY.account.signOut}
-                </button>
-              </form>
-            </div>
-          </div>
-        </header>
+    <>
+      {contentTabs.includes(activeSection as YashieAdminCollectionKey)
+        ? renderContentTab(activeSection as YashieAdminCollectionKey)
+        : null}
 
-        <nav
-          aria-label="Dashboard areas"
-          className="flex gap-2 overflow-x-auto border-b border-[rgba(184,112,81,0.34)] pb-3"
+      {editorTarget ? (
+        <div
+          className="fixed inset-0 z-50 grid overscroll-contain bg-[rgba(12,31,52,0.58)] px-3 py-4 backdrop-blur-sm sm:px-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              requestCloseEditor();
+            }
+          }}
+          role="presentation"
         >
-          {tabLabels.map((tab) => {
-            const Icon = tab.icon;
-
-            return (
-              <Link
-                aria-current={activeSection === tab.id ? "page" : undefined}
-                className={`inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap border px-3 text-sm font-black transition sm:min-h-12 sm:border-b-2 sm:px-4 ${
-                  activeSection === tab.id
-                    ? "border-[var(--clay)] bg-[rgba(164,78,67,0.08)] text-[var(--clay)]"
-                    : "border-[rgba(184,112,81,0.28)] bg-white/35 text-[var(--ink-soft)] hover:text-[var(--navy)] sm:border-transparent sm:bg-transparent"
-                }`}
-                href={getYashieAdminSectionHref(tab.id)}
-                key={tab.id}
-              >
-                <Icon aria-hidden="true" className="size-4" />
-                {tab.label}
-              </Link>
-            );
-          })}
-          <Link
-            className="flex min-h-11 shrink-0 items-center gap-2 border border-[rgba(31,107,115,0.34)] bg-[rgba(31,107,115,0.08)] px-4 text-sm font-black text-[var(--teal)] transition hover:border-[var(--teal)] sm:min-h-12"
-            href={tasksHref}
-            rel="noreferrer"
-            target="_blank"
+          <section
+            aria-label={`${editorTarget.itemId ? "Edit" : "Create"} ${sectionCopy[editorTarget.collectionKey].singular}`}
+            aria-modal="true"
+            className="parchment-card mx-auto grid max-h-[calc(100vh-2rem)] w-full max-w-5xl min-w-0 overscroll-contain self-center overflow-y-auto p-4 shadow-[0_28px_90px_rgba(12,31,52,0.38)] sm:p-5"
+            role="dialog"
           >
-            <ListTodo aria-hidden="true" className="size-4" />
-            {YASHIE_ADMIN_COPY.tabs.tasks}
-            <ExternalLink aria-hidden="true" className="size-3.5" />
-          </Link>
-        </nav>
-
-        {contentTabs.includes(activeSection as YashieAdminCollectionKey)
-          ? renderContentTab(activeSection as YashieAdminCollectionKey)
-          : null}
-
-        {editorTarget ? (
-          <div
-            className="fixed inset-0 z-50 grid overscroll-contain bg-[rgba(12,31,52,0.58)] px-3 py-4 backdrop-blur-sm sm:px-6"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                requestCloseEditor();
-              }
-            }}
-            role="presentation"
-          >
-            <section
-              aria-label={`${editorTarget.itemId ? "Edit" : "Create"} ${sectionCopy[editorTarget.collectionKey].singular}`}
-              aria-modal="true"
-              className="parchment-card mx-auto grid max-h-[calc(100vh-2rem)] w-full max-w-5xl min-w-0 overscroll-contain self-center overflow-y-auto p-4 shadow-[0_28px_90px_rgba(12,31,52,0.38)] sm:p-5"
-              role="dialog"
-            >
-              <ContentForm
-                categories={content.categories}
-                collectionKey={editorTarget.collectionKey}
-                item={editorItem}
-                key={`${editorTarget.collectionKey}-${editorTarget.itemId ?? "new"}`}
-                onBusyChange={setEditorBusy}
-                onClose={closeEditor}
-                onCloseRequest={requestCloseEditor}
-                onDeleted={(items) => {
-                  setContent((current) => ({
-                    ...current,
-                    [editorTarget.collectionKey]: items,
-                  }));
-                  setSelectedIds((current) => ({
-                    ...current,
-                    [editorTarget.collectionKey]: items[0]?.id ?? null,
-                  }));
-                }}
-                onDirtyChange={setEditorDirty}
-                onSaved={(items, savedItem) => {
-                  setContent((current) => ({
-                    ...current,
-                    [editorTarget.collectionKey]: items,
-                  }));
-                  setSelectedIds((current) => ({
-                    ...current,
-                    [editorTarget.collectionKey]:
-                      savedItem?.id ?? items[0]?.id ?? null,
-                  }));
-                }}
-              />
-            </section>
-            {confirmEditorClose ? (
-              <div
-                className="absolute inset-0 z-10 grid place-items-center bg-[rgba(12,31,52,0.36)] px-4"
-                role="presentation"
-              >
-                <section
-                  aria-modal="true"
-                  className="parchment-card w-full max-w-md p-5 shadow-[0_24px_80px_rgba(12,31,52,0.34)]"
-                  role="alertdialog"
-                >
-                  <p className="script-label">
-                    {YASHIE_ADMIN_COPY.editor.unsavedTitle}
-                  </p>
-                  <h3 className="mt-2 font-display text-4xl leading-none text-[var(--navy)]">
-                    {YASHIE_ADMIN_COPY.editor.unsavedHeading}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
-                    {YASHIE_ADMIN_COPY.editor.unsavedDescription}
-                  </p>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <button
-                      className="button-secondary w-full"
-                      onClick={() => setConfirmEditorClose(false)}
-                      type="button"
-                    >
-                      {YASHIE_ADMIN_COPY.editor.keepEditing}
-                    </button>
-                    <button
-                      className="button-primary w-full"
-                      onClick={closeEditor}
-                      type="button"
-                    >
-                      {YASHIE_ADMIN_COPY.editor.discardChanges}
-                    </button>
-                  </div>
-                </section>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {activeSection === "publish" ? <YashieAdminSyncPanel /> : null}
-
-        {activeSection === "profile" ? (
-          <section className="parchment-card min-w-0 p-4 sm:p-5">
-            <SiteSettingsPanel
-              onSaved={setSiteSettings}
-              onRefresh={refreshSiteSettings}
-              settings={siteSettings}
+            <ContentForm
+              categories={content.categories}
+              collectionKey={editorTarget.collectionKey}
+              item={editorItem}
+              key={`${editorTarget.collectionKey}-${editorTarget.itemId ?? "new"}`}
+              onBusyChange={setEditorBusy}
+              onClose={closeEditor}
+              onCloseRequest={requestCloseEditor}
+              onDeleted={(items) => {
+                setContent((current) => ({
+                  ...current,
+                  [editorTarget.collectionKey]: items,
+                }));
+                setSelectedIds((current) => ({
+                  ...current,
+                  [editorTarget.collectionKey]: items[0]?.id ?? null,
+                }));
+              }}
+              onDirtyChange={setEditorDirty}
+              onSaved={(items, savedItem) => {
+                setContent((current) => ({
+                  ...current,
+                  [editorTarget.collectionKey]: items,
+                }));
+                setSelectedIds((current) => ({
+                  ...current,
+                  [editorTarget.collectionKey]:
+                    savedItem?.id ?? items[0]?.id ?? null,
+                }));
+              }}
             />
           </section>
-        ) : null}
-
-        {activeSection === "storage" ? (
-          <StoragePanel
-            driveHref={driveHref}
-            onResourcesChanged={refreshContent}
-            storageAnalytics={storageAnalytics}
-            storageFiles={storageFiles}
-          />
-        ) : null}
-
-        {activeSection === "members" ? (
-          <MembersPanel membersHref={membersHref} />
-        ) : null}
-
-        {activeSection === "account" ? (
-          <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <div className="parchment-card min-w-0 p-5 sm:p-6">
-              <p className="script-label">
-                {YASHIE_ADMIN_COPY.account.signedIn}
-              </p>
-              <div className="mt-4 flex items-center gap-4">
-                <span className="grid size-14 place-items-center bg-[var(--navy)] font-display text-2xl text-[var(--parchment)]">
-                  {getInitials(userEmail)}
-                </span>
-                <div className="min-w-0">
-                  <strong className="block truncate text-[var(--ink)]">
-                    {userEmail ?? "Website editor"}
-                  </strong>
-                  <span className="mt-1 block text-sm text-[var(--ink-soft)]">
-                    {YASHIE_ADMIN_COPY.account.description}
-                  </span>
+          {confirmEditorClose ? (
+            <div
+              className="absolute inset-0 z-10 grid place-items-center bg-[rgba(12,31,52,0.36)] px-4"
+              role="presentation"
+            >
+              <section
+                aria-modal="true"
+                className="parchment-card w-full max-w-md p-5 shadow-[0_24px_80px_rgba(12,31,52,0.34)]"
+                role="alertdialog"
+              >
+                <p className="script-label">
+                  {YASHIE_ADMIN_COPY.editor.unsavedTitle}
+                </p>
+                <h3 className="mt-2 font-display text-4xl leading-none text-[var(--navy)]">
+                  {YASHIE_ADMIN_COPY.editor.unsavedHeading}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">
+                  {YASHIE_ADMIN_COPY.editor.unsavedDescription}
+                </p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <button
+                    className="button-secondary w-full"
+                    onClick={() => setConfirmEditorClose(false)}
+                    type="button"
+                  >
+                    {YASHIE_ADMIN_COPY.editor.keepEditing}
+                  </button>
+                  <button
+                    className="button-primary w-full"
+                    onClick={closeEditor}
+                    type="button"
+                  >
+                    {YASHIE_ADMIN_COPY.editor.discardChanges}
+                  </button>
                 </div>
+              </section>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {activeSection === "publish" ? <YashieAdminSyncPanel /> : null}
+
+      {activeSection === "profile" ? (
+        <section className="parchment-card min-w-0 p-4 sm:p-5">
+          <SiteSettingsPanel
+            onSaved={setSiteSettings}
+            onRefresh={refreshSiteSettings}
+            settings={siteSettings}
+          />
+        </section>
+      ) : null}
+
+      {activeSection === "storage" ? (
+        <StoragePanel
+          driveHref={driveHref}
+          onResourcesChanged={refreshContent}
+          storageAnalytics={storageAnalytics}
+          storageFiles={storageFiles}
+        />
+      ) : null}
+
+      {activeSection === "members" ? (
+        <MembersPanel membersHref={membersHref} />
+      ) : null}
+
+      {activeSection === "account" ? (
+        <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div className="parchment-card min-w-0 p-5 sm:p-6">
+            <p className="script-label">{YASHIE_ADMIN_COPY.account.signedIn}</p>
+            <div className="mt-4 flex items-center gap-4">
+              <span className="grid size-14 place-items-center bg-[var(--navy)] font-display text-2xl text-[var(--parchment)]">
+                {getInitials(userEmail)}
+              </span>
+              <div className="min-w-0">
+                <strong className="block truncate text-[var(--ink)]">
+                  {userEmail ?? "Website editor"}
+                </strong>
+                <span className="mt-1 block text-sm text-[var(--ink-soft)]">
+                  {YASHIE_ADMIN_COPY.account.description}
+                </span>
               </div>
             </div>
-            <div className="parchment-card grid min-w-0 content-start gap-3 p-5 sm:p-6">
-              <Link
-                className="button-primary inline-flex w-full items-center justify-center gap-2"
-                href="/"
-                prefetch={false}
+          </div>
+          <div className="parchment-card grid min-w-0 content-start gap-3 p-5 sm:p-6">
+            <Link
+              className="button-primary inline-flex w-full items-center justify-center gap-2"
+              href="/"
+              prefetch={false}
+            >
+              <Globe2 aria-hidden="true" className="size-4" />
+              {YASHIE_ADMIN_COPY.account.viewSite}
+            </Link>
+            <form action="/api/auth/logout" method="post">
+              <button
+                className="button-secondary inline-flex w-full items-center justify-center gap-2"
+                type="submit"
               >
-                <Globe2 aria-hidden="true" className="size-4" />
-                {YASHIE_ADMIN_COPY.account.viewSite}
-              </Link>
-              <form action="/api/auth/logout" method="post">
-                <button className="button-secondary inline-flex w-full items-center justify-center gap-2" type="submit">
-                  <LogOut aria-hidden="true" className="size-4" />
-                  {YASHIE_ADMIN_COPY.account.signOut}
-                </button>
-              </form>
-            </div>
-          </section>
-        ) : null}
-      </div>
-    </main>
+                <LogOut aria-hidden="true" className="size-4" />
+                {YASHIE_ADMIN_COPY.account.signOut}
+              </button>
+            </form>
+          </div>
+        </section>
+      ) : null}
+    </>
   );
 }

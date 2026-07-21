@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { YashieAdminDashboard } from "@/components/admin/YashieAdminDashboard";
-import { YashieAdminLoadingPanel } from "@/components/admin/YashieAdminLoadingPanel";
 import { YashieAdminLoginPanel } from "@/components/admin/YashieAdminLoginPanel";
 import { YashieAdminSessionRestorer } from "@/components/admin/YashieAdminSessionRestorer";
 import { getYashieCentralizedLoginHref } from "../login-link";
@@ -15,7 +13,6 @@ import {
 import { readYashieAdminSiteSettings } from "@/lib/yashie-admin-site-settings";
 import {
   buildYashieDriveUrl,
-  buildYashieTasksUrl,
   buildYashieWorkspaceUrl,
 } from "@/lib/yashie-config";
 import {
@@ -62,11 +59,7 @@ export default function AdminSectionPage({
 }: {
   params: Promise<{ section: string }>;
 }) {
-  return (
-    <Suspense fallback={<YashieAdminLoadingPanel />}>
-      <YashieAdminSectionContent params={params} />
-    </Suspense>
-  );
+  return <YashieAdminSectionContent params={params} />;
 }
 
 async function YashieAdminSectionContent({
@@ -103,7 +96,10 @@ async function YashieAdminSectionContent({
   }
 
   return (
-    <AuthenticatedAdminDashboard section={section} session={sessionState.session} />
+    <AuthenticatedAdminDashboard
+      section={section}
+      session={sessionState.session}
+    />
   );
 }
 
@@ -149,7 +145,6 @@ async function AuthenticatedAdminDashboard({
       sessionRefreshEarlySeconds={session.refreshEarlySeconds}
       storageAnalytics={storage.storageAnalytics}
       storageFiles={storage.storageFiles}
-      tasksHref={buildYashieTasksUrl()}
       userEmail={session.user.email}
     />
   );

@@ -1,5 +1,5 @@
-import { YashieAdminLoadingPanel } from "@/components/admin/YashieAdminLoadingPanel";
+import { YashieAdminSectionLoadingPanel } from "@/components/admin/YashieAdminLoadingPanel";
 
 export default function AdminSectionLoading() {
-  return <YashieAdminLoadingPanel />;
+  return <YashieAdminSectionLoadingPanel />;
 }

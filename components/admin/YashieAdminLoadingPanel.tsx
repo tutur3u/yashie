@@ -1,4 +1,9 @@
-import { BookOpenText, ExternalLink, LayoutDashboard, Plus } from "lucide-react";
+import {
+  BookOpenText,
+  ExternalLink,
+  LayoutDashboard,
+  Plus,
+} from "lucide-react";
 
 function SkeletonBlock({ className = "" }: { className?: string }) {
   return (
@@ -88,5 +93,48 @@ export function YashieAdminLoadingPanel() {
         </p>
       </div>
     </main>
+  );
+}
+
+export function YashieAdminSectionLoadingPanel() {
+  return (
+    <section
+      aria-busy="true"
+      aria-label="Loading dashboard section"
+      className="grid min-w-0 gap-5"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="script-label flex items-center gap-2">
+            <BookOpenText aria-hidden="true" className="size-4" />
+            Preparing this section
+          </p>
+          <SkeletonBlock className="mt-3 h-10 w-full max-w-md sm:h-12" />
+          <SkeletonBlock className="mt-3 h-4 w-full max-w-xl" />
+        </div>
+        <SkeletonBlock className="h-11 w-full border border-[rgba(184,112,81,0.24)] bg-white/60 sm:w-36" />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {Array.from({ length: 3 }, (_, index) => (
+          <article
+            className="parchment-card grid min-h-44 content-start gap-4 p-5"
+            key={index}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <SkeletonBlock className="size-14 shrink-0" />
+              <SkeletonBlock className="h-7 w-16" />
+            </div>
+            <SkeletonBlock className="h-6 w-4/5" />
+            <SkeletonBlock className="h-4 w-full" />
+            <SkeletonBlock className="h-4 w-2/3" />
+          </article>
+        ))}
+      </div>
+
+      <p className="sr-only" role="status">
+        Loading this dashboard section. Navigation remains available.
+      </p>
+    </section>
   );
 }
