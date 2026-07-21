@@ -213,9 +213,21 @@ async function validateYashieSession(session: YashieAdminSession) {
       },
     });
 
-    return response.ok ? session : null;
-  } catch {
-    return null;
+    if (response.ok) {
+      return "authenticated" as const;
+    }
+
+    if ([401, 403, 404].includes(response.status)) {
+      return "invalid" as const;
+    }
+
+    console.warn(
+      `[yashie] Session validation is temporarily unavailable (${response.status}).`,
+    );
+    return "unavailable" as const;
+  } catch (error) {
+    console.warn("[yashie] Session validation request failed.", error);
+    return "unavailable" as const;
   }
 }
 
@@ -303,10 +315,10 @@ export async function getYashieSessionReadStateFromCookies(): Promise<YashieSess
       : { session: null, status: "unauthenticated" };
   }
 
-  const validated = await validateYashieSession(session);
+  const validation = await validateYashieSession(session);
 
-  if (validated) {
-    return { session: validated, status: "authenticated" };
+  if (validation !== "invalid") {
+    return { session, status: "authenticated" };
   }
 
   return isRefreshTokenCurrent(session)

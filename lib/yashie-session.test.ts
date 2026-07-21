@@ -78,6 +78,47 @@ describe("yashie session validation", () => {
     });
   }
 
+  for (const status of [429, 500, 502, 503, 504] as const) {
+    test(`keeps a current stored session when platform revalidation returns ${status}`, async () => {
+      const { getYashieSessionReadStateFromCookies, setYashieSessionCookie } =
+        await import("./yashie-session");
+      const response = NextResponse.json({});
+      setYashieSessionCookie(response, createSession());
+      sessionCookieValue = readSessionCookieValue(response);
+
+      globalThis.fetch = (async () =>
+        Response.json({ error: "Temporary upstream failure" }, { status })) as typeof fetch;
+
+      await expect(getYashieSessionReadStateFromCookies()).resolves.toMatchObject({
+        session: {
+          accessToken: "app-token",
+          user: { id: "user-1" },
+        },
+        status: "authenticated",
+      });
+    });
+  }
+
+  test("keeps a current stored session when platform revalidation is unavailable", async () => {
+    const { getYashieSessionReadStateFromCookies, setYashieSessionCookie } =
+      await import("./yashie-session");
+    const response = NextResponse.json({});
+    setYashieSessionCookie(response, createSession());
+    sessionCookieValue = readSessionCookieValue(response);
+
+    globalThis.fetch = (async () => {
+      throw new TypeError("fetch failed");
+    }) as typeof fetch;
+
+    await expect(getYashieSessionReadStateFromCookies()).resolves.toMatchObject({
+      session: {
+        accessToken: "app-token",
+        user: { id: "user-1" },
+      },
+      status: "authenticated",
+    });
+  });
+
   test("reports expired access with a valid refresh token as refreshable", async () => {
     const { getYashieSessionReadStateFromCookies, setYashieSessionCookie } =
       await import("./yashie-session");
