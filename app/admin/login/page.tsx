@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { YashieAdminLoginPanel } from "@/components/admin/YashieAdminLoginPanel";
 import { getYashieCentralizedLoginHref } from "../login-link";
 import { getYashieAdminSessionReadState } from "@/lib/yashie-admin-api";
@@ -19,6 +20,8 @@ export default async function AdminLoginPage({
 }: {
 	searchParams?: Promise<{ next?: string }>;
 }) {
+	await connection();
+
 	const params = await searchParams;
 	const targetKey = resolveYashieAdminTargetKey(params?.next);
 	const [content, loginHref, sessionState] = await Promise.all([

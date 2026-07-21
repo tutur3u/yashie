@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { YashieAdminDashboard } from "@/components/admin/YashieAdminDashboard";
 import { YashieAdminLoadingPanel } from "@/components/admin/YashieAdminLoadingPanel";
@@ -52,6 +53,8 @@ export default async function AdminPage({
 }: {
   searchParams?: Promise<{ target?: string }>;
 }) {
+  await connection();
+
   const resolvedSearchParams = await searchParams;
   const activeTarget = resolveYashieAdminTargetKey(
     resolvedSearchParams?.target,
