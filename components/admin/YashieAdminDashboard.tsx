@@ -3355,7 +3355,11 @@ export function YashieAdminDashboard({
                 {YASHIE_ADMIN_COPY.tabs.tasks}
                 <ExternalLink aria-hidden="true" className="size-3.5" />
               </Link>
-              <Link className="button-secondary inline-flex w-full items-center justify-center gap-2 sm:w-auto" href="/">
+              <Link
+                className="button-secondary inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                href="/"
+                prefetch={false}
+              >
                 <Globe2 aria-hidden="true" className="size-4" />
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
@@ -3546,7 +3550,11 @@ export function YashieAdminDashboard({
               </div>
             </div>
             <div className="parchment-card grid min-w-0 content-start gap-3 p-5 sm:p-6">
-              <Link className="button-primary inline-flex w-full items-center justify-center gap-2" href="/">
+              <Link
+                className="button-primary inline-flex w-full items-center justify-center gap-2"
+                href="/"
+                prefetch={false}
+              >
                 <Globe2 aria-hidden="true" className="size-4" />
                 {YASHIE_ADMIN_COPY.account.viewSite}
               </Link>
