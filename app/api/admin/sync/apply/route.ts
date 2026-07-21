@@ -12,8 +12,6 @@ import { getYashieSessionFromCookies } from "@/lib/yashie-session";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-
 const SYNC_PHASE_TIMEOUT_MS = 60_000;
 
 async function readApiError(response: Response) {

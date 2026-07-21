@@ -11,8 +11,6 @@ import {
 import { getYashieWorkspaceId } from "@/lib/yashie-config";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-
 function readErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Request failed";
 }

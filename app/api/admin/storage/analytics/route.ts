@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { getYashieAdminSession } from "@/lib/yashie-admin-api";
 import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
 
-export const dynamic = "force-dynamic";
-
 export async function GET() {
   const session = await getYashieAdminSession();
 

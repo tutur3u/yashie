@@ -7,7 +7,7 @@ import { resolveYashieAdminTargetKey } from "@/lib/yashie-config";
 import { getYashieContent } from "@/lib/yashie-delivery";
 import { isYashieNavTabVisible } from "@/lib/yashie-navigation-access";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export const metadata: Metadata = {
 	title: "Admin Login",

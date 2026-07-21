@@ -13,8 +13,6 @@ export const metadata: Metadata = {
 		"Essays, reflections, poetry notes, and bookish posts from InkedByYashie.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default async function BlogPage() {
 	const content = await getYashieContent();
 

@@ -18,8 +18,6 @@ type DetailParams = {
 	params: Promise<{ slug: string }>;
 };
 
-export const dynamic = "force-dynamic";
-
 export function generateStaticParams() {
 	return blogPosts.map((post) => ({
 		slug: slugify(post.title),

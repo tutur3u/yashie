@@ -7,6 +7,7 @@ import { YashieAdminLoginPanel } from "@/components/admin/YashieAdminLoginPanel"
 import { YashieAdminSessionRestorer } from "@/components/admin/YashieAdminSessionRestorer";
 import { getYashieCentralizedLoginHref } from "./login-link";
 import {
+  needsYashieStarterContent,
   readYashieAdminContent,
   type YashieAdminStudioPayload,
 } from "@/lib/yashie-admin-content-model";
@@ -25,7 +26,7 @@ import { isYashieNavTabVisible } from "@/lib/yashie-navigation-access";
 import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
 import { getYashieStorageFiles } from "@/lib/yashie-storage-files";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Yashie Dashboard",
@@ -102,11 +103,12 @@ async function AuthenticatedAdminDashboard({
     gallery: readYashieAdminContent(studio, "gallery"),
     shop: readYashieAdminContent(studio, "shop"),
   };
+  const hasPublicFallbackCollection = needsYashieStarterContent(initialContent);
 
   return (
     <YashieAdminDashboard
       initialContent={initialContent}
-      initialNeedsImport={studio.entries.length === 0}
+      initialNeedsImport={hasPublicFallbackCollection}
       initialSiteSettings={readYashieAdminSiteSettings(studio)}
       driveHref={buildYashieDriveUrl()}
       membersHref={buildYashieWorkspaceUrl({ targetKey: "members" })}

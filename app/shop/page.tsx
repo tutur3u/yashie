@@ -11,8 +11,6 @@ export const metadata: Metadata = {
 		"Shop for signed books, stationery, bookmarks, art prints, and author merch from InkedByYashie.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default async function ShopPage() {
 	const content = await getYashieContent();
 

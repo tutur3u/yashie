@@ -13,8 +13,6 @@ export const metadata: Metadata = {
 		"Mock contact page for Yashoda U. Itwaru, also known as InkedByYashie.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default async function ContactPage() {
 	const content = await getYashieContent();
 	const { author, socials } = content;

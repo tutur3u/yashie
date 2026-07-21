@@ -44,6 +44,17 @@ export type YashieAdminContentItem = {
   type: string;
 };
 
+type YashiePublicContentCollections = Pick<
+  Record<YashieAdminCollectionKey, readonly unknown[]>,
+  "blog" | "gallery" | "shop" | "worlds"
+>;
+
+export function needsYashieStarterContent(
+  content: YashiePublicContentCollections,
+) {
+  return Object.values(content).some((items) => items.length === 0);
+}
+
 export type YashieContentMutationInput = {
   body: string;
   category: string;

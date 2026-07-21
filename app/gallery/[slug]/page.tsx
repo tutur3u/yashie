@@ -17,8 +17,6 @@ type DetailParams = {
 	params: Promise<{ slug: string }>;
 };
 
-export const dynamic = "force-dynamic";
-
 export function generateStaticParams() {
 	return galleryItems.map((item) => ({
 		slug: slugify(item.title),

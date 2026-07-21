@@ -17,8 +17,6 @@ export const metadata: Metadata = {
 		"Gallery of book worlds, journals, poetry collections, and personal writing from InkedByYashie.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default async function GalleryPage() {
 	const content = await getYashieContent();
 

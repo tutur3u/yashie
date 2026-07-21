@@ -5,8 +5,6 @@ import {
 } from "@/lib/yashie-admin-api";
 import { getYashieApiBaseUrl, getYashieWorkspaceId } from "@/lib/yashie-config";
 
-export const dynamic = "force-dynamic";
-
 function getPlatformStorageUrl(request: Request) {
   const incomingUrl = new URL(request.url);
   const apiBaseUrl = getYashieApiBaseUrl().replace(/\/+$/, "");

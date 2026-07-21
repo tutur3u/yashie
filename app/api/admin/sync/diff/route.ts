@@ -4,8 +4,6 @@ import { yashieExternalProjectManifest } from "@/lib/yashie-external-project-man
 import { getYashieSessionFromCookies } from "@/lib/yashie-session";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-
 async function readApiError(response: Response) {
   const fallback = `Tuturuuu sync diff failed with status ${response.status}`;
   const data = (await response.json().catch(() => null)) as { error?: unknown } | null;

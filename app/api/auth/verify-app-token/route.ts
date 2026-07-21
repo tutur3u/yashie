@@ -6,8 +6,6 @@ import {
 } from "@/lib/yashie-session";
 import { type NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-
 class TokenExchangeError extends Error {
   constructor(
     message: string,

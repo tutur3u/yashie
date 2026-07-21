@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
 import {
   buildYashieContent,
@@ -8,16 +8,18 @@ import {
 import { getOptionalYashieWorkspaceId, getYashieApiBaseUrl } from "./yashie-config";
 import { YASHIE_DELIVERY_CACHE_TAG } from "./yashie-cache";
 
-const DELIVERY_REVALIDATE_SECONDS = 60;
+async function getCachedDeliveryPayload(
+  workspaceId: string,
+  apiBaseUrl: string,
+) {
+  "use cache";
+  cacheLife({ stale: 60, revalidate: 60, expire: 60 * 60 });
+  cacheTag(YASHIE_DELIVERY_CACHE_TAG);
 
-async function fetchDeliveryPayload(workspaceId: string, apiBaseUrl: string) {
   const response = await fetch(
     `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,
     )}/external-projects/delivery`,
-    {
-      cache: "no-store",
-    },
   );
 
   if (!response.ok) {
@@ -29,15 +31,6 @@ async function fetchDeliveryPayload(workspaceId: string, apiBaseUrl: string) {
     delivery: (await response.json()) as YashieDeliveryPayload,
   };
 }
-
-const getCachedDeliveryPayload = unstable_cache(
-  fetchDeliveryPayload,
-  [YASHIE_DELIVERY_CACHE_TAG],
-  {
-    revalidate: DELIVERY_REVALIDATE_SECONDS,
-    tags: [YASHIE_DELIVERY_CACHE_TAG],
-  },
-);
 
 export async function getUncachedYashieContent() {
   try {

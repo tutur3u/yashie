@@ -27,7 +27,10 @@ import type {
   YashieAdminMember,
   YashieAdminMembersContext,
 } from "@/lib/yashie-admin-members";
-import { slugifyYashieContent } from "@/lib/yashie-admin-content-model";
+import {
+  needsYashieStarterContent,
+  slugifyYashieContent,
+} from "@/lib/yashie-admin-content-model";
 import type { YashieStorageAnalyticsState } from "@/lib/yashie-storage-analytics";
 import type {
   YashieStorageFileItem,
@@ -3163,6 +3166,7 @@ export function YashieAdminDashboard({
     );
 
     setContent(nextContent);
+    setNeedsImport(needsYashieStarterContent(nextContent));
     setSelectedIds((current) => {
       const next = { ...current };
 
@@ -3212,7 +3216,6 @@ export function YashieAdminDashboard({
       }
 
       await Promise.all([refreshContent(), refreshSiteSettings()]);
-      setNeedsImport(false);
       toast.success(YASHIE_ADMIN_COPY.importSeed.success);
     } catch {
       toast.error(YASHIE_ADMIN_COPY.errors.importSeed);
