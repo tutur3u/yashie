@@ -112,9 +112,12 @@ type ManifestRequestPayload = {
   };
 };
 
-function createRequest(force = false) {
+function createRequest({
+  force = false,
+  uploadAssets = false,
+}: { force?: boolean; uploadAssets?: boolean } = {}) {
   return new Request("http://localhost/api/admin/sync/apply", {
-    body: JSON.stringify({ force }),
+    body: JSON.stringify({ force, uploadAssets }),
     headers: {
       "Content-Type": "application/json",
     },
@@ -219,9 +222,23 @@ describe("Yashie admin sync apply route", () => {
     delete process.env.YASHIE_APP_URL;
   });
 
-  test("normalizes and fetches public folder assets before setup and apply", async () => {
+  test("restores linked starter content without re-uploading media by default", async () => {
     const calls = createMockFetch();
     const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    expect(findCall(calls, "/missing-from-serverless-fs.svg")).toBeUndefined();
+    expect(findCall(calls, "/external-projects/assets/upload-url")).toBeUndefined();
+
+    const applyBody = parseBody(findCall(calls, "/external-projects/sync/apply"));
+    expect(applyBody.manifest.content.entries[0]?.assets?.[0]?.storagePath).toBe(
+      "external-projects/yashie/profile/profile/missing-from-serverless-fs.svg",
+    );
+  });
+
+  test("normalizes and uploads public folder assets during the first import", async () => {
+    const calls = createMockFetch();
+    const response = await POST(createRequest({ uploadAssets: true }));
 
     expect(response.status).toBe(200);
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout");

@@ -106,15 +106,16 @@ export const YASHIE_ADMIN_COPY = {
     unavailable: "Team members are not available right now.",
   },
   publish: {
-    check: "Check for changes",
+    check: "Review starter content",
     description:
-      "Review what changed, then share the latest version with visitors.",
-    done: "Your website is up to date.",
-    force: "Share anyway",
-    pending: "changes ready",
-    push: "Share latest version",
-    title: "Publish",
-    warning: "Some changes need one more confirmation.",
+      "Save once in the editor and visitors receive the update automatically. No extra publish step is required.",
+    done: "All starter content is already present.",
+    force: "Restore anyway",
+    pending: "starter changes available",
+    push: "Restore starter content",
+    title: "Site status",
+    warning:
+      "Restoring would also replace or remove existing content. Review carefully before continuing.",
   },
   storage: {
     back: "Back",
@@ -158,7 +159,7 @@ export const YASHIE_ADMIN_COPY = {
     categories: "Categories",
     gallery: "Gallery",
     members: "Members",
-    publish: "Publish",
+    publish: "Site status",
     profile: "Profile & Links",
     shop: "Shop",
     storage: "Storage",

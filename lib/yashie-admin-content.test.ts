@@ -6,9 +6,11 @@ import type {
 } from "./yashie-admin-content-model";
 
 const revalidatePath = mock(() => undefined);
+const revalidateTag = mock(() => undefined);
 
 mock.module("next/cache", () => ({
   revalidatePath,
+  revalidateTag,
 }));
 
 const {
@@ -205,6 +207,7 @@ class FakeCrudClient implements CrudClient {
 describe("Yashie admin content mutations", () => {
   beforeEach(() => {
     revalidatePath.mockClear();
+    revalidateTag.mockClear();
   });
 
   test("creates, updates, saves visibility, and deletes every dashboard collection", async () => {
@@ -268,6 +271,7 @@ describe("Yashie admin content mutations", () => {
       );
       expect(client.calls.publishEntry).toEqual([]);
 
+      const studioReadsBeforeDelete = client.calls.getStudio.length;
       const deleted = await deleteYashieContentItem(
         client,
         "workspace-1",
@@ -277,6 +281,8 @@ describe("Yashie admin content mutations", () => {
 
       expect(deleted.items).toEqual([]);
       expect(client.calls.deleteEntry).toContain(entryId);
+      expect(client.calls.deleteAsset).toEqual([]);
+      expect(client.calls.getStudio).toHaveLength(studioReadsBeforeDelete + 1);
     }
   });
 

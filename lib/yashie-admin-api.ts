@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { ExternalProjectsClient } from "tuturuuu/external-projects";
 import {
   linkPublicFolderAssets,
@@ -11,6 +11,7 @@ import {
   getYashieSessionReadStateFromCookies,
 } from "./yashie-session";
 import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
+import { YASHIE_DELIVERY_CACHE_TAG } from "./yashie-cache";
 
 export function createYashieExternalProjectsClient(accessToken: string) {
   const apiBaseUrl = getYashieApiBaseUrl();
@@ -74,12 +75,24 @@ export async function getYashieAdminSessionReadState() {
 }
 
 export async function getYashieAdminStudio(accessToken: string) {
-  await setupYashieAdminStudio(accessToken);
   const client = createYashieExternalProjectsClient(accessToken);
-  return client.getStudio(getYashieWorkspaceId()) as Promise<YashieAdminStudioPayload>;
+  const workspaceId = getYashieWorkspaceId();
+  try {
+    const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+
+    if (studio.collections.length > 0) {
+      return studio;
+    }
+  } catch {
+    // First-time sites do not have an external-project binding yet.
+  }
+
+  await setupYashieAdminStudio(accessToken);
+  return client.getStudio(workspaceId) as Promise<YashieAdminStudioPayload>;
 }
 
 export function revalidateYashieContent() {
+  revalidateTag(YASHIE_DELIVERY_CACHE_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   revalidatePath("/admin");
   revalidatePath("/admin/login");

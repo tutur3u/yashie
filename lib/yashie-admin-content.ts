@@ -460,12 +460,15 @@ export async function deleteYashieContentItem(
     throw new Error("Item not found.");
   }
 
-  if (current.imageAssetId) {
-    await client.deleteAsset(workspaceId, current.imageAssetId);
-  }
-
   await client.deleteEntry(workspaceId, entryId);
-  return finalizeMutation(client, workspaceId, collectionKey, null);
+  revalidateYashieContent();
+
+  return {
+    item: null,
+    items: readYashieAdminContent(studio, collectionKey).filter(
+      (contentItem) => contentItem.id !== entryId,
+    ),
+  };
 }
 
 export async function refreshYashieAdminContent(
@@ -475,6 +478,5 @@ export async function refreshYashieAdminContent(
   const workspaceId = getYashieWorkspaceId();
   const client = createYashieExternalProjectsClient(accessToken);
   const studio = await client.getStudio(workspaceId);
-  revalidateYashieContent();
   return readYashieAdminContent(studio as YashieAdminStudioPayload, collectionKey);
 }

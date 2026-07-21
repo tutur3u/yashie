@@ -3198,7 +3198,7 @@ export function YashieAdminDashboard({
 
     try {
       const response = await adminFetch("/api/admin/sync/apply", {
-        body: JSON.stringify({ force: false }),
+        body: JSON.stringify({ force: false, uploadAssets: true }),
         cache: "no-store",
         headers: {
           Accept: "application/json",

@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import {
   buildYashieContent,
@@ -5,26 +6,17 @@ import {
   type YashieDeliveryPayload,
 } from "./yashie-content";
 import { getOptionalYashieWorkspaceId, getYashieApiBaseUrl } from "./yashie-config";
+import { YASHIE_DELIVERY_CACHE_TAG } from "./yashie-cache";
 
 const DELIVERY_REVALIDATE_SECONDS = 60;
 
-async function fetchDeliveryPayload() {
-  const workspaceId = getOptionalYashieWorkspaceId();
-
-  if (!workspaceId) {
-    return null;
-  }
-
-  const apiBaseUrl = getYashieApiBaseUrl();
+async function fetchDeliveryPayload(workspaceId: string, apiBaseUrl: string) {
   const response = await fetch(
     `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,
     )}/external-projects/delivery`,
     {
-      cache: "force-cache",
-      next: {
-        revalidate: DELIVERY_REVALIDATE_SECONDS,
-      },
+      cache: "no-store",
     },
   );
 
@@ -38,13 +30,24 @@ async function fetchDeliveryPayload() {
   };
 }
 
+const getCachedDeliveryPayload = unstable_cache(
+  fetchDeliveryPayload,
+  [YASHIE_DELIVERY_CACHE_TAG],
+  {
+    revalidate: DELIVERY_REVALIDATE_SECONDS,
+    tags: [YASHIE_DELIVERY_CACHE_TAG],
+  },
+);
+
 export async function getUncachedYashieContent() {
   try {
-    const payload = await fetchDeliveryPayload();
+    const workspaceId = getOptionalYashieWorkspaceId();
 
-    if (!payload) {
+    if (!workspaceId) {
       return DEFAULT_YASHIE_CONTENT;
     }
+
+    const payload = await getCachedDeliveryPayload(workspaceId, getYashieApiBaseUrl());
 
     return buildYashieContent(payload.delivery, {
       apiBaseUrl: payload.apiBaseUrl,

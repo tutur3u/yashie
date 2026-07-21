@@ -58,9 +58,11 @@ type SyncPublicFolderAssetsInput<Manifest extends PublicManifest> = {
 	accessToken: string;
 	apiBaseUrl: string;
 	appBaseUrl?: string;
+	concurrency?: number;
 	fetch?: typeof fetch;
 	manifest: Manifest;
 	publicDir?: string;
+	requestTimeoutMs?: number;
 	tokenType?: string;
 	upsert?: boolean;
 	workspaceId: string;
@@ -74,10 +76,14 @@ type UploadExternalProjectAssetFileInput = {
 	fetch?: typeof fetch;
 	file: Blob;
 	filename: string;
+	requestTimeoutMs?: number;
 	tokenType?: string;
 	upsert?: boolean;
 	workspaceId: string;
 };
+
+const DEFAULT_ASSET_CONCURRENCY = 4;
+const DEFAULT_REQUEST_TIMEOUT_MS = 45_000;
 
 const CONTENT_TYPES: Record<string, string> = {
 	".gif": "image/gif",
@@ -205,11 +211,13 @@ async function readPublicAsset({
 	fetchImpl,
 	publicDir,
 	publicPath,
+	requestTimeoutMs,
 }: {
 	appBaseUrl?: string;
 	fetchImpl: typeof fetch;
 	publicDir: string;
 	publicPath: string;
+	requestTimeoutMs: number;
 }) {
 	try {
 		const file = await readFile(/* turbopackIgnore: true */ resolvePublicFilePath(publicDir, publicPath));
@@ -225,7 +233,10 @@ async function readPublicAsset({
 	}
 
 	const assetUrl = new URL(publicPath, appBaseUrl).toString();
-	const response = await fetchImpl(assetUrl, { cache: "no-store" }).catch(() => null);
+	const response = await fetchImpl(assetUrl, {
+		cache: "no-store",
+		signal: AbortSignal.timeout(requestTimeoutMs),
+	}).catch(() => null);
 
 	if (!response?.ok) {
 		return null;
@@ -274,6 +285,7 @@ export async function uploadExternalProjectAssetFile({
 	fetch: fetchImpl = fetch,
 	file,
 	filename,
+	requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
 	tokenType = "Bearer",
 	upsert = true,
 	workspaceId,
@@ -298,6 +310,7 @@ export async function uploadExternalProjectAssetFile({
 				"Content-Type": "application/json",
 			},
 			method: "POST",
+			signal: AbortSignal.timeout(requestTimeoutMs),
 		},
 	);
 
@@ -323,6 +336,7 @@ export async function uploadExternalProjectAssetFile({
 		cache: "no-store",
 		headers,
 		method: "PUT",
+		signal: AbortSignal.timeout(requestTimeoutMs),
 	});
 
 	if (!uploadResponse.ok) {
@@ -334,6 +348,7 @@ export async function uploadExternalProjectAssetFile({
 			cache: "no-store",
 			headers: fallbackHeaders,
 			method: "PUT",
+			signal: AbortSignal.timeout(requestTimeoutMs),
 		});
 	}
 
@@ -356,62 +371,94 @@ export async function syncPublicFolderAssets<Manifest extends PublicManifest>({
 	accessToken,
 	apiBaseUrl,
 	appBaseUrl,
+	concurrency = DEFAULT_ASSET_CONCURRENCY,
 	fetch: fetchImpl = fetch,
 	manifest: manifestInput,
 	publicDir = resolve(/* turbopackIgnore: true */ process.cwd(), "public"),
+	requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
 	tokenType = "Bearer",
 	upsert = true,
 	workspaceId,
 }: SyncPublicFolderAssetsInput<Manifest>): Promise<PublicFolderSyncResult<Manifest>> {
 	const manifest = linkPublicFolderAssets(manifestInput);
-	const uploaded: PublicFolderAssetUpload[] = [];
-	const skipped: PublicFolderAssetUpload[] = [];
+	const assetUploads = getPublicAssetUploads(manifest);
+	const results = new Array<
+		| { kind: "skipped"; upload: PublicFolderAssetUpload }
+		| { kind: "uploaded"; upload: PublicFolderAssetUpload }
+	>(assetUploads.length);
+	const workerCount = Math.max(
+		1,
+		Math.min(Math.floor(concurrency), assetUploads.length || 1),
+	);
+	let nextIndex = 0;
 
-	for (const { asset, entry, publicPath } of getPublicAssetUploads(manifest)) {
-		const upload = {
-			collectionSlug: entry.collectionSlug,
-			entrySlug: entry.slug,
-			filename: basename(publicPath),
-			publicPath,
-			stableSourceId: asset.stableSourceId ?? null,
-			storagePath:
-				asset.storagePath ??
-				getPublicAssetStoragePath({
-					adapter: manifest.adapter,
-					collectionSlug: entry.collectionSlug,
-					entrySlug: entry.slug,
-					publicPath,
-				}),
-		} satisfies PublicFolderAssetUpload;
+	async function worker() {
+		while (nextIndex < assetUploads.length) {
+			const index = nextIndex++;
+			const item = assetUploads[index];
 
-		const source = await readPublicAsset({
-			appBaseUrl,
-			fetchImpl,
-			publicDir,
-			publicPath,
-		});
+			if (!item) continue;
 
-		if (!source) {
-			skipped.push(upload);
-			continue;
+			const { asset, entry, publicPath } = item;
+			const upload = {
+				collectionSlug: entry.collectionSlug,
+				entrySlug: entry.slug,
+				filename: basename(publicPath),
+				publicPath,
+				stableSourceId: asset.stableSourceId ?? null,
+				storagePath:
+					asset.storagePath ??
+					getPublicAssetStoragePath({
+						adapter: manifest.adapter,
+						collectionSlug: entry.collectionSlug,
+						entrySlug: entry.slug,
+						publicPath,
+					}),
+			} satisfies PublicFolderAssetUpload;
+
+			const source = await readPublicAsset({
+				appBaseUrl,
+				fetchImpl,
+				publicDir,
+				publicPath,
+				requestTimeoutMs,
+			});
+
+			if (!source) {
+				results[index] = { kind: "skipped", upload };
+				continue;
+			}
+
+			const result = await uploadExternalProjectAssetFile({
+				accessToken,
+				apiBaseUrl,
+				collectionType: entry.collectionSlug,
+				entrySlug: entry.slug,
+				fetch: fetchImpl,
+				file: new Blob([source.value], { type: source.contentType }),
+				filename: upload.filename,
+				requestTimeoutMs,
+				tokenType,
+				upsert,
+				workspaceId,
+			});
+
+			asset.storagePath = result.path;
+			results[index] = {
+				kind: "uploaded",
+				upload: { ...upload, storagePath: result.path },
+			};
 		}
-
-		const result = await uploadExternalProjectAssetFile({
-			accessToken,
-			apiBaseUrl,
-			collectionType: entry.collectionSlug,
-			entrySlug: entry.slug,
-			fetch: fetchImpl,
-			file: new Blob([source.value], { type: source.contentType }),
-			filename: upload.filename,
-			tokenType,
-			upsert,
-			workspaceId,
-		});
-
-		asset.storagePath = result.path;
-		uploaded.push({ ...upload, storagePath: result.path });
 	}
+
+	await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+	const uploaded = results
+		.filter((result) => result?.kind === "uploaded")
+		.map((result) => result.upload);
+	const skipped = results
+		.filter((result) => result?.kind === "skipped")
+		.map((result) => result.upload);
 
 	return { manifest, skipped, uploaded };
 }

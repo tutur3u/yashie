@@ -5,9 +5,11 @@ import type { YashieAdminSiteSettingsInput } from "./yashie-admin-site-settings"
 const originalWorkspaceId = process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
 const originalFetch = globalThis.fetch;
 const revalidatePath = mock(() => undefined);
+const revalidateTag = mock(() => undefined);
 
 mock.module("next/cache", () => ({
   revalidatePath,
+  revalidateTag,
 }));
 
 mock.module("tuturuuu/external-projects", () => ({

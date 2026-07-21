@@ -1,7 +1,6 @@
 import {
   createYashieExternalProjectsClient,
   getYashieAdminSession,
-  setupYashieAdminStudio,
 } from "@/lib/yashie-admin-api";
 import { createYashieContentItem, refreshYashieAdminContent } from "@/lib/yashie-admin-content";
 import { createYashieContentMutationStream } from "@/lib/yashie-admin-content-stream";
@@ -40,7 +39,6 @@ export async function GET(
   }
 
   try {
-    await setupYashieAdminStudio(session.accessToken);
     return NextResponse.json({
       items: await refreshYashieAdminContent(session.accessToken, collectionKey),
     });
