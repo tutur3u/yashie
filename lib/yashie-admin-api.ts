@@ -1,4 +1,9 @@
-import { revalidatePath, revalidateTag } from "next/cache";
+import {
+  cacheLife,
+  cacheTag,
+  revalidatePath,
+  revalidateTag,
+} from "next/cache";
 import { ExternalProjectsClient } from "tuturuuu/external-projects";
 import {
   linkPublicFolderAssets,
@@ -8,10 +13,13 @@ import { getYashieApiBaseUrl, getYashieWorkspaceId } from "./yashie-config";
 import { yashieExternalProjectManifest } from "./yashie-external-project-manifest";
 import {
   getYashieSessionFromCookies,
+  getYashiePageSessionReadStateFromCookies,
   getYashieSessionReadStateFromCookies,
 } from "./yashie-session";
 import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
 import { YASHIE_DELIVERY_CACHE_TAG } from "./yashie-cache";
+import { getYashieStorageAnalytics } from "./yashie-storage-analytics";
+import { getYashieStorageFiles } from "./yashie-storage-files";
 
 export function createYashieExternalProjectsClient(accessToken: string) {
   const apiBaseUrl = getYashieApiBaseUrl();
@@ -74,6 +82,10 @@ export async function getYashieAdminSessionReadState() {
   return getYashieSessionReadStateFromCookies();
 }
 
+export async function getYashieAdminPageSessionReadState() {
+  return getYashiePageSessionReadStateFromCookies();
+}
+
 export async function getYashieAdminStudio(accessToken: string) {
   const client = createYashieExternalProjectsClient(accessToken);
   const workspaceId = getYashieWorkspaceId();
@@ -91,7 +103,34 @@ export async function getYashieAdminStudio(accessToken: string) {
   return client.getStudio(workspaceId) as Promise<YashieAdminStudioPayload>;
 }
 
+const YASHIE_ADMIN_SNAPSHOT_CACHE_TAG = "yashie-admin-snapshot";
+
+function emptyStudio(): YashieAdminStudioPayload {
+  return {
+    assets: [],
+    blocks: [],
+    collections: [],
+    entries: [],
+  };
+}
+
+export async function getYashieAdminDashboardSnapshot(accessToken: string) {
+  "use cache";
+
+  cacheLife({ expire: 300, revalidate: 30, stale: 30 });
+  cacheTag(YASHIE_ADMIN_SNAPSHOT_CACHE_TAG);
+
+  const [studio, storageAnalytics, storageFiles] = await Promise.all([
+    getYashieAdminStudio(accessToken).catch(() => emptyStudio()),
+    getYashieStorageAnalytics(accessToken),
+    getYashieStorageFiles(accessToken),
+  ]);
+
+  return { storageAnalytics, storageFiles, studio };
+}
+
 export function revalidateYashieContent() {
+  revalidateTag(YASHIE_ADMIN_SNAPSHOT_CACHE_TAG, { expire: 0 });
   revalidateTag(YASHIE_DELIVERY_CACHE_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   revalidatePath("/admin");

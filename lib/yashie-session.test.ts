@@ -119,6 +119,26 @@ describe("yashie session validation", () => {
     });
   });
 
+  test("reads a current sealed page session without a validation request", async () => {
+    const { getYashiePageSessionReadStateFromCookies, setYashieSessionCookie } =
+      await import("./yashie-session");
+    const response = NextResponse.json({});
+    setYashieSessionCookie(response, createSession());
+    sessionCookieValue = readSessionCookieValue(response);
+
+    const calls: Array<{ init?: RequestInit; input: RequestInfo | URL }> = [];
+    globalThis.fetch = (async (input, init) => {
+      calls.push({ init, input });
+      return Response.json({ ok: true });
+    }) as typeof fetch;
+
+    await expect(getYashiePageSessionReadStateFromCookies()).resolves.toMatchObject({
+      session: { accessToken: "app-token" },
+      status: "authenticated",
+    });
+    expect(calls).toHaveLength(0);
+  });
+
   test("reports expired access with a valid refresh token as refreshable", async () => {
     const { getYashieSessionReadStateFromCookies, setYashieSessionCookie } =
       await import("./yashie-session");

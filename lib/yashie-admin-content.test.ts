@@ -9,6 +9,8 @@ const revalidatePath = mock(() => undefined);
 const revalidateTag = mock(() => undefined);
 
 mock.module("next/cache", () => ({
+  cacheLife: () => undefined,
+  cacheTag: () => undefined,
   revalidatePath,
   revalidateTag,
 }));

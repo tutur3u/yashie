@@ -82,7 +82,10 @@ mock.module("@/lib/yashie-session", () => ({
 }));
 
 mock.module("next/cache", () => ({
+  cacheLife: () => undefined,
+  cacheTag: () => undefined,
   revalidatePath,
+  revalidateTag: () => undefined,
 }));
 
 const { POST } = await import("./route");

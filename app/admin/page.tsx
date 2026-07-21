@@ -10,7 +10,6 @@ import { getYashieCentralizedLoginHref } from "./login-link";
 import {
   needsYashieStarterContent,
   readYashieAdminContent,
-  type YashieAdminStudioPayload,
 } from "@/lib/yashie-admin-content-model";
 import { readYashieAdminSiteSettings } from "@/lib/yashie-admin-site-settings";
 import {
@@ -20,13 +19,11 @@ import {
   resolveYashieAdminTargetKey,
 } from "@/lib/yashie-config";
 import {
-  getYashieAdminSessionReadState,
-  getYashieAdminStudio,
+  getYashieAdminDashboardSnapshot,
+  getYashieAdminPageSessionReadState,
 } from "@/lib/yashie-admin-api";
 import { getYashieContent } from "@/lib/yashie-delivery";
 import { isYashieNavTabVisible } from "@/lib/yashie-navigation-access";
-import { getYashieStorageAnalytics } from "@/lib/yashie-storage-analytics";
-import { getYashieStorageFiles } from "@/lib/yashie-storage-files";
 
 export const metadata: Metadata = {
   title: "Yashie Dashboard",
@@ -34,18 +31,9 @@ export const metadata: Metadata = {
 };
 
 type AuthenticatedYashieAdminSession = Extract<
-  Awaited<ReturnType<typeof getYashieAdminSessionReadState>>,
+  Awaited<ReturnType<typeof getYashieAdminPageSessionReadState>>,
   { status: "authenticated" }
 >["session"];
-
-function emptyStudio(): YashieAdminStudioPayload {
-  return {
-    assets: [],
-    blocks: [],
-    collections: [],
-    entries: [],
-  };
-}
 
 export default function AdminPage({
   searchParams,
@@ -70,24 +58,23 @@ async function YashieAdminContent({
   const activeTarget = resolveYashieAdminTargetKey(
     resolvedSearchParams?.target,
   );
-  const [content, loginHref, sessionState] = await Promise.all([
-    getYashieContent(),
-    getYashieCentralizedLoginHref(activeTarget),
-    getYashieAdminSessionReadState(),
-  ]);
-
-  if (
-    !isYashieNavTabVisible(content, "login") &&
-    sessionState.status === "unauthenticated"
-  ) {
-    notFound();
-  }
+  const sessionState = await getYashieAdminPageSessionReadState();
 
   if (sessionState.status === "unauthenticated") {
+    const [content, loginHref] = await Promise.all([
+      getYashieContent(),
+      getYashieCentralizedLoginHref(activeTarget),
+    ]);
+
+    if (!isYashieNavTabVisible(content, "login")) {
+      notFound();
+    }
+
     return <YashieAdminLoginPanel loginHref={loginHref} />;
   }
 
   if (sessionState.status === "refreshable") {
+    const loginHref = await getYashieCentralizedLoginHref(activeTarget);
     return <YashieAdminSessionRestorer loginHref={loginHref} />;
   }
 
@@ -101,11 +88,8 @@ async function AuthenticatedAdminDashboard({
 }: {
   session: AuthenticatedYashieAdminSession;
 }) {
-  const [studio, storageAnalytics, storageFiles] = await Promise.all([
-    getYashieAdminStudio(session.accessToken).catch(() => emptyStudio()),
-    getYashieStorageAnalytics(session.accessToken),
-    getYashieStorageFiles(session.accessToken),
-  ]);
+  const { studio, storageAnalytics, storageFiles } =
+    await getYashieAdminDashboardSnapshot(session.accessToken);
   const initialContent = {
     worlds: readYashieAdminContent(studio, "worlds"),
     categories: readYashieAdminContent(studio, "categories"),

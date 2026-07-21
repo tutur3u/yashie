@@ -326,6 +326,22 @@ export async function getYashieSessionReadStateFromCookies(): Promise<YashieSess
     : { session: null, status: "unauthenticated" };
 }
 
+export async function getYashiePageSessionReadStateFromCookies(): Promise<YashieSessionReadState> {
+  const session = await getStoredYashieSession();
+
+  if (!session) {
+    return { session: null, status: "unauthenticated" };
+  }
+
+  if (isAccessTokenCurrent(session)) {
+    return { session, status: "authenticated" };
+  }
+
+  return isRefreshTokenCurrent(session)
+    ? { session, status: "refreshable" }
+    : { session: null, status: "unauthenticated" };
+}
+
 export async function getYashieSessionFromCookies() {
   const state = await getYashieSessionReadStateFromCookies();
   return state.status === "authenticated" ? state.session : null;
