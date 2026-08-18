@@ -428,4 +428,37 @@ describe("Yashie public content", () => {
 
     expect(content.socials).toEqual([]);
   });
+
+  test("keeps public content collections empty after their last entries are removed", () => {
+    const content = buildYashieContent(
+      {
+        adapter: "yashie",
+        canonicalProjectId: "yashie",
+        collections: [
+          "blog-posts",
+          "gallery",
+          "shop-products",
+          "writing-worlds",
+        ].map((slug) => ({
+          collection_type: slug,
+          config: null,
+          description: null,
+          entries: [],
+          id: `collection-${slug}`,
+          slug,
+          title: slug,
+        })),
+        generatedAt: new Date("2026-08-18").toISOString(),
+        loadingData: null,
+        profileData: {},
+        workspaceId: "workspace-1",
+      },
+      { apiBaseUrl: "https://platform.example.com/api/v1" },
+    );
+
+    expect(content.blogPosts).toEqual([]);
+    expect(content.galleryItems).toEqual([]);
+    expect(content.products).toEqual([]);
+    expect(content.worlds).toEqual([]);
+  });
 });

@@ -326,7 +326,7 @@ function buildBlogPosts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
     };
   });
 
-  return mapped.length > 0 ? mapped : blogPosts;
+  return mapped;
 }
 
 function buildGalleryItems(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
@@ -346,7 +346,7 @@ function buildGalleryItems(delivery: YashieDeliveryPayload, apiBaseUrl: string) 
     };
   });
 
-  return mapped.length > 0 ? mapped : galleryItems;
+  return mapped;
 }
 
 function buildProducts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
@@ -366,7 +366,7 @@ function buildProducts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
     };
   });
 
-  return mapped.length > 0 ? mapped : products;
+  return mapped;
 }
 
 function buildWorlds(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
@@ -390,7 +390,7 @@ function buildWorlds(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
     },
   );
 
-  return mapped.length > 0 ? mapped : worlds;
+  return mapped;
 }
 
 export function buildYashieContent(
