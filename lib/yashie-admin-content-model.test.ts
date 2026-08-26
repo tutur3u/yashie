@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import {
-  needsYashieStarterContent,
   parseYashieContentFormData,
   readYashieAdminContent,
   resolveYashieAdminCollectionKey,
@@ -135,26 +134,6 @@ const studio = {
 } satisfies YashieAdminStudioPayload;
 
 describe("Yashie admin content model", () => {
-  test("detects public collections that are still using landing-page fallback content", () => {
-    expect(
-      needsYashieStarterContent({
-        blog: [{}],
-        gallery: [{}],
-        shop: [{}],
-        worlds: [{}],
-      }),
-    ).toBe(false);
-
-    expect(
-      needsYashieStarterContent({
-        blog: [],
-        gallery: [{}],
-        shop: [{}],
-        worlds: [{}],
-      }),
-    ).toBe(true);
-  });
-
   test("resolves dashboard keys and CMS collection slugs", () => {
     expect(resolveYashieAdminCollectionKey("worlds")).toBe("worlds");
     expect(resolveYashieAdminCollectionKey("writing-worlds")).toBe("worlds");

@@ -2,6 +2,7 @@ import type { ExternalProjectsClient } from "tuturuuu/external-projects";
 import {
   author,
   navigationTabs,
+  profileFacts,
   socials,
   socialPlatformOptions,
   type NavTabKey,
@@ -111,6 +112,8 @@ export type YashieAdminProfileSettings = {
   entryId: string | null;
   location: string;
   name: string;
+  profileFacts: string;
+  quote: string;
   shortName: string;
   status: YashieContentStatus;
   summary: string;
@@ -136,7 +139,11 @@ export type YashieAdminSiteSettings = {
 export type YashieAdminSiteSettingsInput = {
   navigation: Array<Pick<NavigationTab, "key" | "label" | "visible">>;
   pages: YashiePageContent;
-  profile: Omit<YashieAdminProfileSettings, "entryId">;
+  profile: Omit<
+    YashieAdminProfileSettings,
+    "entryId" | "profileFacts" | "quote"
+  > &
+    Partial<Pick<YashieAdminProfileSettings, "profileFacts" | "quote">>;
   socials: Array<
     Omit<YashieAdminSocialSettings, "id"> & { id?: string | null }
   >;
@@ -370,6 +377,12 @@ export function readYashieAdminSiteSettings(
       entryId: profileEntry ? String(profileEntry.id) : null,
       location: readString(profileData, "location") ?? author.location,
       name: readString(profileEntry ?? {}, "title") ?? author.name,
+      profileFacts: Array.isArray(profileData.profileFacts)
+        ? profileData.profileFacts
+            .filter((item): item is string => typeof item === "string")
+            .join(", ")
+        : profileFacts.join(", "),
+      quote: readString(profileData, "quote") ?? author.quote,
       shortName: readString(profileData, "shortName") ?? author.shortName,
       status: normalizeStatus(profileEntry?.status),
       summary: readString(profileEntry ?? {}, "summary") ?? author.tagline,
@@ -461,6 +474,9 @@ export function parseYashieSiteSettingsPayload(
       "profile.name",
       "Add the author name.",
     ),
+    profileFacts:
+      readOptionalString(profile.profileFacts) || profileFacts.join(", "),
+    quote: readOptionalString(profile.quote) || author.quote,
     shortName: readRequiredString(
       profile.shortName,
       errors,
@@ -773,6 +789,11 @@ function buildProfileEntryPayload(
       email: input.email,
       location: input.location,
       pageContent: pages,
+      profileFacts: (input.profileFacts ?? "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      quote: input.quote ?? author.quote,
       shortName: input.shortName,
       title: input.title,
     },
@@ -868,6 +889,11 @@ async function saveProfileSettings({
       email: input.email,
       location: input.location,
       pageContent: pages,
+      profileFacts: (input.profileFacts ?? "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      quote: input.quote ?? author.quote,
       shortName: input.shortName,
       title: input.title,
     },

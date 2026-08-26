@@ -46,6 +46,8 @@ const input: YashieAdminSiteSettingsInput = {
     email: "hello@example.com",
     location: "Everywhere",
     name: "Yashoda U. Itwaru",
+    profileFacts: "Tea, Poetry, Travel",
+    quote: "A saved featured quote.",
     shortName: "Yashie",
     status: "published",
     summary: "Profile summary.",
@@ -311,6 +313,8 @@ describe("Yashie admin site settings mutations", () => {
           payload: expect.objectContaining({
             profile_data: expect.objectContaining({
               pageContent: DEFAULT_YASHIE_PAGE_CONTENT,
+              profileFacts: ["Tea", "Poetry", "Travel"],
+              quote: "A saved featured quote.",
             }),
           }),
         }),

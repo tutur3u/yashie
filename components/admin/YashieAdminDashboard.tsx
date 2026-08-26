@@ -28,10 +28,7 @@ import type {
   YashieAdminMember,
   YashieAdminMembersContext,
 } from "@/lib/yashie-admin-members";
-import {
-  needsYashieStarterContent,
-  slugifyYashieContent,
-} from "@/lib/yashie-admin-content-model";
+import { slugifyYashieContent } from "@/lib/yashie-admin-content-model";
 import type { YashieStorageAnalyticsState } from "@/lib/yashie-storage-analytics";
 import type {
   YashieStorageFileItem,
@@ -1331,6 +1328,11 @@ const profileFieldConfigs: ProfileFieldConfig[] = [
   { label: "Brand", name: "brand", required: true },
   { label: "Short name", name: "shortName", required: true },
   { label: "Location", name: "location" },
+  { label: "Featured quote", multiline: true, name: "quote", required: true },
+  {
+    label: "Homepage interest tags (comma separated)",
+    name: "profileFacts",
+  },
   {
     label: YASHIE_ADMIN_COPY.editor.visibility,
     name: "status",
@@ -1343,8 +1345,58 @@ const profileFieldConfigs: ProfileFieldConfig[] = [
 const pageLabels: Record<YashiePageKey, string> = {
   blog: "Blog",
   contact: "Contact",
+  footer: "Footer",
   gallery: "Gallery",
+  home: "Homepage",
   shop: "Shop",
+};
+
+const pageEditorCopy: Record<
+  YashiePageKey,
+  { description: string; feature: string; intro: string; listing: string }
+> = {
+  blog: {
+    description:
+      "Edit the introduction, post-list heading, and closing editorial section. Posts stay in the Blog tab.",
+    feature: "Closing editorial section",
+    intro: "Page introduction",
+    listing: "Post collection",
+  },
+  contact: {
+    description:
+      "Edit the introduction, social-links heading, and closing contact statement.",
+    feature: "Closing statement",
+    intro: "Page introduction",
+    listing: "Social links",
+  },
+  footer: {
+    description:
+      "Edit the newsletter invitation, inbox note, and signature shown across every visitor page.",
+    feature: "Footer signature",
+    intro: "Newsletter invitation",
+    listing: "Newsletter note",
+  },
+  gallery: {
+    description:
+      "Edit the introduction, gallery heading, and writing-world section. Gallery pieces stay in the Gallery tab.",
+    feature: "Writing-world section",
+    intro: "Page introduction",
+    listing: "Gallery collection",
+  },
+  home: {
+    description:
+      "Edit the homepage welcome, writing-world heading, about section, and creative identity labels.",
+    feature: "About section",
+    intro: "Homepage welcome",
+    listing: "Writing worlds",
+  },
+  shop: {
+    description:
+      "Edit the introduction, shelf heading, and closing editorial section. Products stay in the Shop tab.",
+    feature: "Closing editorial section",
+    intro: "Page introduction",
+    listing: "Product shelf",
+  },
 };
 
 function settingsSnapshot(value: unknown) {
@@ -1725,6 +1777,7 @@ function PageContentDialog({
   submitting: boolean;
 }) {
   const [page, setPage] = useState<PageDraft>(() => structuredClone(currentPage));
+  const copy = pageEditorCopy[pageKey];
   const isDirty = !settingsEqual(page, currentPage);
   const requiredValues = [
     page.intro.title,
@@ -1751,7 +1804,7 @@ function PageContentDialog({
 
   return (
     <SettingsDialogFrame
-      description="Edit the headings and small editorial cards visitors see on this page. Shop inventory remains managed in the Shop tab."
+      description={copy.description}
       footer={
         <>
           <button
@@ -1777,7 +1830,7 @@ function PageContentDialog({
     >
       <fieldset className="grid gap-4 border border-[rgba(184,112,81,0.28)] p-4">
         <legend className="px-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-          Page introduction
+          {copy.intro}
         </legend>
         <SettingsTextField
           disabled={submitting}
@@ -1812,7 +1865,7 @@ function PageContentDialog({
           key={section}
         >
           <legend className="px-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-            {section === "listing" ? "Main collection" : "Editorial section"}
+            {section === "listing" ? copy.listing : copy.feature}
           </legend>
           <SettingsTextField
             disabled={submitting}
@@ -1840,10 +1893,10 @@ function PageContentDialog({
         </fieldset>
       ))}
 
-      {pageKey !== "gallery" ? (
+      {pageKey !== "gallery" && pageKey !== "footer" ? (
         <fieldset className="grid gap-4 border border-[rgba(184,112,81,0.28)] p-4">
           <legend className="px-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
-            Small cards
+            {pageKey === "home" ? "Creative identity" : "Small cards"}
           </legend>
           <SettingsTextField
             disabled={submitting}
@@ -2017,38 +2070,6 @@ function SocialLinkDialog({
         </div>
       </div>
     </SettingsDialogFrame>
-  );
-}
-
-function ImportSeedContentPanel({
-  importing,
-  onImport,
-}: {
-  importing: boolean;
-  onImport: () => void;
-}) {
-  return (
-    <section className="grid min-w-0 gap-4 border border-[rgba(184,112,81,0.38)] bg-white/62 p-4 sm:p-5">
-      <div className="min-w-0">
-        <p className="script-label">{YASHIE_ADMIN_COPY.publish.title}</p>
-        <h2 className="break-words font-display text-3xl leading-none text-[var(--navy)] sm:text-4xl">
-          {YASHIE_ADMIN_COPY.importSeed.title}
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--ink-soft)]">
-          {YASHIE_ADMIN_COPY.importSeed.description}
-        </p>
-      </div>
-      <button
-        className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
-        disabled={importing}
-        onClick={onImport}
-        type="button"
-      >
-        {importing
-          ? YASHIE_ADMIN_COPY.importSeed.pending
-          : YASHIE_ADMIN_COPY.importSeed.action}
-      </button>
-    </section>
   );
 }
 
@@ -2274,9 +2295,15 @@ function SiteSettingsPanel({
         <div className="grid gap-4 md:grid-cols-2">
           {YASHIE_PAGE_KEYS.map((key) => (
             <SettingSummaryCard
-              detail={`${draft.pages[key].listing.title} · ${
-                draft.pages[key].highlights.length
-              } small card${draft.pages[key].highlights.length === 1 ? "" : "s"}`}
+              detail={
+                key === "footer"
+                  ? draft.pages[key].intro.description
+                  : `${draft.pages[key].listing.title} · ${
+                      draft.pages[key].highlights.length
+                    } ${key === "home" ? "identity label" : "small card"}${
+                      draft.pages[key].highlights.length === 1 ? "" : "s"
+                    }`
+              }
               error={Object.entries(fieldErrors).find(([field]) =>
                 field.startsWith(`pages.${key}.`),
               )?.[1]}
@@ -3343,7 +3370,6 @@ export function YashieAdminDashboard({
   activeSection,
   driveHref,
   initialContent,
-  initialNeedsImport = false,
   initialSiteSettings,
   membersHref,
   sessionExpiresAt,
@@ -3355,7 +3381,6 @@ export function YashieAdminDashboard({
   activeSection: YashieAdminSection;
   driveHref: string;
   initialContent: DashboardContent;
-  initialNeedsImport?: boolean;
   initialSiteSettings: YashieAdminSiteSettings;
   membersHref: string;
   sessionExpiresAt: string;
@@ -3369,8 +3394,6 @@ export function YashieAdminDashboard({
   const [editorBusy, setEditorBusy] = useState(false);
   const [editorDirty, setEditorDirty] = useState(false);
   const [confirmEditorClose, setConfirmEditorClose] = useState(false);
-  const [importingSeed, setImportingSeed] = useState(false);
-  const [needsImport, setNeedsImport] = useState(initialNeedsImport);
   const [siteSettings, setSiteSettings] = useState(initialSiteSettings);
   const [selectedIds, setSelectedIds] = useState<
     Record<YashieAdminCollectionKey, string | null>
@@ -3428,7 +3451,6 @@ export function YashieAdminDashboard({
     );
 
     setContent(nextContent);
-    setNeedsImport(needsYashieStarterContent(nextContent));
     setSelectedIds((current) => {
       const next = { ...current };
 
@@ -3456,33 +3478,6 @@ export function YashieAdminDashboard({
 
     if (response.ok && payload.settings) {
       setSiteSettings(payload.settings);
-    }
-  };
-
-  const importSeedContent = async () => {
-    setImportingSeed(true);
-
-    try {
-      const response = await adminFetch("/api/admin/sync/apply", {
-        body: JSON.stringify({ force: false, uploadAssets: true }),
-        cache: "no-store",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error("Import failed");
-      }
-
-      await Promise.all([refreshContent(), refreshSiteSettings()]);
-      toast.success(YASHIE_ADMIN_COPY.importSeed.success);
-    } catch {
-      toast.error(YASHIE_ADMIN_COPY.errors.importSeed);
-    } finally {
-      setImportingSeed(false);
     }
   };
 
@@ -3522,12 +3517,6 @@ export function YashieAdminDashboard({
 
     return (
       <section className="grid min-w-0 gap-6">
-        {needsImport && items.length === 0 ? (
-          <ImportSeedContentPanel
-            importing={importingSeed}
-            onImport={() => void importSeedContent()}
-          />
-        ) : null}
         <ContentList
           collectionKey={collectionKey}
           items={items}

@@ -70,17 +70,8 @@ export const YASHIE_ADMIN_COPY = {
     shop: "Add the first shop item from the editor.",
     worlds: "Add the first writing world from the editor.",
   },
-  importSeed: {
-    action: "Import website content",
-    description:
-      "The public site is showing built-in website content, but this dashboard has not imported it into the editor yet.",
-    pending: "Importing...",
-    success: "Website content imported.",
-    title: "Bring the website content into this dashboard.",
-  },
   errors: {
     delete: "We could not delete this item. Please try again.",
-    importSeed: "We could not import the website content. Please try again.",
     save: "We could not save this item. Please try again.",
   },
   profile: {

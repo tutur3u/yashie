@@ -99,6 +99,7 @@ export default async function RootLayout({
 				<SiteFooter
 					author={content.author}
 					navItems={content.navItems}
+					page={content.pageContent.footer}
 					socials={content.socials}
 				/>
 				<YashieToaster />

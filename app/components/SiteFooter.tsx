@@ -7,31 +7,39 @@ export function SiteFooter({
 	author,
 	navItems,
 	socials,
+	page,
 }: {
 	author: YashieContent["author"];
 	navItems: YashieContent["navItems"];
 	socials: YashieContent["socials"];
+	page: YashieContent["pageContent"]["footer"];
 }) {
 	return (
 		<footer className="border-t border-[var(--copper)] bg-[var(--navy)] text-[var(--parchment)]">
 			<div className="edge-frame mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_1.2fr_1fr] lg:px-8">
 				<div>
-					<p className="font-display text-3xl text-[var(--gold)]">Stay in the Loop</p>
+					<p className="font-display text-3xl text-[var(--gold)]">{page.intro.title}</p>
 					<p className="mt-2 max-w-sm text-sm leading-6 text-[var(--parchment-soft)]">
-						Get essays, poems, stories, and update notes straight to your inbox.
+						{page.intro.description}
 					</p>
 				</div>
 
 				<div>
 					<NewsletterForm />
 					<p className="mt-3 text-sm italic text-[var(--parchment-soft)]">
-						No spam, just soulful letters.
+						{page.listing.title}
+					</p>
+					<p className="mt-1 text-xs text-[var(--parchment-soft)]">
+						{page.listing.description}
 					</p>
 				</div>
 
 				<div className="lg:text-right">
+					<p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--parchment-soft)]">
+						{page.feature.label}
+					</p>
 					<p className="font-display text-2xl text-[var(--gold)]">
-						Always {author.alias}
+						{page.feature.title}
 					</p>
 					<p className="mt-1 whitespace-nowrap text-xs font-bold uppercase tracking-[0.38em] text-[var(--parchment-soft)]">
 						{author.brand}
@@ -57,18 +65,7 @@ export function SiteFooter({
 				<div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<p className="flex flex-wrap items-center gap-1">
 						<span>© 2026 {author.name}.</span>
-						<span>
-							Made with ❤️ by sokora from{" "}
-							<a
-								href="https://tuturuuu.com"
-								target="_blank"
-								rel="noreferrer"
-								className="font-semibold text-[var(--gold)] underline-offset-4 hover:underline"
-							>
-								Tuturuuu
-							</a>
-							.
-						</span>
+						<span>{page.feature.description}</span>
 					</p>
 					<div className="flex flex-wrap gap-x-4 gap-y-2">
 						{navItems.slice(0, 6).map((item) => (

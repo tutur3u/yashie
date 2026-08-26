@@ -149,6 +149,7 @@ function ShopShelfItem({ product }: { product: Product }) {
 export default async function Home() {
 	const content = await getYashieContent();
 	const { author, profileFacts, socials, worlds } = content;
+	const home = content.pageContent.home;
 	const visibleTabs = getVisibleYashieNavTabs(content);
 	const showAbout = visibleTabs.has("about");
 	const showBlog = visibleTabs.has("blog");
@@ -169,28 +170,25 @@ export default async function Home() {
 				/>
 				<div className="landing-hero-content">
 					<div className="landing-hero-copy">
-						<p className="script-label">Namaste, I&apos;m Yashie</p>
+						<p className="script-label">{home.intro.title}</p>
 						<h1 id="landing-title">{author.name}</h1>
 						<p
 							className="landing-byline"
-							aria-label="Writer, Author, Storyteller"
+							aria-label={home.highlights.join(", ")}
 						>
-							<span>Writer</span>
-							<span className="landing-byline-sparkle" aria-hidden="true">
-								&#10022;
-							</span>
-							<span>Author</span>
-							<span className="landing-byline-sparkle" aria-hidden="true">
-								&#10022;
-							</span>
-							<span>Storyteller</span>
+							{home.highlights.map((item, index) => (
+								<span key={item} className="contents">
+									{index > 0 ? (
+										<span className="landing-byline-sparkle" aria-hidden="true">
+											&#10022;
+										</span>
+									) : null}
+									<span>{item}</span>
+								</span>
+							))}
 						</p>
 						<div className="landing-rule" />
-						<p className="landing-intro">
-							I write a lot: essays, reflections, books, stories, poetry,
-							blog posts, and personal writings. Through words, I explore life,
-							memory, identity, emotion, and everything in between.
-						</p>
+						<p className="landing-intro">{home.intro.description}</p>
 						{showBlog || showGallery ? (
 							<div className="landing-actions">
 								{showBlog ? (
@@ -215,9 +213,12 @@ export default async function Home() {
 				</div>
 			</section>
 
-			<section id="worlds" className="ink-manuscript-band">
+			{worlds.length > 0 ? <section id="worlds" className="ink-manuscript-band">
 				<div className="landing-container">
-					<SectionRibbon title="Explore My Worlds" label="Essays, books, poetry, posts" />
+					<SectionRibbon title={home.listing.title} label={home.listing.label} />
+					<p className="mb-6 max-w-2xl text-sm leading-6 text-[var(--parchment-soft)]">
+						{home.listing.description}
+					</p>
 					<MobileCarousel
 						label="World"
 						tone="dark"
@@ -228,15 +229,15 @@ export default async function Home() {
 						))}
 					</MobileCarousel>
 				</div>
-			</section>
+			</section> : null}
 
-			{showGallery ? (
+			{showGallery && content.galleryItems.length > 0 ? (
 				<section className="manuscript-section manuscript-section-framed">
 					<div className="landing-container">
 						<div className="manuscript-paper">
 							<div className="section-heading-line">
-								<h2>Gallery</h2>
-								<p>A peek into my books, writing, journals, and poetry</p>
+								<h2>{content.pageContent.gallery.intro.title}</h2>
+								<p>{content.pageContent.gallery.intro.description}</p>
 							</div>
 							<div className="gallery-layout">
 								<MobileCarousel
@@ -254,14 +255,14 @@ export default async function Home() {
 				</section>
 			) : null}
 
-			{showBlog ? (
+			{showBlog && content.blogPosts.length > 0 ? (
 				<section className="manuscript-section manuscript-section-blog">
 					<div className="landing-container">
 						<div className="blog-ledger">
 							<div className="blog-ledger-main">
 								<div className="section-heading-line">
-									<h2>From the Blog</h2>
-									<p>Latest thoughts, stories, and posts</p>
+									<h2>{content.pageContent.blog.listing.title}</h2>
+									<p>{content.pageContent.blog.listing.description}</p>
 								</div>
 								<MobileCarousel
 									label="Post"
@@ -273,11 +274,11 @@ export default async function Home() {
 								</MobileCarousel>
 							</div>
 							<div className="blog-side-note">
-								<QuoteNote quote="Words are how I make sense of the world." tone="small" />
+								<QuoteNote quote={content.pageContent.blog.feature.title} tone="small" />
 								<div className="vertical-tabs" aria-hidden="true">
-									<span>Writing</span>
-									<span>Journal</span>
-									<span>Memories</span>
+									{content.pageContent.blog.highlights.slice(0, 3).map((item) => (
+										<span key={item}>{item}</span>
+									))}
 								</div>
 							</div>
 						</div>
@@ -289,8 +290,8 @@ export default async function Home() {
 				<section className="shop-manuscript-strip">
 					<div className="landing-container">
 						<div className="section-heading-line">
-							<h2>From My Desk to Yours</h2>
-							<p>Shop books, prints, merch, and stationery</p>
+							<h2>{content.pageContent.shop.intro.title}</h2>
+							<p>{content.pageContent.shop.intro.description}</p>
 						</div>
 						<div className="shop-shelf">
 							{content.products.map((product) => (
@@ -315,16 +316,10 @@ export default async function Home() {
 					<div className="landing-container about-ledger-grid">
 						<div>
 							<div className="section-heading-line">
-								<h2>About Me</h2>
-								<p>Writing, reading, journaling, traveling, nature, and tea</p>
+								<h2>{home.feature.title}</h2>
+								<p>{home.feature.label}</p>
 							</div>
-							<p className="about-copy">
-								I&apos;m Yashie: Yashoda U. Itwaru. I write essays, reflections,
-								books, stories, poetry, blog posts, and personal writings. I&apos;m
-								drawn to the beauty in everyday moments and the stories we carry
-								within. Writing helps me connect, heal, express, and leave behind
-								pieces of truth for the future.
-							</p>
+							<p className="about-copy">{home.feature.description}</p>
 							<div className="fact-tags">
 								{profileFacts.slice(0, 5).map((fact) => (
 									<span key={fact}>{fact.split(" ")[0]}</span>
@@ -335,8 +330,8 @@ export default async function Home() {
 						{showContact ? (
 							<div>
 								<div className="section-heading-line">
-									<h2>Let&apos;s Connect</h2>
-									<p>You can find me everywhere as {author.alias}</p>
+									<h2>{content.pageContent.contact.listing.title}</h2>
+									<p>{content.pageContent.contact.listing.description}</p>
 								</div>
 								<div className="social-ledger">
 									{socials.map((social) => (

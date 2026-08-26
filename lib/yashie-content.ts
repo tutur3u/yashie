@@ -210,7 +210,8 @@ function buildAuthor(delivery: YashieDeliveryPayload) {
     email: asString(profileData.email) ?? author.email,
     location: asString(profileData.location) ?? author.location,
     name: profileEntry.title || author.name,
-    quote: getQuoteBlock(profileEntry) ?? author.quote,
+    quote:
+      asString(profileData.quote) ?? getQuoteBlock(profileEntry) ?? author.quote,
     shortName: asString(profileData.shortName) ?? author.shortName,
     tagline,
     title: asString(profileData.title) ?? profileEntry.subtitle ?? author.title,
@@ -224,7 +225,14 @@ function buildProfileFacts(delivery: YashieDeliveryPayload) {
     getPublishedEntries(delivery, "profile")[0] ??
     null;
 
-  return getListBlock(profileEntry, "Profile facts") ?? profileFacts;
+  const savedFacts = asRecord(profileEntry?.profile_data).profileFacts;
+
+  return Array.isArray(savedFacts)
+    ? savedFacts
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : (getListBlock(profileEntry, "Profile facts") ?? profileFacts);
 }
 
 function buildPageContent(delivery: YashieDeliveryPayload) {

@@ -46,6 +46,8 @@ describe("Yashie page content", () => {
       },
     });
     expect(pages.blog).toEqual(DEFAULT_YASHIE_PAGE_CONTENT.blog);
+    expect(pages.home).toEqual(DEFAULT_YASHIE_PAGE_CONTENT.home);
+    expect(pages.footer).toEqual(DEFAULT_YASHIE_PAGE_CONTENT.footer);
   });
 
   test("preserves an intentionally empty small-card list", () => {

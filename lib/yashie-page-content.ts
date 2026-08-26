@@ -1,4 +1,11 @@
-export const YASHIE_PAGE_KEYS = ["blog", "gallery", "shop", "contact"] as const;
+export const YASHIE_PAGE_KEYS = [
+  "home",
+  "blog",
+  "gallery",
+  "shop",
+  "contact",
+  "footer",
+] as const;
 
 export type YashiePageKey = (typeof YASHIE_PAGE_KEYS)[number];
 
@@ -22,6 +29,27 @@ export type YashiePageContent = Record<
 >;
 
 export const DEFAULT_YASHIE_PAGE_CONTENT: YashiePageContent = {
+  home: {
+    feature: {
+      description:
+        "I'm Yashie: Yashoda U. Itwaru. I write essays, reflections, books, stories, poetry, blog posts, and personal writings. I'm drawn to the beauty in everyday moments and the stories we carry within. Writing helps me connect, heal, express, and leave behind pieces of truth for the future.",
+      label: "Writing, reading, journaling, traveling, nature, and tea",
+      title: "About Me",
+    },
+    highlightLabel: "Creative identity",
+    highlights: ["Writer", "Author", "Storyteller"],
+    intro: {
+      description:
+        "I write a lot: essays, reflections, books, stories, poetry, blog posts, and personal writings. Through words, I explore life, memory, identity, emotion, and everything in between.",
+      title: "Namaste, I'm Yashie",
+    },
+    listing: {
+      description:
+        "Step into the themes, forms, and stories that shape my writing.",
+      label: "Essays, books, poetry, posts",
+      title: "Explore My Worlds",
+    },
+  },
   blog: {
     feature: {
       description:
@@ -104,6 +132,25 @@ export const DEFAULT_YASHIE_PAGE_CONTENT: YashiePageContent = {
         "Most links use the public handle or the InkedByYashie brand.",
       label: "Social shelf",
       title: "Find Yashie",
+    },
+  },
+  footer: {
+    feature: {
+      description: "Made with care by sokora from Tuturuuu.",
+      label: "Signature",
+      title: "Always InkedByYashie",
+    },
+    highlightLabel: "Newsletter",
+    highlights: [],
+    intro: {
+      description:
+        "Get essays, poems, stories, and update notes straight to your inbox.",
+      title: "Stay in the Loop",
+    },
+    listing: {
+      description: "A quiet promise for every letter.",
+      label: "Inbox note",
+      title: "No spam, just soulful letters.",
     },
   },
 };

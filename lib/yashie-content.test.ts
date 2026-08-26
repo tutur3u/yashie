@@ -63,6 +63,8 @@ describe("Yashie public content", () => {
                   alias: "@published",
                   brand: "Published Brand",
                   email: "published@example.com",
+                  profileFacts: ["Saved fact"],
+                  quote: "Saved quote.",
                   shortName: "Published",
                   title: "Published Writer",
                 },
@@ -336,14 +338,14 @@ describe("Yashie public content", () => {
         brand: "Published Brand",
         email: "published@example.com",
         name: "Published Name",
-        quote: "Published quote.",
+        quote: "Saved quote.",
         shortName: "Published",
         tagline: "Published profile intro.",
         title: "Published Writer",
         values: ["Published value"],
       }),
     );
-    expect(content.profileFacts).toEqual(["Published fact"]);
+    expect(content.profileFacts).toEqual(["Saved fact"]);
     expect(content.socials[0]).toEqual(
       expect.objectContaining({
         handle: "@published",

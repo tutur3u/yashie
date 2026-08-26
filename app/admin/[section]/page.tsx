@@ -6,7 +6,6 @@ import { YashieAdminLoginPanel } from "@/components/admin/YashieAdminLoginPanel"
 import { YashieAdminSessionRestorer } from "@/components/admin/YashieAdminSessionRestorer";
 import { getYashieCentralizedLoginHref } from "../login-link";
 import {
-  needsYashieStarterContent,
   readYashieAdminContent,
   type YashieAdminStudioPayload,
 } from "@/lib/yashie-admin-content-model";
@@ -133,11 +132,6 @@ async function AuthenticatedAdminDashboard({
       activeSection={section}
       driveHref={buildYashieDriveUrl()}
       initialContent={initialContent}
-      initialNeedsImport={
-        isYashieAdminStudioSection(section)
-          ? needsYashieStarterContent(initialContent)
-          : false
-      }
       initialSiteSettings={readYashieAdminSiteSettings(studio)}
       key={section}
       membersHref={buildYashieWorkspaceUrl({ targetKey: "members" })}
