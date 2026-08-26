@@ -1185,6 +1185,8 @@ function siteSettingsDraftFromSettings(
       email: settings.profile.email,
       location: settings.profile.location,
       name: settings.profile.name,
+      profileFacts: settings.profile.profileFacts,
+      quote: settings.profile.quote,
       shortName: settings.profile.shortName,
       status: settings.profile.status,
       summary: settings.profile.summary,
