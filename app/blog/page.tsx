@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 
 export default async function BlogPage() {
 	const content = await getYashieContent();
+	const page = content.pageContent.blog;
 
 	if (!(await canAccessYashieNavTab(content, "blog"))) {
 		notFound();
@@ -23,8 +24,8 @@ export default async function BlogPage() {
 	return (
 		<main>
 			<PageIntro
-				title="From the Blog"
-				description="Essays and reflections about culture, writing, memory, books, and becoming yourself."
+				title={page.intro.title}
+				description={page.intro.description}
 				image="/images/artworks/chibi-family-cast.jpg"
 			/>
 
@@ -49,9 +50,9 @@ export default async function BlogPage() {
 
 					<div>
 						<SectionHeader
-							label="Latest posts"
-							title="Essays, poems, and notes"
-							description="A living notebook for culture, writing, memory, books, and personal updates."
+							label={page.listing.label}
+							title={page.listing.title}
+							description={page.listing.description}
 						/>
 						<div className="grid gap-6">
 							{content.blogPosts.map((post) => (
@@ -75,19 +76,19 @@ export default async function BlogPage() {
 					</div>
 					<div className="self-center">
 						<SectionHeader
-							label="Editorial direction"
-							title="The page as a place to remember"
-							description="Blog posts can hold craft notes, reading lists, cultural reflections, short poetry, publication news, and the behind-the-scenes work of building a dark fantasy world."
+							label={page.feature.label}
+							title={page.feature.title}
+							description={page.feature.description}
 						/>
 						<div className="grid gap-4 sm:grid-cols-2">
-							{["Memory", "Identity", "Hindu-inspired fantasy", "AI ethics"].map(
+							{page.highlights.map(
 								(topic) => (
 									<div key={topic} className="parchment-card p-4">
 										<p className="font-display text-2xl text-[var(--navy)]">
 											{topic}
 										</p>
 										<p className="mt-2 text-sm leading-6 text-[var(--ink-soft)]">
-											Essays and updates in this writing lane.
+											{page.highlightLabel}
 										</p>
 									</div>
 								),

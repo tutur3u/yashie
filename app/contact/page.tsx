@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 export default async function ContactPage() {
 	const content = await getYashieContent();
 	const { author, socials } = content;
+	const page = content.pageContent.contact;
 
 	if (!(await canAccessYashieNavTab(content, "contact"))) {
 		notFound();
@@ -24,8 +25,8 @@ export default async function ContactPage() {
 	return (
 		<main>
 			<PageIntro
-				title="Contact"
-				description="Reach out for respectful conversation, community, writing updates, collaborations, and future reader opportunities."
+				title={page.intro.title}
+				description={page.intro.description}
 				image="/images/artworks/lotus-dove-ornament.jpg"
 			/>
 
@@ -33,9 +34,9 @@ export default async function ContactPage() {
 				<div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr]">
 					<div className="min-w-0">
 						<SectionHeader
-							label="Social shelf"
-							title={`Find ${author.shortName}`}
-							description={`Most links use the public handle ${author.alias} or the InkedByYashie brand. This is a mock contact experience.`}
+							label={page.listing.label}
+							title={page.listing.title}
+							description={page.listing.description}
 						/>
 						<div className="parchment-card mb-5 min-w-0 p-5">
 							<p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--clay)]">
@@ -85,26 +86,13 @@ export default async function ContactPage() {
 						/>
 						<ContactForm />
 						<div className="mt-5 grid gap-3 sm:grid-cols-3">
-							{[
-								{
-									topic: "Writing",
-									description: "Essays, interviews, and reader letters.",
-								},
-								{
-									topic: "Collaborations",
-									description: "Panels, launches, and creative projects.",
-								},
-								{
-									topic: "Community",
-									description: "Respectful DMs and book-world updates.",
-								},
-							].map((item) => (
-								<div key={item.topic} className="parchment-card p-4">
+							{page.highlights.map((topic) => (
+								<div key={topic} className="parchment-card p-4">
 									<p className="font-display text-2xl text-[var(--navy)]">
-										{item.topic}
+										{topic}
 									</p>
 									<p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">
-										{item.description}
+										{page.highlightLabel}
 									</p>
 								</div>
 							))}
@@ -116,13 +104,12 @@ export default async function ContactPage() {
 			<section className="bg-[var(--navy)] px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_1fr]">
 					<div className="self-center text-[var(--parchment)]">
-						<p className="script-label text-[var(--gold)]">Respect first</p>
+						<p className="script-label text-[var(--gold)]">{page.feature.label}</p>
 						<h2 className="font-display text-5xl leading-tight text-[var(--gold)]">
-							Open to DMs, so long as everyone is respectful.
+							{page.feature.title}
 						</h2>
 						<p className="mt-4 max-w-xl text-base leading-8 text-[var(--parchment-soft)]">
-							This page keeps the boundary clear while making the route feel
-							like part of the same book-world system.
+							{page.feature.description}
 						</p>
 					</div>
 					<div className="ornament-frame relative min-h-80 overflow-hidden">

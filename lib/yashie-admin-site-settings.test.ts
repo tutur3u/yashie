@@ -36,6 +36,14 @@ const studio = {
         alias: "@published",
         brand: "Published Brand",
         email: "published@example.com",
+        pageContent: {
+          shop: {
+            intro: {
+              description: "Published shop introduction.",
+              title: "Published shop",
+            },
+          },
+        },
         shortName: "Published",
         title: "Published Writer",
       },
@@ -98,6 +106,14 @@ describe("Yashie admin site settings", () => {
           shortName: "Published",
           summary: "Published intro.",
           title: "Published Writer",
+        }),
+        pages: expect.objectContaining({
+          shop: expect.objectContaining({
+            intro: {
+              description: "Published shop introduction.",
+              title: "Published shop",
+            },
+          }),
         }),
         socials: [
           expect.objectContaining({

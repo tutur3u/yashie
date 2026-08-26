@@ -285,7 +285,7 @@ export default async function Home() {
 				</section>
 			) : null}
 
-			{showShop ? (
+			{showShop && content.products.length > 0 ? (
 				<section className="shop-manuscript-strip">
 					<div className="landing-container">
 						<div className="section-heading-line">

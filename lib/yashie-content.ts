@@ -17,6 +17,11 @@ import {
   type SocialPlatform,
   type WritingWorld,
 } from "@/app/data/portfolio";
+import {
+  DEFAULT_YASHIE_PAGE_CONTENT,
+  readYashiePageContent,
+  type YashiePageContent,
+} from "./yashie-page-content";
 
 type JsonObject = Record<string, unknown>;
 
@@ -82,6 +87,7 @@ export type YashieContent = {
   galleryItems: GalleryItem[];
   navigationTabs: NavigationTab[];
   navItems: typeof navItems;
+  pageContent: YashiePageContent;
   products: Product[];
   profileFacts: typeof profileFacts;
   socials: typeof socials;
@@ -94,6 +100,7 @@ export const DEFAULT_YASHIE_CONTENT: YashieContent = {
   galleryItems,
   navigationTabs,
   navItems,
+  pageContent: DEFAULT_YASHIE_PAGE_CONTENT,
   products,
   profileFacts,
   socials,
@@ -218,6 +225,15 @@ function buildProfileFacts(delivery: YashieDeliveryPayload) {
     null;
 
   return getListBlock(profileEntry, "Profile facts") ?? profileFacts;
+}
+
+function buildPageContent(delivery: YashieDeliveryPayload) {
+  const profileEntry =
+    getPublishedEntries(delivery, "profile").find(
+      (entry) => entry.slug === "profile",
+    ) ?? getPublishedEntries(delivery, "profile")[0];
+
+  return readYashiePageContent(profileEntry?.profile_data.pageContent);
 }
 
 function isSocialPlatform(value: string | null): value is SocialPlatform {
@@ -414,6 +430,7 @@ export function buildYashieContent(
     galleryItems: buildGalleryItems(delivery, apiBaseUrl),
     navigationTabs: effectiveNavigationTabs,
     navItems: buildNavItems(effectiveNavigationTabs),
+    pageContent: buildPageContent(delivery),
     products: buildProducts(delivery, apiBaseUrl),
     profileFacts: buildProfileFacts(delivery),
     socials: buildSocials(delivery),

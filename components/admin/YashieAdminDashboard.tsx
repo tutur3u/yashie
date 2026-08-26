@@ -38,6 +38,11 @@ import type {
   YashieStorageFilesState,
 } from "@/lib/yashie-storage-files";
 import type { YashieAdminSection } from "@/lib/yashie-admin-sections";
+import {
+  YASHIE_PAGE_KEYS,
+  type YashieEditablePageContent,
+  type YashiePageKey,
+} from "@/lib/yashie-page-content";
 import { YashieAdminSyncPanel } from "./YashieAdminSyncPanel";
 import { YASHIE_ADMIN_COPY } from "./yashie-admin-copy";
 import {
@@ -1176,6 +1181,7 @@ function siteSettingsDraftFromSettings(
       label: item.label,
       visible: item.visible,
     })),
+    pages: structuredClone(settings.pages),
     profile: {
       alias: settings.profile.alias,
       brand: settings.profile.brand,
@@ -1262,9 +1268,44 @@ function SettingsTextField({
   );
 }
 
+function SettingsTextArea({
+  disabled,
+  error,
+  help,
+  label,
+  onChange,
+  value,
+}: {
+  disabled?: boolean;
+  error?: string;
+  help?: string;
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <label className="grid min-w-0 gap-2">
+      <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--clay)]">
+        {label}
+      </span>
+      <textarea
+        className={`min-h-28 w-full min-w-0 resize-y border bg-white/78 px-3 py-3 text-sm leading-6 text-[var(--ink)] outline-none transition focus:border-[var(--gold)] ${
+          error ? "border-red-400" : "border-[rgba(184,112,81,0.42)]"
+        } disabled:cursor-not-allowed disabled:bg-white/45 disabled:text-[var(--ink-soft)]`}
+        disabled={disabled}
+        onChange={(event) => onChange(event.currentTarget.value)}
+        value={value}
+      />
+      {help ? <span className="text-xs text-[var(--ink-soft)]">{help}</span> : null}
+      {error ? <span className="text-xs text-red-700">{error}</span> : null}
+    </label>
+  );
+}
+
 type ProfileFieldName = keyof YashieAdminSiteSettingsInput["profile"];
 type NavigationDraft = YashieAdminSiteSettingsInput["navigation"][number];
 type SocialDraft = YashieAdminSiteSettingsInput["socials"][number];
+type PageDraft = YashieAdminSiteSettingsInput["pages"][YashiePageKey];
 
 type ProfileFieldConfig = {
   inputType?: string;
@@ -1278,6 +1319,7 @@ type ProfileFieldConfig = {
 type SettingsDialogTarget =
   | { field: ProfileFieldName; kind: "profile" }
   | { index: number; kind: "navigation" }
+  | { key: YashiePageKey; kind: "page" }
   | { index: number; kind: "social" }
   | { kind: "new-social" };
 
@@ -1297,6 +1339,13 @@ const profileFieldConfigs: ProfileFieldConfig[] = [
   },
   { label: "Intro line", multiline: true, name: "summary" },
 ];
+
+const pageLabels: Record<YashiePageKey, string> = {
+  blog: "Blog",
+  contact: "Contact",
+  gallery: "Gallery",
+  shop: "Shop",
+};
 
 function settingsSnapshot(value: unknown) {
   return JSON.stringify(value);
@@ -1660,6 +1709,171 @@ function NavigationItemDialog({
   );
 }
 
+function PageContentDialog({
+  currentPage,
+  errors,
+  onApply,
+  onClose,
+  pageKey,
+  submitting,
+}: {
+  currentPage: PageDraft;
+  errors: Record<string, string>;
+  onApply: (page: PageDraft) => void;
+  onClose: () => void;
+  pageKey: YashiePageKey;
+  submitting: boolean;
+}) {
+  const [page, setPage] = useState<PageDraft>(() => structuredClone(currentPage));
+  const isDirty = !settingsEqual(page, currentPage);
+  const requiredValues = [
+    page.intro.title,
+    page.intro.description,
+    page.listing.label,
+    page.listing.title,
+    page.listing.description,
+    page.feature.label,
+    page.feature.title,
+    page.feature.description,
+  ];
+  const isInvalid = requiredValues.some((value) => !value.trim());
+  const errorFor = (field: string) => errors[`pages.${pageKey}.${field}`];
+  const updateSection = (
+    section: "feature" | "listing",
+    field: keyof YashieEditablePageContent["feature"],
+    value: string,
+  ) => {
+    setPage((current) => ({
+      ...current,
+      [section]: { ...current[section], [field]: value },
+    }));
+  };
+
+  return (
+    <SettingsDialogFrame
+      description="Edit the headings and small editorial cards visitors see on this page. Shop inventory remains managed in the Shop tab."
+      footer={
+        <>
+          <button
+            className="button-secondary w-full sm:w-auto"
+            disabled={submitting}
+            onClick={onClose}
+            type="button"
+          >
+            {YASHIE_ADMIN_COPY.actions.cancel}
+          </button>
+          <button
+            className="button-primary w-full disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={submitting || !isDirty || isInvalid}
+            onClick={() => onApply(page)}
+            type="button"
+          >
+            Apply
+          </button>
+        </>
+      }
+      onClose={onClose}
+      title={`${pageLabels[pageKey]} page sections`}
+    >
+      <fieldset className="grid gap-4 border border-[rgba(184,112,81,0.28)] p-4">
+        <legend className="px-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+          Page introduction
+        </legend>
+        <SettingsTextField
+          disabled={submitting}
+          error={errorFor("intro.title")}
+          label="Title"
+          onChange={(value) =>
+            setPage((current) => ({
+              ...current,
+              intro: { ...current.intro, title: value },
+            }))
+          }
+          required
+          value={page.intro.title}
+        />
+        <SettingsTextArea
+          disabled={submitting}
+          error={errorFor("intro.description")}
+          label="Introduction"
+          onChange={(value) =>
+            setPage((current) => ({
+              ...current,
+              intro: { ...current.intro, description: value },
+            }))
+          }
+          value={page.intro.description}
+        />
+      </fieldset>
+
+      {(["listing", "feature"] as const).map((section) => (
+        <fieldset
+          className="grid gap-4 border border-[rgba(184,112,81,0.28)] p-4"
+          key={section}
+        >
+          <legend className="px-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+            {section === "listing" ? "Main collection" : "Editorial section"}
+          </legend>
+          <SettingsTextField
+            disabled={submitting}
+            error={errorFor(`${section}.label`)}
+            label="Small label"
+            onChange={(value) => updateSection(section, "label", value)}
+            required
+            value={page[section].label}
+          />
+          <SettingsTextField
+            disabled={submitting}
+            error={errorFor(`${section}.title`)}
+            label="Heading"
+            onChange={(value) => updateSection(section, "title", value)}
+            required
+            value={page[section].title}
+          />
+          <SettingsTextArea
+            disabled={submitting}
+            error={errorFor(`${section}.description`)}
+            label="Description"
+            onChange={(value) => updateSection(section, "description", value)}
+            value={page[section].description}
+          />
+        </fieldset>
+      ))}
+
+      {pageKey !== "gallery" ? (
+        <fieldset className="grid gap-4 border border-[rgba(184,112,81,0.28)] p-4">
+          <legend className="px-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--clay)]">
+            Small cards
+          </legend>
+          <SettingsTextField
+            disabled={submitting}
+            label="Card caption"
+            onChange={(value) =>
+              setPage((current) => ({ ...current, highlightLabel: value }))
+            }
+            value={page.highlightLabel}
+          />
+          <SettingsTextArea
+            disabled={submitting}
+            help="One card heading per line. Clear the list to hide these cards."
+            label="Card headings"
+            onChange={(value) =>
+              setPage((current) => ({
+                ...current,
+                highlights: value
+                  .split("\n")
+                  .map((item) => item.trim())
+                  .filter(Boolean),
+              }))
+            }
+            value={page.highlights.join("\n")}
+          />
+        </fieldset>
+      ) : null}
+    </SettingsDialogFrame>
+  );
+}
+
 function SocialLinkDialog({
   currentSocial,
   errorPrefix,
@@ -1861,8 +2075,10 @@ function SiteSettingsPanel({
     draft.navigation,
     savedDraft.navigation,
   );
+  const pagesDirty = !settingsEqual(draft.pages, savedDraft.pages);
   const socialsDirty = !settingsEqual(draft.socials, savedDraft.socials);
-  const hasChanges = profileDirty || navigationDirty || socialsDirty;
+  const hasChanges =
+    profileDirty || pagesDirty || navigationDirty || socialsDirty;
 
   useEffect(() => {
     setDraft(siteSettingsDraftFromSettings(settings));
@@ -1929,6 +2145,15 @@ function SiteSettingsPanel({
       ),
     }));
     clearErrors([`navigation.${index}`]);
+    setDialogTarget(null);
+  };
+
+  const applyPage = (key: YashiePageKey, page: PageDraft) => {
+    setDraft((current) => ({
+      ...current,
+      pages: { ...current.pages, [key]: page },
+    }));
+    clearErrors([`pages.${key}`]);
     setDialogTarget(null);
   };
 
@@ -2033,6 +2258,32 @@ function SiteSettingsPanel({
                 config.name,
                 draft.profile[config.name],
               )}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-4">
+        <SettingsSectionHeader
+          description="Edit the introduction, headings, descriptions, and small editorial cards on each visitor page. Shop items themselves stay in the Shop tab."
+          dirty={pagesDirty}
+          onSave={() => void saveSettings()}
+          submitting={submitting}
+          title="Page sections"
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          {YASHIE_PAGE_KEYS.map((key) => (
+            <SettingSummaryCard
+              detail={`${draft.pages[key].listing.title} · ${
+                draft.pages[key].highlights.length
+              } small card${draft.pages[key].highlights.length === 1 ? "" : "s"}`}
+              error={Object.entries(fieldErrors).find(([field]) =>
+                field.startsWith(`pages.${key}.`),
+              )?.[1]}
+              key={key}
+              label="Visitor page"
+              onEdit={() => setDialogTarget({ key, kind: "page" })}
+              value={pageLabels[key]}
             />
           ))}
         </div>
@@ -2172,6 +2423,18 @@ function SiteSettingsPanel({
           key={`navigation-${dialogTarget.index}`}
           onApply={(item) => applyNavigationItem(dialogTarget.index, item)}
           onClose={() => setDialogTarget(null)}
+          submitting={submitting}
+        />
+      ) : null}
+
+      {dialogTarget?.kind === "page" ? (
+        <PageContentDialog
+          currentPage={draft.pages[dialogTarget.key]}
+          errors={fieldErrors}
+          key={`page-${dialogTarget.key}`}
+          onApply={(page) => applyPage(dialogTarget.key, page)}
+          onClose={() => setDialogTarget(null)}
+          pageKey={dialogTarget.key}
           submitting={submitting}
         />
       ) : null}

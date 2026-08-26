@@ -85,8 +85,8 @@ export const YASHIE_ADMIN_COPY = {
   },
   profile: {
     description:
-      "Update the name, public handle, email, and links visitors see.",
-    heading: "Profile and links",
+      "Update your public details, page sections, website menu, and visitor links in one place.",
+    heading: "Website details",
     linkRemoved: "Link removed. Save links to keep it.",
     links: "Links",
     menu: "Website menu",

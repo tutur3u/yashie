@@ -19,6 +19,12 @@ import type {
 } from "./yashie-admin-content-model";
 import { getYashieApiBaseUrl, getYashieWorkspaceId } from "./yashie-config";
 import { getYashieManifestCollectionSchema } from "./yashie-external-project-manifest";
+import {
+  DEFAULT_YASHIE_PAGE_CONTENT,
+  readYashiePageContent,
+  YASHIE_PAGE_KEYS,
+  type YashiePageContent,
+} from "./yashie-page-content";
 
 const PROFILE_COLLECTION_SLUG = "profile";
 const PROFILE_ENTRY_SLUG = "profile";
@@ -122,12 +128,14 @@ export type YashieAdminNavigationSettings = NavigationTab & {
 
 export type YashieAdminSiteSettings = {
   navigation: YashieAdminNavigationSettings[];
+  pages: YashiePageContent;
   profile: YashieAdminProfileSettings;
   socials: YashieAdminSocialSettings[];
 };
 
 export type YashieAdminSiteSettingsInput = {
   navigation: Array<Pick<NavigationTab, "key" | "label" | "visible">>;
+  pages: YashiePageContent;
   profile: Omit<YashieAdminProfileSettings, "entryId">;
   socials: Array<
     Omit<YashieAdminSocialSettings, "id"> & { id?: string | null }
@@ -354,6 +362,7 @@ export function readYashieAdminSiteSettings(
 
   return {
     navigation: readNavigationSettings(studio),
+    pages: readYashiePageContent(profileData.pageContent),
     profile: {
       alias: readString(profileData, "alias") ?? author.alias,
       brand: readString(profileData, "brand") ?? author.brand,
@@ -424,6 +433,7 @@ export function parseYashieSiteSettingsPayload(
     ? record.navigation
     : [];
   const socialValues = Array.isArray(record.socials) ? record.socials : [];
+  const submittedPages = readRecord(record.pages);
 
   const parsedProfile: YashieAdminSiteSettingsInput["profile"] = {
     alias: readRequiredString(
@@ -558,12 +568,94 @@ export function parseYashieSiteSettingsPayload(
     };
   });
 
+  const parsedPages = Object.fromEntries(
+    YASHIE_PAGE_KEYS.map((key) => {
+      const page = readRecord(submittedPages[key]);
+      const intro = readRecord(page.intro);
+      const listing = readRecord(page.listing);
+      const feature = readRecord(page.feature);
+      const fallback = DEFAULT_YASHIE_PAGE_CONTENT[key];
+      const readPageString = (
+        value: unknown,
+        field: string,
+        fallbackValue: string,
+      ) =>
+        readRequiredString(
+          value ?? fallbackValue,
+          errors,
+          `pages.${key}.${field}`,
+          "Add text for this section.",
+        );
+
+      return [
+        key,
+        {
+          feature: {
+            description: readPageString(
+              feature.description,
+              "feature.description",
+              fallback.feature.description,
+            ),
+            label: readPageString(
+              feature.label,
+              "feature.label",
+              fallback.feature.label,
+            ),
+            title: readPageString(
+              feature.title,
+              "feature.title",
+              fallback.feature.title,
+            ),
+          },
+          highlightLabel:
+            readOptionalString(page.highlightLabel) || fallback.highlightLabel,
+          highlights: Array.isArray(page.highlights)
+            ? page.highlights
+                .filter((item): item is string => typeof item === "string")
+                .map((item) => item.trim())
+                .filter(Boolean)
+            : fallback.highlights,
+          intro: {
+            description: readPageString(
+              intro.description,
+              "intro.description",
+              fallback.intro.description,
+            ),
+            title: readPageString(
+              intro.title,
+              "intro.title",
+              fallback.intro.title,
+            ),
+          },
+          listing: {
+            description: readPageString(
+              listing.description,
+              "listing.description",
+              fallback.listing.description,
+            ),
+            label: readPageString(
+              listing.label,
+              "listing.label",
+              fallback.listing.label,
+            ),
+            title: readPageString(
+              listing.title,
+              "listing.title",
+              fallback.listing.title,
+            ),
+          },
+        },
+      ];
+    }),
+  ) as YashiePageContent;
+
   return Object.keys(errors).length > 0
     ? { errors, input: null }
     : {
         errors,
         input: {
           navigation: parsedNavigation,
+          pages: parsedPages,
           profile: parsedProfile,
           socials: parsedSocials,
         },
@@ -669,6 +761,7 @@ function readCollectionId(collection: StudioRecord) {
 
 function buildProfileEntryPayload(
   input: YashieAdminSiteSettingsInput["profile"],
+  pages: YashieAdminSiteSettingsInput["pages"],
   collectionId: string,
 ): SiteSettingsEntryPayload {
   return {
@@ -679,6 +772,7 @@ function buildProfileEntryPayload(
       brand: input.brand,
       email: input.email,
       location: input.location,
+      pageContent: pages,
       shortName: input.shortName,
       title: input.title,
     },
@@ -744,11 +838,13 @@ function buildNavigationEntryPayload(
 async function saveProfileSettings({
   client,
   input,
+  pages,
   studio,
   workspaceId,
 }: {
   client: SettingsClient;
   input: YashieAdminSiteSettingsInput["profile"];
+  pages: YashieAdminSiteSettingsInput["pages"];
   studio: YashieAdminStudioPayload;
   workspaceId: string;
 }) {
@@ -771,6 +867,7 @@ async function saveProfileSettings({
       brand: input.brand,
       email: input.email,
       location: input.location,
+      pageContent: pages,
       shortName: input.shortName,
       title: input.title,
     },
@@ -949,6 +1046,7 @@ function buildSiteSettingsBatchOperations({
   );
   const profilePayload = buildProfileEntryPayload(
     input.profile,
+    input.pages,
     profileCollectionId,
   );
 
@@ -1213,6 +1311,7 @@ async function saveSiteSettingsSerially({
   await saveProfileSettings({
     client,
     input: input.profile,
+    pages: input.pages,
     studio,
     workspaceId,
   });

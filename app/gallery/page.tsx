@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 export default async function GalleryPage() {
 	const content = await getYashieContent();
+	const page = content.pageContent.gallery;
 
 	if (!(await canAccessYashieNavTab(content, "gallery"))) {
 		notFound();
@@ -27,16 +28,16 @@ export default async function GalleryPage() {
 	return (
 		<main>
 			<PageIntro
-				title="Gallery"
-				description="A shelf of covers, journals, and writing-world fragments for the InkedByYashie portfolio."
+				title={page.intro.title}
+				description={page.intro.description}
 			/>
 
 			<section className="section-band px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
 					<SectionHeader
-						label="Books and keepsakes"
-						title="The Book World Shelf"
-						description="A shelf of covers, journals, and writing-world fragments for the InkedByYashie portfolio."
+						label={page.listing.label}
+						title={page.listing.title}
+						description={page.listing.description}
 					/>
 					<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 						{content.galleryItems.map((item) => (
@@ -50,9 +51,9 @@ export default async function GalleryPage() {
 				<div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.2fr_0.8fr]">
 					<div>
 						<SectionHeader
-							label="Recurring rooms"
-							title="Writing Modes"
-							description="The portfolio treats each genre and format as a doorway into Yashie's larger world."
+							label={page.feature.label}
+							title={page.feature.title}
+							description={page.feature.description}
 						/>
 						<div className="grid gap-4 md:grid-cols-2">
 							{content.worlds.map((world) => (

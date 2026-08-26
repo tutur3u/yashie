@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
 import type { YashieAdminSiteSettingsInput } from "./yashie-admin-site-settings";
+import { DEFAULT_YASHIE_PAGE_CONTENT } from "./yashie-page-content";
 
 const originalWorkspaceId = process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
 const originalFetch = globalThis.fetch;
@@ -38,6 +39,7 @@ const input: YashieAdminSiteSettingsInput = {
       visible: false,
     },
   ],
+  pages: DEFAULT_YASHIE_PAGE_CONTENT,
   profile: {
     alias: "@inkedbyyashie",
     brand: "InkedByYashie",
@@ -306,6 +308,11 @@ describe("Yashie admin site settings mutations", () => {
         expect.objectContaining({
           action: "update",
           clientOperationId: "profile",
+          payload: expect.objectContaining({
+            profile_data: expect.objectContaining({
+              pageContent: DEFAULT_YASHIE_PAGE_CONTENT,
+            }),
+          }),
         }),
       ]),
     );
