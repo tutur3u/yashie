@@ -284,6 +284,25 @@ describe("Yashie admin site settings mutations", () => {
     revalidateTag.mockClear();
   });
 
+  for (const method of ["batch", "serial"] as const) {
+    test(`${method}: tags containing commas survive an unrelated save and reload`, async () => {
+      if (method === "serial") globalThis.fetch = mock(async () => new Response(null, { status: 404 })) as typeof fetch;
+      const submitted = structuredClone(input);
+      submitted.profile.profileFacts = ["Culture, identity, and memory", "AI ethics in healthcare"];
+      const parsed = parseYashieSiteSettingsPayload(submitted);
+      expect(parsed.errors).toEqual({});
+      await updateYashieAdminSiteSettings("admin-token", parsed.input!);
+      const reloaded = readYashieAdminSiteSettings(studio);
+      expect(reloaded.profile.profileFacts).toBe("Culture, identity, and memory\nAI ethics in healthcare");
+      const profile = studio.entries.find((entry) => entry.slug === "profile")!;
+      expect((profile.profile_data as Record<string, unknown>).profileFacts).toEqual(submitted.profile.profileFacts);
+      submitted.profile.profileFacts = reloaded.profile.profileFacts.split("\n");
+      submitted.profile.location = "Unrelated profile edit";
+      await updateYashieAdminSiteSettings("admin-token", submitted);
+      expect((studio.entries.find((entry) => entry.slug === "profile")!.profile_data as Record<string, unknown>).profileFacts).toEqual(["Culture, identity, and memory", "AI ethics in healthcare"]);
+    });
+  }
+
   test("clearing optional profile, captions and the last social link stays cleared on reload and public delivery", async () => {
     const submitted = structuredClone(input);
     submitted.profile.summary = "";

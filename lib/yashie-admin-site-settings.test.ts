@@ -105,7 +105,7 @@ describe("Yashie admin site settings", () => {
           email: "published@example.com",
           entryId: "profile-1",
           name: "Published Name",
-          profileFacts: "Tea, Poetry",
+          profileFacts: "Tea\nPoetry",
           quote: "A saved quote.",
           shortName: "Published",
           summary: "Published intro.",

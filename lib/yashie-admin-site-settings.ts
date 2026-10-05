@@ -143,7 +143,7 @@ export type YashieAdminSiteSettingsInput = {
     YashieAdminProfileSettings,
     "entryId" | "profileFacts" | "quote"
   > &
-    Partial<Pick<YashieAdminProfileSettings, "profileFacts" | "quote">>;
+    Partial<Pick<YashieAdminProfileSettings, "quote">> & { profileFacts?: string | string[] };
   socials: Array<
     Omit<YashieAdminSocialSettings, "id"> & { id?: string | null }
   >;
@@ -384,8 +384,8 @@ export function readYashieAdminSiteSettings(
       profileFacts: Array.isArray(profileData.profileFacts)
         ? profileData.profileFacts
             .filter((item): item is string => typeof item === "string")
-            .join(", ")
-        : profileFacts.join(", "),
+            .join("\n")
+        : profileFacts.join("\n"),
       quote: readString(profileData, "quote") ?? author.quote,
       shortName: readString(profileData, "shortName") ?? author.shortName,
       status: normalizeStatus(profileEntry?.status),
@@ -479,7 +479,9 @@ export function parseYashieSiteSettingsPayload(
       "Add the author name.",
     ),
     profileFacts:
-      readOptionalText(profile.profileFacts, profileFacts.join(", ")),
+      Array.isArray(profile.profileFacts)
+        ? profile.profileFacts.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean)
+        : typeof profile.profileFacts === "string" ? profile.profileFacts.trim() : [...profileFacts],
     quote: readOptionalString(profile.quote) || author.quote,
     shortName: readRequiredString(
       profile.shortName,
@@ -779,6 +781,11 @@ function readCollectionId(collection: StudioRecord) {
   return id;
 }
 
+function normalizeProfileFacts(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value : (value ?? "").split(","))
+    .map((item) => item.trim()).filter(Boolean);
+}
+
 function buildProfileEntryPayload(
   input: YashieAdminSiteSettingsInput["profile"],
   pages: YashieAdminSiteSettingsInput["pages"],
@@ -793,10 +800,7 @@ function buildProfileEntryPayload(
       email: input.email,
       location: input.location,
       pageContent: pages,
-      profileFacts: (input.profileFacts ?? "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
+      profileFacts: normalizeProfileFacts(input.profileFacts),
       quote: input.quote ?? author.quote,
       shortName: input.shortName,
       title: input.title,
@@ -893,10 +897,7 @@ async function saveProfileSettings({
       email: input.email,
       location: input.location,
       pageContent: pages,
-      profileFacts: (input.profileFacts ?? "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
+      profileFacts: normalizeProfileFacts(input.profileFacts),
       quote: input.quote ?? author.quote,
       shortName: input.shortName,
       title: input.title,

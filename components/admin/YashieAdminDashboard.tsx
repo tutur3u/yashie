@@ -1170,9 +1170,13 @@ function TextAreaField<TName extends keyof Draft>({
   );
 }
 
+type SiteSettingsDraft = Omit<YashieAdminSiteSettingsInput, "profile"> & {
+  profile: Omit<YashieAdminSiteSettingsInput["profile"], "profileFacts"> & { profileFacts: string };
+};
+
 function siteSettingsDraftFromSettings(
   settings: YashieAdminSiteSettings,
-): YashieAdminSiteSettingsInput {
+): SiteSettingsDraft {
   return {
     navigation: settings.navigation.map((item) => ({
       key: item.key,
@@ -1333,7 +1337,8 @@ const profileFieldConfigs: ProfileFieldConfig[] = [
   { label: "Location", name: "location" },
   { label: "Featured quote", multiline: true, name: "quote", required: true },
   {
-    label: "Homepage interest tags (comma separated)",
+    label: "Homepage interest tags (one per line)",
+    multiline: true,
     name: "profileFacts",
   },
   {
@@ -2157,7 +2162,7 @@ function SiteSettingsPanel({
       profile: {
         ...current.profile,
         [field]: value,
-      } as YashieAdminSiteSettingsInput["profile"],
+      } as SiteSettingsDraft["profile"],
     }));
     clearErrors([`profile.${field}`]);
     setDialogTarget(null);
@@ -2213,7 +2218,10 @@ function SiteSettingsPanel({
 
     try {
       const response = await adminFetch("/api/admin/site-settings", {
-        body: JSON.stringify(draft),
+        body: JSON.stringify({
+          ...draft,
+          profile: { ...draft.profile, profileFacts: draft.profile.profileFacts.split(/\r?\n/).map((item) => item.trim()).filter(Boolean) },
+        }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
       });
