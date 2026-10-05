@@ -1750,12 +1750,13 @@ function NavigationItemDialog({
           checked={item.visible}
           className="size-4 accent-[var(--clay)]"
           disabled={submitting}
-          onChange={(event) =>
+          onChange={(event) => {
+            const visible = event.currentTarget.checked;
             setItem((current) => ({
               ...current,
-              visible: event.currentTarget.checked,
-            }))
-          }
+              visible,
+            }));
+          }}
           type="checkbox"
         />
         <span>{YASHIE_ADMIN_COPY.profile.showTab}</span>
