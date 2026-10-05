@@ -1693,7 +1693,7 @@ function ProfileFieldDialog({
   );
 }
 
-function NavigationItemDialog({
+export function NavigationItemDialog({
   currentItem,
   error,
   onApply,
