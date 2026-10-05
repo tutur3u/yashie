@@ -284,6 +284,33 @@ describe("Yashie admin site settings mutations", () => {
     revalidateTag.mockClear();
   });
 
+  test("clearing optional profile, captions and the last social link stays cleared on reload and public delivery", async () => {
+    const submitted = structuredClone(input);
+    submitted.profile.summary = "";
+    submitted.profile.location = "";
+    submitted.profile.profileFacts = "";
+    submitted.socials = [];
+    for (const key of YASHIE_PAGE_KEYS) submitted.pages[key].highlightLabel = "";
+    const parsed = parseYashieSiteSettingsPayload(submitted);
+    expect(parsed.errors).toEqual({});
+    expect(parsed.input).not.toBeNull();
+    await updateYashieAdminSiteSettings("admin-token", parsed.input!);
+    const reloaded = readYashieAdminSiteSettings(studio);
+    expect(reloaded.profile).toMatchObject({ summary: "", location: "", profileFacts: "" });
+    expect(reloaded.socials).toEqual([]);
+    const content = buildYashieContent({
+      adapter: "yashie", canonicalProjectId: "project", generatedAt: "now", loadingData: null,
+      profileData: {}, workspaceId: "workspace-1",
+      collections: studio.collections.map((collection) => ({ ...collection,
+        entries: studio.entries.filter((entry) => entry.collection_id === collection.id).map((entry) => ({ ...entry, assets: [], blocks: [] })),
+      })),
+    } as unknown as YashieDeliveryPayload, { apiBaseUrl: "https://example.com" });
+    expect(content.author).toMatchObject({ tagline: "", location: "" });
+    expect(content.profileFacts).toEqual([]);
+    expect(content.socials).toEqual([]);
+    for (const key of YASHIE_PAGE_KEYS) expect(content.pageContent[key].highlightLabel).toBe("");
+  });
+
   for (const method of ["batch", "serial"] as const) {
     for (const key of YASHIE_PAGE_KEYS) {
       test(`${method}: ${key} descriptions and cards survive validation, saving, reload and public delivery`, async () => {

@@ -197,10 +197,9 @@ export function readYashiePageContent(value: unknown): YashiePageContent {
         key,
         {
           feature: readSection(page.feature, fallback.feature),
-          highlightLabel: readString(
-            page.highlightLabel,
-            fallback.highlightLabel,
-          ),
+          highlightLabel: typeof page.highlightLabel === "string"
+            ? page.highlightLabel.trim()
+            : fallback.highlightLabel,
           highlights,
           intro: {
             description: readString(

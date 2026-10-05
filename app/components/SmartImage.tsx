@@ -10,6 +10,7 @@ function isRemoteImage(src: string) {
 }
 
 export function SmartImage({ alt, className, fill, src, style, ...props }: SmartImageProps) {
+  if (!src) return null;
   if (!isRemoteImage(src)) {
     return (
       <Image alt={alt} className={className} fill={fill} src={src} style={style} {...props} />

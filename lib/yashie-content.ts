@@ -156,7 +156,7 @@ function getMarkdown(entry: DeliveryEntry | null | undefined) {
     .filter((item) => item.block_type === "markdown")
     .sort((left, right) => left.sort_order - right.sort_order)[0];
   const markdown = asRecord(block?.content).markdown;
-  return asString(markdown);
+  return typeof markdown === "string" ? markdown.trim() : null;
 }
 
 function getListBlock(entry: DeliveryEntry | null | undefined, title: string) {
@@ -185,6 +185,16 @@ function getLeadImage(entry: DeliveryEntry | null | undefined) {
   );
 }
 
+function readOptionalText(value: unknown, fallback: string) {
+  return typeof value === "string" ? value.trim() : fallback;
+}
+
+function readImagePosition(entry: DeliveryEntry) {
+  const profile = asRecord(entry.profile_data);
+  return readOptionalText(profile.imagePosition,
+    asString(asRecord(getLeadImage(entry)?.metadata).imagePosition) ?? "center");
+}
+
 function getImageUrl(entry: DeliveryEntry, apiBaseUrl: string) {
   const image = getLeadImage(entry);
   return absolutizeUrl(apiBaseUrl, image?.assetUrl ?? image?.source_url ?? null);
@@ -201,14 +211,14 @@ function buildAuthor(delivery: YashieDeliveryPayload) {
   }
 
   const profileData = asRecord(profileEntry.profile_data);
-  const tagline = getMarkdown(profileEntry) ?? profileEntry.summary ?? author.tagline;
+  const tagline = profileEntry.summary ?? getMarkdown(profileEntry) ?? author.tagline;
 
   return {
     ...author,
     alias: asString(profileData.alias) ?? author.alias,
     brand: asString(profileData.brand) ?? author.brand,
     email: asString(profileData.email) ?? author.email,
-    location: asString(profileData.location) ?? author.location,
+    location: typeof profileData.location === "string" ? profileData.location.trim() : author.location,
     name: profileEntry.title || author.name,
     quote:
       asString(profileData.quote) ?? getQuoteBlock(profileEntry) ?? author.quote,
@@ -265,7 +275,7 @@ function buildSocials(delivery: YashieDeliveryPayload) {
 
       if (!isSocialPlatform(platform)) {
         return {
-          handle: asString(profileData.handle) ?? entry.summary ?? "",
+          handle: readOptionalText(profileData.handle, entry.summary ?? ""),
           href: asString(profileData.href) ?? "",
           label: entry.title || "Link",
           platform: "other",
@@ -279,7 +289,7 @@ function buildSocials(delivery: YashieDeliveryPayload) {
         socials[0]!;
 
       return {
-        handle: asString(profileData.handle) ?? entry.summary ?? fallback.handle,
+        handle: readOptionalText(profileData.handle, entry.summary ?? fallback.handle),
         href: asString(profileData.href) ?? fallback.href,
         label: entry.title || fallback.label,
         platform,
@@ -330,21 +340,21 @@ function buildNavItems(tabs: NavigationTab[]) {
 }
 
 function buildBlogPosts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
-  const mapped = getPublishedEntries(delivery, "blog-posts").map<BlogPost>((entry, index) => {
+  const mapped = getPublishedEntries(delivery, "blog-posts").map<BlogPost>((entry) => {
     const profileData = asRecord(entry.profile_data);
-    const fallback = blogPosts[index % blogPosts.length] ?? blogPosts[0]!;
+
     const body = getMarkdown(entry);
     const image = getLeadImage(entry);
 
     return {
       body: body ?? entry.summary ?? "",
       category: asString(profileData.category) ?? entry.subtitle ?? "Post",
-      date: asString(profileData.date) ?? "New",
+      date: readOptionalText(profileData.date, "New"),
       excerpt: entry.summary ?? body ?? "",
-      image: getImageUrl(entry, apiBaseUrl) ?? fallback.image,
-      imageAlt: image?.alt_text ?? fallback.imageAlt,
-      imagePosition: asString(profileData.imagePosition) ?? fallback.imagePosition,
-      readTime: asString(profileData.readTime) ?? "Short read",
+      image: getImageUrl(entry, apiBaseUrl) ?? "",
+      imageAlt: image?.alt_text ?? `${entry.title} image`,
+      imagePosition: readImagePosition(entry),
+      readTime: readOptionalText(profileData.readTime, "Short read"),
       slug: entry.slug,
       title: entry.title,
     };
@@ -354,16 +364,16 @@ function buildBlogPosts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
 }
 
 function buildGalleryItems(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
-  const mapped = getPublishedEntries(delivery, "gallery").map<GalleryItem>((entry, index) => {
+  const mapped = getPublishedEntries(delivery, "gallery").map<GalleryItem>((entry) => {
     const profileData = asRecord(entry.profile_data);
-    const fallback = galleryItems[index % galleryItems.length] ?? galleryItems[0]!;
+
     const image = getLeadImage(entry);
 
     return {
       description: entry.summary ?? "",
-      image: getImageUrl(entry, apiBaseUrl) ?? fallback.image,
-      imageAlt: image?.alt_text ?? fallback.imageAlt,
-      imagePosition: asString(profileData.imagePosition) ?? fallback.imagePosition,
+      image: getImageUrl(entry, apiBaseUrl) ?? "",
+      imageAlt: image?.alt_text ?? `${entry.title} image`,
+      imagePosition: readImagePosition(entry),
       slug: entry.slug,
       title: entry.title,
       type: asString(profileData.type) ?? entry.subtitle ?? "Gallery piece",
@@ -374,16 +384,16 @@ function buildGalleryItems(delivery: YashieDeliveryPayload, apiBaseUrl: string) 
 }
 
 function buildProducts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
-  const mapped = getPublishedEntries(delivery, "shop-products").map<Product>((entry, index) => {
+  const mapped = getPublishedEntries(delivery, "shop-products").map<Product>((entry) => {
     const profileData = asRecord(entry.profile_data);
-    const fallback = products[index % products.length] ?? products[0]!;
+
     const image = getLeadImage(entry);
 
     return {
       description: entry.summary ?? "",
-      image: getImageUrl(entry, apiBaseUrl) ?? fallback.image,
-      imageAlt: image?.alt_text ?? fallback.imageAlt,
-      imagePosition: asString(profileData.imagePosition) ?? fallback.imagePosition,
+      image: getImageUrl(entry, apiBaseUrl) ?? "",
+      imageAlt: image?.alt_text ?? `${entry.title} image`,
+      imagePosition: readImagePosition(entry),
       price: asString(profileData.price) ?? entry.subtitle ?? "",
       slug: entry.slug,
       title: entry.title,
@@ -395,19 +405,19 @@ function buildProducts(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
 
 function buildWorlds(delivery: YashieDeliveryPayload, apiBaseUrl: string) {
   const mapped = getPublishedEntries(delivery, "writing-worlds").map<WritingWorld>(
-    (entry, index) => {
+    (entry) => {
       const profileData = asRecord(entry.profile_data);
-      const fallback = worlds[index % worlds.length] ?? worlds[0]!;
+
       const image = getLeadImage(entry);
       const detail = getMarkdown(entry);
 
       return {
         description: entry.summary ?? "",
-        detail: detail ?? asString(profileData.detail) ?? entry.summary ?? "",
-        image: getImageUrl(entry, apiBaseUrl) ?? fallback.image,
-        imageAlt: image?.alt_text ?? fallback.imageAlt,
-        imagePosition: asString(profileData.imagePosition) ?? fallback.imagePosition,
-        kicker: asString(profileData.kicker) ?? entry.subtitle ?? fallback.kicker,
+        detail: detail ?? readOptionalText(profileData.detail, entry.summary ?? ""),
+        image: getImageUrl(entry, apiBaseUrl) ?? "",
+        imageAlt: image?.alt_text ?? `${entry.title} image`,
+        imagePosition: readImagePosition(entry),
+        kicker: asString(profileData.kicker) ?? entry.subtitle ?? "",
         slug: entry.slug,
         title: entry.title,
       };

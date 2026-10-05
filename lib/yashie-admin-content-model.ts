@@ -245,7 +245,9 @@ export function readYashieAdminContent(
         id: entryId,
         imageAlt: readString(imageAsset ?? {}, "alt_text") ?? readString(imageAsset ?? {}, "altText") ?? "",
         imageAssetId: imageAsset ? String(imageAsset.id) : null,
-        imagePosition: readString(profileData, "imagePosition") ?? "",
+        imagePosition: typeof profileData.imagePosition === "string"
+          ? profileData.imagePosition.trim()
+          : readString(readRecord(imageAsset?.metadata), "imagePosition") ?? "",
         imageStoragePath: getAssetStoragePath(imageAsset),
         imageUrl: getAssetUrl(imageAsset),
         price: readString(profileData, "price") ?? readString(entry, "subtitle") ?? "",

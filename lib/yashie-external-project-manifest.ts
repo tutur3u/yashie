@@ -72,6 +72,9 @@ const profileFields = [
   { key: "location", label: "Location", type: "string" },
   { key: "shortName", label: "Short name", type: "string" },
   { key: "title", label: "Title", type: "string" },
+  { key: "quote", label: "Featured quote", type: "string" },
+  { key: "profileFacts", label: "Interest tags", type: "string-array" },
+  { key: "pageContent", label: "Page sections", type: "json" },
 ] satisfies YashieSyncField[];
 
 const imagePositionField = {

@@ -20,6 +20,9 @@ const {
   deleteYashieContentItem,
   updateYashieContentItem,
 } = await import("./yashie-admin-content");
+const { buildYashieContent } = await import("./yashie-content");
+import type { YashieDeliveryPayload } from "./yashie-content";
+
 const { YASHIE_ADMIN_COLLECTIONS } = await import("./yashie-admin-content-model");
 
 type CrudClient = Parameters<typeof createYashieContentItem>[0];
@@ -206,6 +209,21 @@ class FakeCrudClient implements CrudClient {
   }
 }
 
+function delivered(client: FakeCrudClient) {
+  return buildYashieContent({
+    adapter: "yashie", canonicalProjectId: "yashie", workspaceId: "workspace-1",
+    generatedAt: "now", loadingData: null, profileData: {},
+    collections: client.studio.collections.map((collection) => ({
+      ...collection,
+      entries: client.studio.entries.filter((entry) => entry.collection_id === collection.id)
+        .map((entry) => ({ ...entry,
+          assets: client.studio.assets.filter((asset) => asset.entry_id === entry.id),
+          blocks: client.studio.blocks.filter((block) => block.entry_id === entry.id),
+        })),
+    })),
+  } as unknown as YashieDeliveryPayload, { apiBaseUrl: "https://example.com/api/v1" });
+}
+
 describe("Yashie admin content mutations", () => {
   beforeEach(() => {
     revalidatePath.mockClear();
@@ -287,6 +305,52 @@ describe("Yashie admin content mutations", () => {
       expect(client.calls.getStudio).toHaveLength(studioReadsBeforeDelete + 1);
     }
   });
+
+  for (const key of ["blog", "worlds", "gallery", "shop"] as const) {
+    test(`${key}: all editable text, crop, image removal and visibility reach public delivery`, async () => {
+      const client = new FakeCrudClient();
+      const created = await createYashieContentItem(client, "workspace-1", key, createInput(key, {
+        imageAlt: "Original image", imagePosition: "20% 30%",
+        imageFile: new File(["cover"], "cover.png", { type: "image/png" }),
+      }));
+      expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+      expect(revalidateTag).toHaveBeenCalledWith("yashie-delivery-v1", { expire: 0 });
+      const id = created.item!.id;
+      // Existing externally hosted assets must survive crop/alt-only edits.
+      Object.assign(client.studio.assets[0], { source_url: "https://example.com/cover.png", storage_path: null,
+        metadata: { filename: "cover.png", contentType: "image/png", imagePosition: "20% 30%" } });
+      const changed = createInput(key, { title: "Edited title", slug: "edited-slug", summary: "Edited description",
+        body: "Edited full body", category: "Edited category", type: "Edited type", price: "$99",
+        date: "Edited date", readTime: "Edited read time", imageAlt: "Edited alt", imagePosition: "80% 70%" });
+      const updated = await updateYashieContentItem(client, "workspace-1", key, id, changed);
+      expect(updated.item).toMatchObject({ title: changed.title, slug: changed.slug, summary: changed.summary,
+        imageAlt: changed.imageAlt, imagePosition: changed.imagePosition });
+      expect(client.studio.assets[0]).toMatchObject({ source_url: "https://example.com/cover.png", storage_path: null,
+        metadata: { filename: "cover.png", contentType: "image/png", imagePosition: changed.imagePosition } });
+      const list = (content: ReturnType<typeof delivered>) => key === "blog" ? content.blogPosts : key === "worlds" ? content.worlds : key === "gallery" ? content.galleryItems : content.products;
+      const item = list(delivered(client))[0];
+      expect(item).toMatchObject({ title: changed.title, slug: changed.slug, image: "https://example.com/cover.png",
+        imageAlt: changed.imageAlt, imagePosition: changed.imagePosition });
+      if (key === "blog") expect(item).toMatchObject({ body: changed.body, category: changed.category, excerpt: changed.summary, date: changed.date, readTime: changed.readTime });
+      if (key === "worlds") expect(item).toMatchObject({ detail: changed.body, kicker: changed.category, description: changed.summary });
+      if (key === "gallery") expect(item).toMatchObject({ type: changed.type, description: changed.summary });
+      if (key === "shop") expect(item).toMatchObject({ price: changed.price, description: changed.summary });
+      await updateYashieContentItem(client, "workspace-1", key, id, { ...changed, removeImage: true, body: "", date: "", readTime: "", imagePosition: "" });
+      const cleared = list(delivered(client))[0];
+      expect(cleared.image).toBe("");
+      expect(cleared.imagePosition).toBe("");
+      if (key === "blog") expect(cleared).toMatchObject({ body: "", date: "", readTime: "" });
+      if (key === "worlds") expect(cleared).toMatchObject({ detail: "" });
+      for (const status of ["draft", "scheduled", "archived"] as const) {
+        await updateYashieContentItem(client, "workspace-1", key, id, { ...changed, status });
+        expect(list(delivered(client))).toEqual([]);
+      }
+      await updateYashieContentItem(client, "workspace-1", key, id, changed);
+      expect(list(delivered(client))).toHaveLength(1);
+      await deleteYashieContentItem(client, "workspace-1", key, id);
+      expect(list(delivered(client))).toEqual([]);
+    });
+  }
 
   test("reports digestible save progress and avoids an extra create refresh", async () => {
     const client = new FakeCrudClient();

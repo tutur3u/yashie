@@ -128,8 +128,10 @@ async function ensureContentCollection(
 }
 
 function buildProfileData(input: YashieContentMutationInput) {
+  const image = { imagePosition: input.imagePosition };
   if (input.collectionKey === "blog") {
     return {
+      ...image,
       category: input.category,
       date: input.date,
       readTime: input.readTime,
@@ -144,18 +146,21 @@ function buildProfileData(input: YashieContentMutationInput) {
 
   if (input.collectionKey === "gallery") {
     return {
+      ...image,
       type: input.type,
     };
   }
 
   if (input.collectionKey === "worlds") {
     return {
+      ...image,
       detail: input.body,
       kicker: input.category,
     };
   }
 
   return {
+    ...image,
     price: input.price,
   };
 }
@@ -270,12 +275,14 @@ async function saveImageAsset({
   entryId,
   input,
   item,
+  assetMetadata = {},
   workspaceId,
 }: {
   client: YashieCrudClient;
   entryId: string;
   input: YashieContentMutationInput;
   item: YashieAdminContentItem | null;
+  assetMetadata?: Record<string, unknown>;
   workspaceId: string;
 }) {
   if (input.removeImage && item?.imageAssetId) {
@@ -289,8 +296,8 @@ async function saveImageAsset({
       (input.imageAlt !== item.imageAlt || input.imagePosition !== item.imagePosition)
     ) {
       await client.updateAsset(workspaceId, item.imageAssetId, {
-        ...buildImageAssetPayload({ entryId, input, upload: null }),
-        storage_path: item.imageStoragePath,
+        alt_text: input.imageAlt || `${input.title} image`,
+        metadata: { ...assetMetadata, imagePosition: input.imagePosition || null },
       });
     }
 
@@ -386,6 +393,7 @@ export async function createYashieContentItem(
     step: "refresh-dashboard",
   });
   const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
+  revalidateYashieContent();
   return {
     item: findItemById(studio, collectionKey, entryId),
     items: readYashieAdminContent(studio, collectionKey),
@@ -423,7 +431,10 @@ export async function updateYashieContentItem(
     percent: 52,
     step: "save-image",
   });
-  await saveImageAsset({ client, entryId, input, item: current, workspaceId });
+  await saveImageAsset({
+    client, entryId, input, item: current, workspaceId,
+    assetMetadata: readRecord(studio.assets.find((asset) => asset.id === current.imageAssetId)?.metadata),
+  });
   await reportProgress(options, {
     label:
       collectionKey === "blog" || collectionKey === "worlds"

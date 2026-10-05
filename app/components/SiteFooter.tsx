@@ -25,6 +25,7 @@ export function SiteFooter({
 				</div>
 
 				<div>
+					<p className="mb-3 text-xs uppercase tracking-widest text-[var(--parchment-soft)]">{page.listing.label}</p>
 					<NewsletterForm />
 					<p className="mt-3 text-sm italic text-[var(--parchment-soft)]">
 						{page.listing.title}
@@ -44,6 +45,7 @@ export function SiteFooter({
 					<p className="mt-1 whitespace-nowrap text-xs font-bold uppercase tracking-[0.38em] text-[var(--parchment-soft)]">
 						{author.brand}
 					</p>
+					{author.location ? <p className="mt-2 text-xs text-[var(--parchment-soft)]">{author.location}</p> : null}
 					<div className="mt-4 flex flex-wrap gap-2 lg:justify-end">
 						{socials.slice(0, 5).map((social) => (
 							<a

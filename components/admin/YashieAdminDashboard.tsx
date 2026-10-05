@@ -2764,6 +2764,7 @@ function ContentForm({
     item: YashieAdminContentItem | null,
   ) => void;
 }) {
+  const router = useRouter();
   const copy = sectionCopy[collectionKey];
   const [savedItem, setSavedItem] = useState<YashieAdminContentItem | null>(
     null,
@@ -2886,6 +2887,7 @@ function ContentForm({
       });
 
       onSaved(payload.items ?? [], payload.item ?? null);
+      router.refresh();
       setSavedItem(payload.item ?? effectiveItem ?? null);
       setImageFile(null);
       setImageFileLabel("");
@@ -2950,6 +2952,7 @@ function ContentForm({
       }
 
       onDeleted(payload.items ?? []);
+      router.refresh();
       toast.success(YASHIE_ADMIN_COPY.editor.removed);
       onClose();
     } catch {

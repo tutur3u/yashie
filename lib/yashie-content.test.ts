@@ -340,7 +340,7 @@ describe("Yashie public content", () => {
         name: "Published Name",
         quote: "Saved quote.",
         shortName: "Published",
-        tagline: "Published profile intro.",
+        tagline: "Published summary.",
         title: "Published Writer",
         values: ["Published value"],
       }),

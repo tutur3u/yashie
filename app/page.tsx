@@ -172,6 +172,8 @@ export default async function Home() {
 					<div className="landing-hero-copy">
 						<p className="script-label">{home.intro.title}</p>
 						<h1 id="landing-title">{author.name}</h1>
+						<p className="text-sm text-[var(--ink-soft)]">{author.title}</p>
+						{home.highlightLabel ? <p className="mt-4 text-xs uppercase tracking-widest text-[var(--clay)]">{home.highlightLabel}</p> : null}
 						<p
 							className="landing-byline"
 							aria-label={home.highlights.join(", ")}
@@ -206,6 +208,7 @@ export default async function Home() {
 						<p className="alias-slip">
 							also known online as <span>{author.alias}</span>
 						</p>
+						{author.tagline ? <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--ink-soft)]">{author.tagline}</p> : null}
 					</div>
 					<div className="landing-hero-quote">
 						<QuoteNote quote={author.quote} />
@@ -321,8 +324,8 @@ export default async function Home() {
 							</div>
 							<p className="about-copy">{home.feature.description}</p>
 							<div className="fact-tags">
-								{profileFacts.slice(0, 5).map((fact) => (
-									<span key={fact}>{fact.split(" ")[0]}</span>
+								{profileFacts.map((fact) => (
+									<span key={fact}>{fact}</span>
 								))}
 							</div>
 						</div>

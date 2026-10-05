@@ -165,6 +165,10 @@ function readString(record: StudioRecord, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function readOptionalText(value: unknown, fallback: string) {
+  return typeof value === "string" ? value.trim() : fallback;
+}
+
 function readBoolean(record: StudioRecord, key: string) {
   const value = record[key];
   return typeof value === "boolean" ? value : null;
@@ -375,7 +379,7 @@ export function readYashieAdminSiteSettings(
       brand: readString(profileData, "brand") ?? author.brand,
       email: readString(profileData, "email") ?? author.email,
       entryId: profileEntry ? String(profileEntry.id) : null,
-      location: readString(profileData, "location") ?? author.location,
+      location: readOptionalText(profileData.location, author.location),
       name: readString(profileEntry ?? {}, "title") ?? author.name,
       profileFacts: Array.isArray(profileData.profileFacts)
         ? profileData.profileFacts
@@ -385,11 +389,11 @@ export function readYashieAdminSiteSettings(
       quote: readString(profileData, "quote") ?? author.quote,
       shortName: readString(profileData, "shortName") ?? author.shortName,
       status: normalizeStatus(profileEntry?.status),
-      summary: readString(profileEntry ?? {}, "summary") ?? author.tagline,
+      summary: readOptionalText(profileEntry?.summary, author.tagline),
       title: readString(profileData, "title") ?? author.title,
     },
     socials:
-      deliveredSocials.length > 0
+      findCollection(studio, SOCIAL_LINKS_COLLECTION_SLUG)
         ? deliveredSocials
         : socials.map((social) => ({
             ...social,
@@ -467,7 +471,7 @@ export function parseYashieSiteSettingsPayload(
       "profile.email",
       "Add an email address.",
     ),
-    location: readOptionalString(profile.location) || author.location,
+    location: readOptionalText(profile.location, author.location),
     name: readRequiredString(
       profile.name,
       errors,
@@ -475,7 +479,7 @@ export function parseYashieSiteSettingsPayload(
       "Add the author name.",
     ),
     profileFacts:
-      readOptionalString(profile.profileFacts) || profileFacts.join(", "),
+      readOptionalText(profile.profileFacts, profileFacts.join(", ")),
     quote: readOptionalString(profile.quote) || author.quote,
     shortName: readRequiredString(
       profile.shortName,
@@ -484,7 +488,7 @@ export function parseYashieSiteSettingsPayload(
       "Add a short name.",
     ),
     status: parseStatus(profile.status, errors, "profile.status"),
-    summary: readOptionalString(profile.summary) || author.tagline,
+    summary: readOptionalText(profile.summary, author.tagline),
     title: readRequiredString(
       profile.title,
       errors,
@@ -624,7 +628,7 @@ export function parseYashieSiteSettingsPayload(
             ),
           },
           highlightLabel:
-            readOptionalString(page.highlightLabel) || fallback.highlightLabel,
+            readOptionalText(page.highlightLabel, fallback.highlightLabel),
           highlights: Array.isArray(page.highlights)
             ? page.highlights
                 .filter((item): item is string => typeof item === "string")
