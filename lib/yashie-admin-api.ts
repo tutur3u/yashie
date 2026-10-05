@@ -143,7 +143,7 @@ export async function getYashieAdminStorageSnapshot(accessToken: string) {
   return { storageAnalytics, storageFiles };
 }
 
-export function revalidateYashieContent() {
+export function revalidateYashieContent(detailPaths: string[] = []) {
   revalidateTag(YASHIE_ADMIN_SNAPSHOT_CACHE_TAG, { expire: 0 });
   revalidateTag(YASHIE_DELIVERY_CACHE_TAG, { expire: 0 });
   revalidatePath("/", "layout");
@@ -159,4 +159,5 @@ export function revalidateYashieContent() {
   revalidatePath("/shop");
   revalidatePath("/shop/[slug]", "page");
   revalidatePath("/worlds/[slug]", "page");
+  for (const path of new Set(detailPaths)) revalidatePath(path);
 }

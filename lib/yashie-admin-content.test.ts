@@ -352,6 +352,20 @@ describe("Yashie admin content mutations", () => {
     });
   }
 
+  test("streamed create and update defer invalidation and include old and new detail URLs", async () => {
+    const client = new FakeCrudClient();
+    const paths: string[][] = [];
+    const options = { onRevalidate: (urls: string[]) => { paths.push(urls); } };
+    const created = await createYashieContentItem(client, "workspace-1", "blog", createInput("blog"), options);
+    expect(paths).toEqual([["/blog/blog-item"]]);
+    expect(revalidateTag).not.toHaveBeenCalled();
+    await updateYashieContentItem(client, "workspace-1", "blog", created.item!.id, createInput("blog", { slug: "renamed" }), options);
+    expect(paths[1]).toEqual(["/blog/blog-item", "/blog/renamed"]);
+    expect(revalidatePath).not.toHaveBeenCalled();
+    await deleteYashieContentItem(client, "workspace-1", "blog", created.item!.id);
+    expect(revalidatePath).toHaveBeenCalledWith("/blog/renamed");
+  });
+
   test("reports digestible save progress and avoids an extra create refresh", async () => {
     const client = new FakeCrudClient();
     const createSteps: string[] = [];

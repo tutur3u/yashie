@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import type { YashieContentMutationProgress } from "./yashie-admin-content";
 import type { YashieAdminContentItem } from "./yashie-admin-content-model";
 
@@ -40,12 +41,20 @@ function readErrorMessage(error: unknown, fallback: string) {
 export function createYashieContentMutationStream({
   fallback,
   run,
+  onSuccess,
 }: {
   fallback: string;
+  onSuccess?: () => void;
   run: (
     onProgress: (progress: YashieContentMutationProgress) => void,
   ) => Promise<MutationResult>;
 }) {
+  // Route handlers collect ordinary revalidation work when the handler returns.
+  // Streaming mutations finish later, so invalidate inside Next's after lifecycle,
+  // which flushes the revalidations queued by its callback after the stream ends.
+  let succeeded = false;
+  if (onSuccess) after(() => { if (succeeded) onSuccess(); });
+
   let latestProgress: YashieContentMutationProgress | null = null;
 
   const stream = new ReadableStream({
@@ -58,6 +67,7 @@ export function createYashieContentMutationStream({
           send({ ...progress, type: "progress" });
         });
 
+        succeeded = true;
         send({
           item: result.item,
           items: result.items,

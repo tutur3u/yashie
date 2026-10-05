@@ -41,8 +41,18 @@ export type YashieContentMutationProgress = {
 };
 
 type MutationOptions = {
+  onRevalidate?: (paths: string[]) => void;
   onProgress?: (progress: YashieContentMutationProgress) => Promise<void> | void;
 };
+
+function detailPaths(collectionKey: YashieAdminCollectionKey, ...slugs: string[]) {
+  return collectionKey === "categories" ? [] : slugs.map((slug) => `/${collectionKey}/${encodeURIComponent(slug)}`);
+}
+
+function invalidateContent(options: MutationOptions | undefined, paths: string[]) {
+  if (options?.onRevalidate) options.onRevalidate(paths);
+  else revalidateYashieContent(paths);
+}
 
 async function reportProgress(
   options: MutationOptions | undefined,
@@ -321,10 +331,12 @@ async function finalizeMutation(
   workspaceId: string,
   collectionKey: YashieAdminCollectionKey,
   entryId: string | null,
+  options: MutationOptions | undefined,
+  paths: string[],
 ): Promise<MutationResult> {
   const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
   const items = readYashieAdminContent(studio, collectionKey);
-  revalidateYashieContent();
+  invalidateContent(options, paths);
 
   return {
     item: entryId ? items.find((contentItem) => contentItem.id === entryId) ?? null : null,
@@ -393,7 +405,7 @@ export async function createYashieContentItem(
     step: "refresh-dashboard",
   });
   const studio = (await client.getStudio(workspaceId)) as YashieAdminStudioPayload;
-  revalidateYashieContent();
+  invalidateContent(options, detailPaths(collectionKey, input.slug));
   return {
     item: findItemById(studio, collectionKey, entryId),
     items: readYashieAdminContent(studio, collectionKey),
@@ -455,7 +467,7 @@ export async function updateYashieContentItem(
     percent: 94,
     step: "refresh-dashboard",
   });
-  return finalizeMutation(client, workspaceId, collectionKey, entryId);
+  return finalizeMutation(client, workspaceId, collectionKey, entryId, options, detailPaths(collectionKey, current.slug, input.slug));
 }
 
 export async function deleteYashieContentItem(
@@ -472,7 +484,7 @@ export async function deleteYashieContentItem(
   }
 
   await client.deleteEntry(workspaceId, entryId);
-  revalidateYashieContent();
+  revalidateYashieContent(detailPaths(collectionKey, current.slug));
 
   return {
     item: null,

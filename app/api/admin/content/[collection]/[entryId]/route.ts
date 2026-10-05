@@ -1,6 +1,7 @@
 import {
   createYashieExternalProjectsClient,
   getYashieAdminSession,
+  revalidateYashieContent,
 } from "@/lib/yashie-admin-api";
 import { deleteYashieContentItem, updateYashieContentItem } from "@/lib/yashie-admin-content";
 import { createYashieContentMutationStream } from "@/lib/yashie-admin-content-stream";
@@ -50,11 +51,14 @@ export async function PATCH(
     const client = createYashieExternalProjectsClient(session.accessToken);
     const workspaceId = getYashieWorkspaceId();
 
+    let invalidationPaths: string[] = [];
     return createYashieContentMutationStream({
       fallback: "Content request failed",
+      onSuccess: () => revalidateYashieContent(invalidationPaths),
       run: (onProgress) =>
         updateYashieContentItem(client, workspaceId, collectionKey, entryId, input, {
           onProgress,
+          onRevalidate: (paths) => { invalidationPaths = paths; },
         }),
     });
   } catch (error) {
