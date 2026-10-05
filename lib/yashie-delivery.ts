@@ -16,10 +16,21 @@ async function getCachedDeliveryPayload(
   cacheLife({ stale: 60, revalidate: 60, expire: 60 * 60 });
   cacheTag(YASHIE_DELIVERY_CACHE_TAG);
 
-  const response = await fetch(
+  // Each refresh must reach the origin. Upstream invalidation can serve one
+  // stale CDN response while revalidating; caching that response here would
+  // keep the visitor pages behind the successfully saved studio content.
+  const url = new URL(
     `${apiBaseUrl.replace(/\/+$/, "")}/workspaces/${encodeURIComponent(
       workspaceId,
     )}/external-projects/delivery`,
+  );
+  url.searchParams.set("refresh", crypto.randomUUID());
+
+  const response = await fetch(
+    url.toString(),
+    {
+      cache: "no-store",
+    },
   );
 
   if (!response.ok) {

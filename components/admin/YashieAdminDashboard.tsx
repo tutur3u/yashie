@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Globe2, LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { SocialIcon } from "@/app/components/SocialIcon";
@@ -2084,6 +2085,7 @@ function SiteSettingsPanel({
   onSaved: (settings: YashieAdminSiteSettings) => void;
   onRefresh?: () => Promise<void>;
 }) {
+  const router = useRouter();
   const [draft, setDraft] = useState(() =>
     siteSettingsDraftFromSettings(settings),
   );
@@ -2226,6 +2228,7 @@ function SiteSettingsPanel({
 
       setDraft(siteSettingsDraftFromSettings(payload.settings));
       onSaved(payload.settings);
+      router.refresh();
       toast.success(YASHIE_ADMIN_COPY.profile.saved);
       void onRefresh?.().catch(() => undefined);
       return true;

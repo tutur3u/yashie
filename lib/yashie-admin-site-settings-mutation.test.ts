@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import type { YashieAdminStudioPayload } from "./yashie-admin-content-model";
 import type { YashieAdminSiteSettingsInput } from "./yashie-admin-site-settings";
-import { DEFAULT_YASHIE_PAGE_CONTENT } from "./yashie-page-content";
+import { DEFAULT_YASHIE_PAGE_CONTENT, YASHIE_PAGE_KEYS } from "./yashie-page-content";
+import { buildYashieContent, type YashieDeliveryPayload } from "./yashie-content";
+import { YASHIE_DELIVERY_CACHE_TAG } from "./yashie-cache";
 
 const originalWorkspaceId = process.env.TUTURUUU_YASHIE_WORKSPACE_ID;
 const originalFetch = globalThis.fetch;
@@ -192,7 +194,7 @@ const batchFetch = mock(
   },
 ) as typeof fetch;
 
-const { updateYashieAdminSiteSettings } =
+const { updateYashieAdminSiteSettings, parseYashieSiteSettingsPayload, readYashieAdminSiteSettings } =
   await import("./yashie-admin-site-settings");
 
 function createStudio({
@@ -279,7 +281,52 @@ describe("Yashie admin site settings mutations", () => {
     };
     batchFetch.mockClear();
     revalidatePath.mockClear();
+    revalidateTag.mockClear();
   });
+
+  for (const method of ["batch", "serial"] as const) {
+    for (const key of YASHIE_PAGE_KEYS) {
+      test(`${method}: ${key} descriptions and cards survive validation, saving, reload and public delivery`, async () => {
+        if (method === "serial") {
+          globalThis.fetch = mock(async () => new Response(null, { status: 404 })) as typeof fetch;
+        }
+        const submitted = structuredClone(input);
+        submitted.pages[key] = {
+          intro: { title: `${key} intro title`, description: `${key} introduction` },
+          feature: { label: `${key} feature label`, title: `${key} feature title`, description: `${key} feature description` },
+          listing: { label: `${key} listing label`, title: `${key} listing title`, description: `${key} listing description` },
+          highlightLabel: `${key} caption`, highlights: [`${key} card one`, `${key} card two`],
+        };
+        const parsed = parseYashieSiteSettingsPayload(submitted);
+        expect(parsed.errors).toEqual({});
+        expect(parsed.input).not.toBeNull();
+        const saved = await updateYashieAdminSiteSettings("admin-token", parsed.input!);
+        expect(saved.pages).toEqual(submitted.pages);
+        expect(readYashieAdminSiteSettings(await client.getStudio()).pages).toEqual(submitted.pages);
+        const publicDelivery = {
+          adapter: "yashie", canonicalProjectId: "project", generatedAt: "now",
+          loadingData: null, profileData: {}, workspaceId: "workspace-1",
+          collections: studio.collections.map((collection) => ({
+            ...collection,
+            entries: studio.entries.filter((entry) => entry.collection_id === collection.id)
+              .map((entry) => ({ ...entry, assets: [], blocks: [] })),
+          })),
+        } as unknown as YashieDeliveryPayload;
+        expect(buildYashieContent(publicDelivery, { apiBaseUrl: "https://example.com" }).pageContent).toEqual(submitted.pages);
+        expect(revalidateTag).toHaveBeenCalledWith(YASHIE_DELIVERY_CACHE_TAG, { expire: 0 });
+        expect(revalidateTag).toHaveBeenCalledWith("yashie-admin-snapshot", { expire: 0 });
+        expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+        expect(revalidatePath).toHaveBeenCalledWith("/contact");
+
+        // A subsequent save can hide cards without restoring the default list.
+        submitted.pages[key].highlights = [];
+        const cleared = await updateYashieAdminSiteSettings("admin-token", submitted);
+        expect(cleared.pages[key].highlights).toEqual([]);
+        expect(readYashieAdminSiteSettings(await client.getStudio()).pages[key].highlights).toEqual([]);
+        expect(studio.entries.filter((entry) => entry.slug === "profile")).toHaveLength(1);
+      });
+    }
+  }
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
@@ -323,6 +370,21 @@ describe("Yashie admin site settings mutations", () => {
     expect(calls.updateEntry).toHaveLength(0);
     expect(calls.publishEntry).toEqual([]);
   });
+
+  for (const failure of ["http", "invalid-response", "operation"] as const) {
+    test(`reports ${failure} save failures without claiming fresh content`, async () => {
+      globalThis.fetch = mock(async () => {
+        if (failure === "http") return Response.json({ error: "Save unavailable" }, { status: 500 });
+        if (failure === "invalid-response") return Response.json({ unexpected: true });
+        return Response.json({ results: [{ action: "update", clientOperationId: "profile", ok: false, error: "Profile save failed" }] });
+      }) as typeof fetch;
+      await expect(updateYashieAdminSiteSettings("admin-token", input)).rejects.toThrow();
+      expect(revalidateTag).not.toHaveBeenCalled();
+      expect(revalidatePath).not.toHaveBeenCalled();
+      expect(calls.updateEntry).toEqual([]);
+      expect(calls.createEntry).toEqual([]);
+    });
+  }
 
   test("creates the navigation collection from the manifest before saving tabs", async () => {
     studio = createStudio({ includeNavigation: false });
