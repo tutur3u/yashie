@@ -2095,6 +2095,7 @@ function SiteSettingsPanel({
   const [draft, setDraft] = useState(() =>
     siteSettingsDraftFromSettings(settings),
   );
+  const [syncedSettings, setSyncedSettings] = useState(settings);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [dialogTarget, setDialogTarget] = useState<SettingsDialogTarget | null>(
     null,
@@ -2111,10 +2112,11 @@ function SiteSettingsPanel({
   const hasChanges =
     profileDirty || pagesDirty || navigationDirty || socialsDirty;
 
-  useEffect(() => {
+  if (settings !== syncedSettings) {
+    setSyncedSettings(settings);
     setDraft(siteSettingsDraftFromSettings(settings));
     setFieldErrors({});
-  }, [settings]);
+  }
 
   const clearErrors = (prefixes: string[]) => {
     setFieldErrors((current) => clearFieldErrorEntries(current, prefixes));
