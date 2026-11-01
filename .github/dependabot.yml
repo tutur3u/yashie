@@ -1,7 +1,7 @@
 version: 2
 updates:
-  - package-ecosystem: "ECO"
-    directory: "DIR"
+  - package-ecosystem: "bun"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -11,7 +11,7 @@ updates:
     labels:
       - "dependencies"
     groups:
-      ECO-minor-patch:
+      bun-minor-patch:
         patterns:
           - "*"
         update-types:
