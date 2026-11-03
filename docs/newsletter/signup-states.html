@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+  Signup flow states: STATIC DESIGN PROTOTYPE, not used by the site.
+  Open this file in a browser to see each state of the footer signup and the
+  confirm/unsubscribe pages. Nothing here submits, stores or sends anything:
+  there are no forms with actions, no scripts and no network requests.
+  The live footer (app/components/MockForms.tsx) is unchanged; see DESIGN.md
+  section 2 for why.
+  Bracketed text such as [cadence] is waiting on a client answer (Q-IDs in DESIGN.md).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Newsletter signup states (prototype)</title>
+<style>
+  :root {
+    --background: #eed1c2; --navy: #0e263d; --navy-deep: #07192a; --parchment: #f6ddcd;
+    --parchment-soft: #efd6c7; --ink: #162c44; --ink-soft: #59495a; --clay: #a44e43;
+    --copper: #b87051; --copper-dark: #7f332f; --gold: #d9a75b;
+  }
+  * { box-sizing: border-box; border-radius: 0; }
+  body { margin: 0; background: var(--background); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; display: grid; gap: 28px; }
+  h1, h2, .display { font-family: Georgia, "Times New Roman", serif; font-weight: normal; }
+  h1 { margin: 0; color: var(--navy); font-size: 32px; }
+  .state { display: grid; gap: 8px; }
+  .state > h2 { margin: 0; font-size: 13px; font-family: Arial, Helvetica, sans-serif; font-weight: bold; letter-spacing: .14em; text-transform: uppercase; color: var(--copper-dark); }
+  .footer { background: var(--navy); border-top: 1px solid var(--copper); color: var(--parchment); padding: 28px 24px; }
+  .footer .inner { max-width: 520px; }
+  .label { margin: 0 0 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--parchment-soft); }
+  .row { display: flex; flex-direction: column; gap: 12px; }
+  @media (min-width: 640px) { .row { flex-direction: row; } }
+  .field { flex: 1; }
+  input[type=email] { width: 100%; height: 48px; border: 1px solid var(--copper); background: var(--parchment); padding: 0 16px; font-size: 14px; color: var(--ink); }
+  input[aria-invalid=true] { border-color: var(--gold); outline: 2px solid rgba(217,167,91,.45); }
+  .btn { height: 48px; border: 1px solid var(--copper-dark); background: var(--clay); color: #fff; padding: 0 24px; font-size: 14px; font-weight: 600; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: 13px; line-height: 20px; color: var(--parchment-soft); }
+  .consent input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--gold); flex: none; }
+  .consent a, .footer a { color: var(--gold); }
+  .msg { margin: 10px 0 0; font-size: 13px; line-height: 20px; }
+  .msg.error { color: var(--gold); }
+  .sent { border: 1px solid rgba(217,167,91,.58); background: rgba(239,207,178,.08); padding: 16px 18px; }
+  .sent .display { margin: 0; font-size: 22px; color: var(--gold); }
+  .sent p { margin: 6px 0 0; font-size: 14px; line-height: 22px; color: var(--parchment-soft); }
+  .link-btn { background: none; border: 0; padding: 0; color: var(--gold); text-decoration: underline; font: inherit; }
+  .page { background: var(--parchment); border: 1px solid rgba(184,112,81,.5); padding: 32px 24px; text-align: center; }
+  .page .display { margin: 0; font-size: 30px; color: var(--navy); }
+  .page p { margin: 10px auto 0; max-width: 440px; font-size: 15px; line-height: 24px; color: var(--ink-soft); }
+  .page .primary { display: inline-block; margin-top: 18px; background: var(--navy); border: 1px solid var(--gold); color: var(--parchment); padding: 12px 22px; font-weight: 700; font-size: 14px; text-decoration: none; }
+  .page .quiet { color: var(--copper-dark); }
+  .mark { color: var(--gold); font-size: 22px; }
+  .grid2 { display: grid; gap: 28px; }
+  @media (min-width: 860px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Newsletter signup states</h1>
+
+  <!-- A. Default: email, button, consent line under them. -->
+  <section class="state" aria-labelledby="s-a">
+    <h2 id="s-a">A. Footer, default</h2>
+    <div class="footer"><div class="inner">
+      <p class="label">Inbox note</p>
+      <div class="row">
+        <div class="field">
+          <input type="email" placeholder="Your email address" autocomplete="email" aria-label="Email address">
+        </div>
+        <button class="btn" type="button">Subscribe</button>
+      </div>
+      <label class="consent">
+        <input type="checkbox">
+        <span>Send me InkedByYashie letters, [cadence]. I'm 16 or over and can unsubscribe at any time. <a href="#privacy">Privacy notice</a></span>
+      </label>
+    </div></div>
+  </section>
+
+  <!-- B. Validation: shown on submit only, next to the field that needs fixing. -->
+  <section class="state" aria-labelledby="s-b">
+    <h2 id="s-b">B. Footer, needs fixing</h2>
+    <div class="footer"><div class="inner">
+      <p class="label">Inbox note</p>
+      <div class="row">
+        <div class="field">
+          <input type="email" value="reader@example" aria-invalid="true" aria-describedby="b-err" aria-label="Email address">
+          <p class="msg error" id="b-err" role="alert">Enter a full email address, like name@example.com.</p>
+        </div>
+        <button class="btn" type="button">Subscribe</button>
+      </div>
+      <label class="consent">
+        <input type="checkbox">
+        <span>Send me InkedByYashie letters, [cadence]. I'm 16 or over and can unsubscribe at any time. <a href="#privacy">Privacy notice</a></span>
+      </label>
+      <p class="msg error" role="alert">Tick the box to subscribe.</p>
+    </div></div>
+  </section>
+
+  <!-- C. Submitted: the form is replaced. Same text whether or not the address is
+       already on the list (no account enumeration). -->
+  <section class="state" aria-labelledby="s-c">
+    <h2 id="s-c">C. Footer, check your email</h2>
+    <div class="footer"><div class="inner">
+      <p class="label">Inbox note</p>
+      <div class="sent" role="status">
+        <p class="display">Check your email to confirm</p>
+        <p>We sent a link to r•••@example.com. Open it within 48 hours to start receiving letters. Nothing arrives until you confirm.</p>
+        <p><button class="link-btn" type="button">Use a different address</button></p>
+      </div>
+    </div></div>
+  </section>
+
+  <div class="grid2">
+    <!-- D. The page the confirm link opens. -->
+    <section class="state" aria-labelledby="s-d">
+      <h2 id="s-d">D. Confirm link opened</h2>
+      <div class="page">
+        <div class="mark" aria-hidden="true">&#10043;</div>
+        <p class="display">You're subscribed</p>
+        <p>The next letter will reach your inbox. Every letter has an unsubscribe link at the bottom.</p>
+        <a class="primary" href="#home">Back to the site</a>
+      </div>
+    </section>
+
+    <!-- D2. Expired or already-used link. -->
+    <section class="state" aria-labelledby="s-d2">
+      <h2 id="s-d2">D2. Link expired or already used</h2>
+      <div class="page">
+        <div class="mark" aria-hidden="true">&#10043;</div>
+        <p class="display">This link has expired</p>
+        <p>Confirmation links work once, for 48 hours. Subscribe again from the footer of any page and we'll send a new one.</p>
+        <a class="primary" href="#footer">Subscribe again</a>
+      </div>
+    </section>
+
+    <!-- E. Unsubscribe link from an email (GET): one button, no login.
+         A button rather than an instant unsubscribe, so link scanners can't
+         unsubscribe people. The List-Unsubscribe one-click header skips this page. -->
+    <section class="state" aria-labelledby="s-e">
+      <h2 id="s-e">E. Unsubscribe link opened</h2>
+      <div class="page">
+        <div class="mark" aria-hidden="true">&#10043;</div>
+        <p class="display">Unsubscribe r•••@example.com?</p>
+        <p>You'll stop receiving InkedByYashie letters.</p>
+        <a class="primary" href="#unsubscribed">Unsubscribe</a>
+      </div>
+    </section>
+
+    <!-- E2. Done. -->
+    <section class="state" aria-labelledby="s-e2">
+      <h2 id="s-e2">E2. Unsubscribed</h2>
+      <div class="page">
+        <div class="mark" aria-hidden="true">&#10043;</div>
+        <p class="display">You're unsubscribed</p>
+        <p>No more letters will be sent to this address.</p>
+        <p><a class="quiet" href="#footer">Changed your mind? Subscribe again</a></p>
+      </div>
+    </section>
+  </div>
+</main>
+</body>
+</html>

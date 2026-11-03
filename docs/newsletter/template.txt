@@ -1,0 +1,41 @@
+YASHODA U. ITWARU · INKEDBYYASHIE
+Letter No. {{issue_number}} · {{issue_date}}
+
+A TITLE FOR THIS LETTER GOES HERE
+
+Placeholder opening. Two or three sentences in the author's own voice about
+what this letter holds and what has been happening at the writing desk since
+the last one.
+
+[Optional artwork: title of the piece and a few words about it.]
+
+* * *
+
+NEW ON THE SITE
+
+Essay title placeholder
+One line on what the piece is about.
+Read the essay: {{item_1_url}}
+
+Poem title placeholder
+One line on what the piece is about.
+Read the poem: {{item_2_url}}
+
+Visit the writing desk: {{cta_url}}
+
+PROMOTION · FROM THE SHELF
+Placeholder note about a book, event or shop item, with one link.
+See the details: {{note_url}}
+
+Placeholder closing line.
+
+Always InkedByYashie
+
+--
+You're receiving this because you subscribed at {{site_url}} and confirmed
+your email address.
+
+Unsubscribe: {{unsubscribe_url}}
+Privacy notice: {{privacy_url}}
+
+{{sender_name}} · {{postal_address}}

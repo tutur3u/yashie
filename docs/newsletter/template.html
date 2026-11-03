@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!--
+  Newsletter email template: DESIGN PROTOTYPE ONLY.
+  Placeholder content, no subscriber data, nothing is sent from this file.
+  See docs/newsletter/DESIGN.md (section 4) for the structure, merge tags and
+  the client checks. Plain-text twin: docs/newsletter/template.txt.
+
+  Email rules followed here: tables for layout, CSS inline on every element,
+  max width 600px, web-safe fonts (Georgia + Arial), no web fonts, no images
+  required (the artwork slot is optional), no scripts, no forms, no tracking
+  pixels. The <style> block holds only resets and the narrow-screen rules,
+  which clients that strip it can ignore safely.
+
+  Merge tags ({{...}}) are filled by the sending system at send time.
+-->
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{issue_title}}</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<style>table, td, h1, h2, p, a { font-family: Georgia, 'Times New Roman', serif !important; }</style>
+<![endif]-->
+<style>
+  html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+  * { -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+  img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; display: block; }
+  a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
+  u + #body a { color: inherit; text-decoration: none; }
+  @media only screen and (max-width: 620px) {
+    .container { width: 100% !important; max-width: 100% !important; }
+    .px { padding-left: 20px !important; padding-right: 20px !important; }
+    .h1 { font-size: 28px !important; line-height: 34px !important; }
+    .stack { display: block !important; width: 100% !important; }
+    .btn a { display: block !important; }
+    .hide-sm { display: none !important; }
+  }
+</style>
+</head>
+<body id="body" style="margin:0; padding:0; background-color:#eed1c2; word-spacing:normal;">
+
+<!-- Preheader: shown in the inbox list next to the subject, hidden in the body. -->
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#eed1c2; opacity:0;">
+  {{preheader}} &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847; &#8199;&#847;
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eed1c2;">
+<tr>
+<td align="center" style="padding:24px 12px;">
+
+  <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td><![endif]-->
+  <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#f6ddcd; border:1px solid #b87051;">
+
+    <!-- 1. Masthead: mirrors the site header (gold mark, serif name, tracked brand line). -->
+    <tr>
+      <td class="px" style="background-color:#0e263d; border-bottom:2px solid #b87051; padding:22px 32px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="52" valign="middle" style="width:52px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" valign="middle" width="44" height="44" style="width:44px; height:44px; border:1px solid #d9a75b; color:#d9a75b; font-family:Georgia, 'Times New Roman', serif; font-size:24px; line-height:44px;">&#10043;</td>
+                </tr>
+              </table>
+            </td>
+            <td valign="middle" style="padding-left:12px;">
+              <p style="margin:0; font-family:Georgia, 'Times New Roman', serif; font-size:24px; line-height:28px; color:#d9a75b;">Yashoda U. Itwaru</p>
+              <p style="margin:4px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:10px; line-height:14px; font-weight:bold; letter-spacing:3px; text-transform:uppercase; color:#efd6c7;">InkedByYashie</p>
+            </td>
+            <td class="hide-sm" align="right" valign="middle" style="font-family:Georgia, 'Times New Roman', serif; font-size:18px; color:#d9a75b;">&#10022;</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- 2. Issue line -->
+    <tr>
+      <td class="px" style="padding:28px 32px 0;">
+        <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:16px; font-weight:bold; letter-spacing:2px; text-transform:uppercase; color:#7f332f;">Letter No. {{issue_number}} &middot; {{issue_date}}</p>
+      </td>
+    </tr>
+
+    <!-- 3. Opening: title + short personal note -->
+    <tr>
+      <td class="px" style="padding:10px 32px 0;">
+        <h1 class="h1" style="margin:0; font-family:Georgia, 'Times New Roman', serif; font-size:34px; line-height:40px; font-weight:normal; color:#0e263d;">A title for this letter goes here</h1>
+        <p style="margin:16px 0 0; font-family:Georgia, 'Times New Roman', serif; font-size:17px; line-height:28px; color:#162c44;">Placeholder opening. Two or three sentences in the author's own voice about what this letter holds and what has been happening at the writing desk since the last one.</p>
+      </td>
+    </tr>
+
+    <!-- 4. Optional artwork slot. Remove the whole row when the issue has no image.
+         When used: absolute https URL on her own site, width 536, explicit alt text.
+         Shown here as a coloured placeholder so the prototype needs no image. -->
+    <tr>
+      <td class="px" style="padding:24px 32px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #d9a75b;">
+          <tr>
+            <td align="center" valign="middle" height="240" style="height:240px; background-color:#23435b; font-family:Georgia, 'Times New Roman', serif; font-size:15px; line-height:22px; color:#efd6c7; padding:16px;">
+              Artwork placeholder (536 &times; 300)<br>
+              <span style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#efd6c7;">Optional. Use only images she approves for email.</span>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:8px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#59495a; font-style:italic;">Caption placeholder: title of the piece and a few words about it.</p>
+      </td>
+    </tr>
+
+    <!-- 5. Ornament divider -->
+    <tr>
+      <td align="center" style="padding:28px 32px 4px; font-family:Georgia, 'Times New Roman', serif; font-size:16px; line-height:16px; color:#b87051;">&#10022; &nbsp; &#10043; &nbsp; &#10022;</td>
+    </tr>
+
+    <!-- 6. New writing: up to three items, each a title, one line and a link -->
+    <tr>
+      <td class="px" style="padding:12px 32px 0;">
+        <p style="margin:0 0 12px; font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:16px; font-weight:bold; letter-spacing:2px; text-transform:uppercase; color:#7f332f;">New on the site</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #b87051;">
+          <tr>
+            <td style="padding:16px 0; border-bottom:1px solid #b87051;">
+              <p style="margin:0; font-family:Georgia, 'Times New Roman', serif; font-size:20px; line-height:26px; color:#0e263d;"><a href="{{item_1_url}}" style="color:#0e263d; text-decoration:none;">Essay title placeholder</a></p>
+              <p style="margin:6px 0 0; font-family:Georgia, 'Times New Roman', serif; font-size:15px; line-height:24px; color:#59495a;">One line on what the piece is about.</p>
+              <p style="margin:8px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:18px; font-weight:bold;"><a href="{{item_1_url}}" style="color:#7f332f; text-decoration:underline;">Read the essay</a></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 0; border-bottom:1px solid #b87051;">
+              <p style="margin:0; font-family:Georgia, 'Times New Roman', serif; font-size:20px; line-height:26px; color:#0e263d;"><a href="{{item_2_url}}" style="color:#0e263d; text-decoration:none;">Poem title placeholder</a></p>
+              <p style="margin:6px 0 0; font-family:Georgia, 'Times New Roman', serif; font-size:15px; line-height:24px; color:#59495a;">One line on what the piece is about.</p>
+              <p style="margin:8px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:18px; font-weight:bold;"><a href="{{item_2_url}}" style="color:#7f332f; text-decoration:underline;">Read the poem</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- 7. Main call to action (bulletproof button: works without images and in Outlook) -->
+    <tr>
+      <td class="px" align="center" style="padding:28px 32px 0;">
+        <table role="presentation" class="btn" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td align="center" bgcolor="#0e263d" style="background-color:#0e263d; border:1px solid #d9a75b;">
+              <a href="{{cta_url}}" style="display:inline-block; padding:14px 28px; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:18px; font-weight:bold; color:#f6ddcd; text-decoration:none;">Visit the writing desk</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- 8. Optional note block (events, books, shop). If it promotes something for
+         sale, keep the visible "Promotion" label (see DESIGN.md, Q20). -->
+    <tr>
+      <td class="px" style="padding:28px 32px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2cfc3; border:1px solid #b87051;">
+          <tr>
+            <td style="padding:18px 20px;">
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:16px; font-weight:bold; letter-spacing:2px; text-transform:uppercase; color:#7f332f;">Promotion &middot; From the shelf</p>
+              <p style="margin:8px 0 0; font-family:Georgia, 'Times New Roman', serif; font-size:15px; line-height:24px; color:#162c44;">Placeholder note about a book, event or shop item, with one link. <a href="{{note_url}}" style="color:#7f332f; text-decoration:underline;">See the details</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- 9. Sign-off -->
+    <tr>
+      <td class="px" style="padding:28px 32px 32px;">
+        <p style="margin:0; font-family:Georgia, 'Times New Roman', serif; font-size:16px; line-height:26px; color:#162c44;">Placeholder closing line.</p>
+        <p style="margin:10px 0 0; font-family:'Brush Script MT', 'Segoe Script', Georgia, serif; font-size:24px; line-height:30px; color:#a44e43;">Always InkedByYashie</p>
+      </td>
+    </tr>
+
+    <!-- 10. Footer: why you got this, unsubscribe, privacy, postal address -->
+    <tr>
+      <td class="px" style="background-color:#0e263d; border-top:2px solid #b87051; padding:24px 32px;">
+        <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:19px; color:#efd6c7;">You're receiving this because you subscribed at {{site_url}} and confirmed your email address.</p>
+        <p style="margin:12px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:19px; color:#efd6c7;">
+          <a href="{{unsubscribe_url}}" style="color:#d9a75b; text-decoration:underline;">Unsubscribe</a>
+          &nbsp;&middot;&nbsp;
+          <a href="{{privacy_url}}" style="color:#d9a75b; text-decoration:underline;">Privacy notice</a>
+        </p>
+        <p style="margin:12px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:19px; color:#efd6c7;">{{sender_name}} &middot; {{postal_address}}</p>
+      </td>
+    </tr>
+
+  </table>
+  <!--[if mso]></td></tr></table><![endif]-->
+
+</td>
+</tr>
+</table>
+</body>
+</html>
